@@ -1,0 +1,5 @@
+pacinfo
+pacinstall
+pacown
+pacsize
+pacconf

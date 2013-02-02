@@ -1,0 +1,114 @@
+=head1 NAME
+
+pacutils - utility library for libalpm front-ends
+
+=head1 SYNOPSIS
+
+ pu_config_t *config = pu_config_new_from_file("/etc/pacman.conf");
+ alpm_handle_t *handle = pu_initialize_handle_from_config(config);
+ alpm_list_t *syncdbs = pu_register_syncdbs(config->repos);
+ // do something with handle...
+
+The purpose of this library is to encapsulate several common tasks that most
+libalpm users need to perform, such as parsing pacman.conf and printing package
+information.
+
+=head1 DESCRIPTION
+
+=head2 Configuration Parsing
+
+=over
+
+=item pu_config_t *pu_config_new_from_file(const char *filename);
+
+Parse a I<pacman> configuration file into a C<pu_config_t> structure.  B<Note:>
+this is the final configuration as parsed by I<pacman>.  C<Include> directives
+will be processed, defaults are set, C<$repo> and C<$arch> will be replaced in
+C<Server> directives and C<Architecture> will be replaced if set to C<auto>.
+
+=item void pu_config_free(pu_config_t *config);
+
+=item alpm_handle_t *pu_initialize_handle_from_config(pu_config_t *config);
+
+=back
+
+=head2 Repositories
+
+=over
+
+=item alpm_db_t *pu_register_syncdb(pu_repo_t *repo);
+
+=item alpm_list_t *pu_register_syncdbs(alpm_list_t *repos);
+
+=item void pu_repo_free(pu_repo_t *repo);
+
+=back
+
+=head1 EXAMPLES
+
+There are several example programs located in F<examples/>.
+
+=over
+
+=item pacconf
+
+Query I<pacman>'s configuration file.  Useful for shell scripts:
+
+ dbpath=$(pacconf dbpath)
+ color=$(pacconf color)
+ [[ -n $color ]] && ... # print something in color
+
+B<Note:> this is the final configuration as parsed by I<pacman>.  C<Include>
+directives will be processed, defaults are set, C<$repo> and C<$arch> will be
+replaced in C<Server> directives and C<Architecture> will be replaced if set to
+C<auto>.
+
+=item pacsize
+
+Print the removable size of a set of packages (ie how much space would be
+gained by running C<< pacman -Rs <pkgs> >>).
+
+=item pacinstall
+
+Install packages from sync repositories, similar to C<< pacman -S <pkgs> >>.
+
+=item pacinfo
+
+Display basic information for installed packages, similar to
+C<< pacman -Qi <pkg> >>.
+
+=item pacown
+
+Search for the owner of a file, similar to C<< pacman -Qo <file> >>, but much
+less sophisticated.
+
+=back
+
+=head1 BUGS
+
+=over
+
+=item copius scrolling output from I<pacinstall>
+
+=back
+
+Not implemented yet:
+
+=over
+
+=item globs in Include directives
+
+=item CleanMethod
+
+=item SigLevel, LocalFileSigLevel, RemoteFileSigLevel
+
+=item error reporting
+
+=back
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (c) 2012-2013 Andrew Gregory
+
+pacutils is distributed under the terms of the MIT license.  See F<COPYING> for
+details.
