@@ -3,3 +3,4 @@ pacinstall
 pacown
 pacsize
 pacconf
+pacsync
