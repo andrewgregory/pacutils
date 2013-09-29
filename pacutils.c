@@ -1,5 +1,6 @@
 #include "pacutils.h"
 
+#include <sys/time.h>
 #include <sys/utsname.h>
 
 enum _pu_setting_name {
@@ -442,6 +443,39 @@ const char *pu_alpm_strerror(alpm_handle_t *handle)
 {
 	alpm_errno_t err = alpm_errno(handle);
 	return alpm_strerror(err);
+}
+
+#define PU_MAX_REFRESH_MS 200
+
+static long _pu_time_diff(struct timeval *t1, struct timeval *t2)
+{
+	return (t1->tv_sec - t2->tv_sec) * 1000 + (t1->tv_usec - t2->tv_usec) / 1000;
+}
+
+void pu_cb_download(const char *filename, off_t xfered, off_t total)
+{
+	static struct timeval last_update = {0, 0};
+	int percent;
+
+	if(xfered > 0 && xfered < total) {
+		struct timeval now;
+		gettimeofday(&now, NULL);
+		if(_pu_time_diff(&now, &last_update) < PU_MAX_REFRESH_MS) {
+			return;
+		}
+		last_update = now;
+	}
+
+	percent = 100 * xfered / total;
+	printf("downloading %s (%ld/%ld) %d%%", filename, xfered, total, percent);
+
+	if(xfered == total) {
+		putchar('\n');
+	} else {
+		putchar('\r');
+	}
+
+	fflush(stdout);
 }
 
 /* vim: set ts=2 sw=2 noet: */

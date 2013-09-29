@@ -60,6 +60,8 @@ void pu_config_free(pu_config_t *config);
 
 alpm_handle_t *pu_initialize_handle_from_config(struct pu_config_t *config);
 
+void pu_cb_download(const char *filename, off_t xfered, off_t total);
+
 #endif /* PACUTILS_H */
 
 /* vim: set ts=2 sw=2 noet: */

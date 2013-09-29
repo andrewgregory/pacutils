@@ -125,11 +125,6 @@ pu_config_t *parse_opts(int argc, char **argv)
 	return config;
 }
 
-void cb_download(const char *filename, off_t xfered, off_t total)
-{
-	printf("downloading %s (%d/%d)\n", filename, xfered, total);
-}
-
 void cb_progress(alpm_progress_t event, const char *pkgname, int percent,
 		size_t total, size_t current)
 {
@@ -229,7 +224,7 @@ int main(int argc, char **argv)
 
 	alpm_option_set_eventcb(handle, cb_event);
 	alpm_option_set_progresscb(handle, cb_progress);
-	alpm_option_set_dlcb(handle, cb_download);
+	alpm_option_set_dlcb(handle, pu_cb_download);
 	alpm_option_set_logcb(handle, cb_log);
 
 	sync_dbs = pu_register_syncdbs(handle, config->repos);
