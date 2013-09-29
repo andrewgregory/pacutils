@@ -309,13 +309,19 @@ int main(int argc, char **argv)
 	if(alpm_trans_prepare(handle, &err_data) != 0) {
 		fprintf(stderr, "%s\n", alpm_strerror(alpm_errno(handle)));
 		ret = 1;
-		goto cleanup;
+		goto transcleanup;
 	}
 
 	if(alpm_trans_commit(handle, &err_data) != 0) {
 		fprintf(stderr, "%s\n", alpm_strerror(alpm_errno(handle)));
 		ret = 1;
-		goto cleanup;
+		goto transcleanup;
+	}
+
+transcleanup:
+	if(alpm_trans_release(handle) != 0) {
+		fprintf(stderr, "%s\n", alpm_strerror(alpm_errno(handle)));
+		ret = 1;
 	}
 
 cleanup:
