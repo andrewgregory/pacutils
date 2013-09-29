@@ -296,7 +296,7 @@ int main(int argc, char **argv)
 	}
 
 	if(alpm_trans_init(handle, trans_flags) != 0) {
-		fprintf(stderr, "error: failed to initialize transaction (%s).\n", pu_alpm_strerror(handle));
+		fprintf(stderr, "%s\n", alpm_strerror(alpm_errno(handle)));
 		ret = 1;
 		goto cleanup;
 	}
@@ -306,13 +306,13 @@ int main(int argc, char **argv)
 	}
 
 	if(alpm_trans_prepare(handle, &err_data) != 0) {
-		fprintf(stderr, "error: failed to prepare transaction (%s)\n", pu_alpm_strerror(handle));
+		fprintf(stderr, "%s\n", alpm_strerror(alpm_errno(handle)));
 		ret = 1;
 		goto cleanup;
 	}
 
 	if(alpm_trans_commit(handle, &err_data) != 0) {
-		fprintf(stderr, "error: failed to commit transaction (%s)\n", pu_alpm_strerror(handle));
+		fprintf(stderr, "%s\n", alpm_strerror(alpm_errno(handle)));
 		ret = 1;
 		goto cleanup;
 	}
