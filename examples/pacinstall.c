@@ -133,51 +133,52 @@ pu_config_t *parse_opts(int argc, char **argv)
 	return config;
 }
 
+const char *progress_msg(alpm_progress_t event)
+{
+	switch(event) {
+		case ALPM_PROGRESS_ADD_START:
+			return "installing";
+		case ALPM_PROGRESS_UPGRADE_START:
+			return "upgrading";
+		case ALPM_PROGRESS_DOWNGRADE_START:
+			return "downgrading";
+		case ALPM_PROGRESS_REINSTALL_START:
+			return "reinstalling";
+		case ALPM_PROGRESS_REMOVE_START:
+			return "removing";
+		case ALPM_PROGRESS_CONFLICTS_START:
+			return "checking for file conflicts";
+		case ALPM_PROGRESS_DISKSPACE_START:
+			return "checking available disk space";
+		case ALPM_PROGRESS_INTEGRITY_START:
+			return "checking package integrity";
+		case ALPM_PROGRESS_KEYRING_START:
+			return "checking keys in keyring";
+		case ALPM_PROGRESS_LOAD_START:
+			return "loading package files";
+		default:
+			return "working";
+	}
+}
+
 void cb_progress(alpm_progress_t event, const char *pkgname, int percent,
 		size_t total, size_t current)
 {
-	const char *opr;
+	const char *opr = progress_msg(event);
 
-	switch(event) {
-		case ALPM_PROGRESS_ADD_START:
-			opr = "installing";
-			break;
-		case ALPM_PROGRESS_UPGRADE_START:
-			opr = "upgrading";
-			break;
-		case ALPM_PROGRESS_DOWNGRADE_START:
-			opr = "downgrading";
-			break;
-		case ALPM_PROGRESS_REINSTALL_START:
-			opr = "reinstalling";
-			break;
-		case ALPM_PROGRESS_REMOVE_START:
-			opr = "removing";
-			break;
-		case ALPM_PROGRESS_CONFLICTS_START:
-			opr = "checking for file conflicts";
-			break;
-		case ALPM_PROGRESS_DISKSPACE_START:
-			opr = "checking available disk space";
-			break;
-		case ALPM_PROGRESS_INTEGRITY_START:
-			opr = "checking package integrity";
-			break;
-		case ALPM_PROGRESS_KEYRING_START:
-			opr = "checking keys in keyring";
-			break;
-		case ALPM_PROGRESS_LOAD_START:
-			opr = "loading package files";
-			break;
-		default:
-			return;
-	}
-
-	if(pkgname) {
-		printf("%s %s (%d/%d) %d%%\n", opr, pkgname, current, total, percent);
+	if(pkgname && pkgname[0]) {
+		printf("%s %s (%d/%d) %d%%", opr, pkgname, current, total, percent);
 	} else {
-		printf("%s %d%%\n", opr, percent);
+		printf("%s (%d/%d) %d%%", opr, current, total, percent);
 	}
+
+	if(percent == 100) {
+		putchar('\n');
+	} else {
+		putchar('\r');
+	}
+
+	fflush(stdout);
 }
 
 void cb_event(alpm_event_t event, void *data1, void *data2)
