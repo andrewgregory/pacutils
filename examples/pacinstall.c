@@ -7,12 +7,14 @@
 pu_config_t *config = NULL;
 alpm_handle_t *handle = NULL;
 alpm_loglevel_t log_level = ALPM_LOG_ERROR | ALPM_LOG_WARNING;
+alpm_transflag_t trans_flags = 0;
 
 enum longopt_flags {
 	FLAG_CACHEDIR,
 	FLAG_CONFIG,
 	FLAG_DBPATH,
 	FLAG_DEBUG,
+	FLAG_DLONLY,
 	FLAG_HELP,
 	FLAG_LOGFILE,
 	FLAG_ROOT,
@@ -30,6 +32,7 @@ void usage(int ret)
 	fputs("   --config=<path>    set an alternate configuration file\n", stream);
 	fputs("   --dbpath=<path>    set an alternate database location\n", stream);
 	fputs("   --debug            enable extra debugging messages\n", stream);
+	fputs("   --downloadonly     download packages without installing\n", stream);
 	fputs("   --logfile=<path>   set an alternate log file\n", stream);
 	fputs("   --root=<path>      set an alternate installation root\n", stream);
 	fputs("   --help             display this help information\n", stream);
@@ -51,14 +54,15 @@ pu_config_t *parse_opts(int argc, char **argv)
 
 	char *short_opts = "";
 	struct option long_opts[] = {
-		{ "config"   , required_argument , NULL , FLAG_CONFIG   } ,
-		{ "dbpath"   , required_argument , NULL , FLAG_DBPATH   } ,
-		{ "debug"    , no_argument       , NULL , FLAG_DEBUG    } ,
-		{ "help"     , no_argument       , NULL , FLAG_HELP     } ,
-		{ "root"     , required_argument , NULL , FLAG_ROOT     } ,
-		{ "version"  , no_argument       , NULL , FLAG_VERSION  } ,
-		{ "logfile"  , required_argument , NULL , FLAG_LOGFILE  } ,
-		{ "cachedir" , required_argument , NULL , FLAG_CACHEDIR } ,
+		{ "config"       , required_argument , NULL , FLAG_CONFIG   } ,
+		{ "dbpath"       , required_argument , NULL , FLAG_DBPATH   } ,
+		{ "debug"        , no_argument       , NULL , FLAG_DEBUG    } ,
+		{ "downloadonly" , no_argument       , NULL , FLAG_DLONLY   } ,
+		{ "help"         , no_argument       , NULL , FLAG_HELP     } ,
+		{ "root"         , required_argument , NULL , FLAG_ROOT     } ,
+		{ "version"      , no_argument       , NULL , FLAG_VERSION  } ,
+		{ "logfile"      , required_argument , NULL , FLAG_LOGFILE  } ,
+		{ "cachedir"     , required_argument , NULL , FLAG_CACHEDIR } ,
 		{ 0, 0, 0, 0 },
 	};
 
@@ -99,6 +103,10 @@ pu_config_t *parse_opts(int argc, char **argv)
 			case FLAG_DEBUG:
 				log_level |= ALPM_LOG_DEBUG;
 				log_level |= ALPM_LOG_FUNCTION;
+				break;
+			case FLAG_DLONLY:
+				trans_flags |= ALPM_TRANS_FLAG_DOWNLOADONLY;
+				trans_flags |= ALPM_TRANS_FLAG_NOCONFLICTS;
 				break;
 			case FLAG_HELP:
 				usage(0);
@@ -287,7 +295,7 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
-	if(alpm_trans_init(handle, 0) != 0) {
+	if(alpm_trans_init(handle, trans_flags) != 0) {
 		fprintf(stderr, "error: failed to initialize transaction (%s).\n", pu_alpm_strerror(handle));
 		ret = 1;
 		goto cleanup;
