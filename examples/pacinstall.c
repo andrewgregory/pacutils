@@ -10,6 +10,8 @@ alpm_loglevel_t log_level = ALPM_LOG_ERROR | ALPM_LOG_WARNING;
 alpm_transflag_t trans_flags = 0;
 
 enum longopt_flags {
+	FLAG_ASDEPS,
+	FLAG_ASEXPLICIT,
 	FLAG_CACHEDIR,
 	FLAG_CONFIG,
 	FLAG_DBPATH,
@@ -21,6 +23,12 @@ enum longopt_flags {
 	FLAG_VERSION,
 };
 
+void fatal(const char *msg)
+{
+	fputs(msg, stderr);
+	exit(1);
+}
+
 void usage(int ret)
 {
 	FILE *stream = (ret ? stderr : stdout);
@@ -28,6 +36,8 @@ void usage(int ret)
 	fputs("usage:  pacinstall [options] <package>...\n", stream);
 	fputs("        pacinstall (--help|--version)\n", stream);
 	fputs("options:\n", stream);
+	fputs("   --asdeps           install packages as dependencies\n", stream);
+	fputs("   --asexplicit       install packages as explicit\n", stream);
 	fputs("   --cachedir=<path>  set an alternate cache location\n", stream);
 	fputs("   --config=<path>    set an alternate configuration file\n", stream);
 	fputs("   --dbpath=<path>    set an alternate database location\n", stream);
@@ -54,15 +64,17 @@ pu_config_t *parse_opts(int argc, char **argv)
 
 	char *short_opts = "";
 	struct option long_opts[] = {
-		{ "config"       , required_argument , NULL , FLAG_CONFIG   } ,
-		{ "dbpath"       , required_argument , NULL , FLAG_DBPATH   } ,
-		{ "debug"        , no_argument       , NULL , FLAG_DEBUG    } ,
-		{ "downloadonly" , no_argument       , NULL , FLAG_DLONLY   } ,
-		{ "help"         , no_argument       , NULL , FLAG_HELP     } ,
-		{ "root"         , required_argument , NULL , FLAG_ROOT     } ,
-		{ "version"      , no_argument       , NULL , FLAG_VERSION  } ,
-		{ "logfile"      , required_argument , NULL , FLAG_LOGFILE  } ,
-		{ "cachedir"     , required_argument , NULL , FLAG_CACHEDIR } ,
+		{ "asdeps"       , no_argument       , NULL , FLAG_ASDEPS       } ,
+		{ "asexplicit"   , no_argument       , NULL , FLAG_ASEXPLICIT   } ,
+		{ "config"       , required_argument , NULL , FLAG_CONFIG       } ,
+		{ "dbpath"       , required_argument , NULL , FLAG_DBPATH       } ,
+		{ "debug"        , no_argument       , NULL , FLAG_DEBUG        } ,
+		{ "downloadonly" , no_argument       , NULL , FLAG_DLONLY       } ,
+		{ "help"         , no_argument       , NULL , FLAG_HELP         } ,
+		{ "root"         , required_argument , NULL , FLAG_ROOT         } ,
+		{ "version"      , no_argument       , NULL , FLAG_VERSION      } ,
+		{ "logfile"      , required_argument , NULL , FLAG_LOGFILE      } ,
+		{ "cachedir"     , required_argument , NULL , FLAG_CACHEDIR     } ,
 		{ 0, 0, 0, 0 },
 	};
 
@@ -89,6 +101,18 @@ pu_config_t *parse_opts(int argc, char **argv)
 	c = getopt_long(argc, argv, short_opts, long_opts, NULL);
 	while(c != -1) {
 		switch(c) {
+			case FLAG_ASDEPS:
+				if(trans_flags & ALPM_TRANS_FLAG_ALLEXPLICIT) {
+					fatal("error: --asdeps and --asexplicit may not be used together\n");
+				}
+				trans_flags |= ALPM_TRANS_FLAG_ALLDEPS;
+				break;
+			case FLAG_ASEXPLICIT:
+				if(trans_flags & ALPM_TRANS_FLAG_ALLDEPS) {
+					fatal("error: --asdeps and --asexplicit may not be used together\n");
+				}
+				trans_flags |= ALPM_TRANS_FLAG_ALLEXPLICIT;
+				break;
 			case FLAG_CACHEDIR:
 				FREELIST(config->cachedirs);
 				config->cachedirs = alpm_list_add(NULL, strdup(optarg));
