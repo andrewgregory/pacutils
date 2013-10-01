@@ -1,6 +1,6 @@
 CFLAGS += -I..
 LDFLAGS += -L..
-LDLIBS += -lpacutils -lalpm
+LDLIBS += -lpacutils -lalpm -larchive
 
 PREFIX      ?= /usr/local
 EXEC_PREFIX ?= ${PREFIX}
@@ -8,7 +8,7 @@ BINDIR      ?= ${EXEC_PREFIX}/bin
 INCLUDEDIR  ?= ${PREFIX}/include
 LIBDIR      ?= ${EXEC_PREFIX}/lib
 
-OBJECTS = pacsize pacinfo pacinstall pacown pacconf pacsync
+OBJECTS = pacsize pacinfo pacinstall pacfile pacconf pacsync
 
 all: $(OBJECTS)
 
@@ -17,7 +17,7 @@ install: all
 	install -m 755 pacsize ${DESTDIR}${BINDIR}/pacsize
 	install -m 755 pacinfo ${DESTDIR}${BINDIR}/pacinfo
 	install -m 755 pacinstall ${DESTDIR}${BINDIR}/pacinstall
-	install -m 755 pacown ${DESTDIR}${BINDIR}/pacown
+	install -m 755 pacfile ${DESTDIR}${BINDIR}/pacfile
 	install -m 755 pacconf ${DESTDIR}${BINDIR}/pacconf
 	install -m 755 pacsync ${DESTDIR}${BINDIR}/pacsync
 

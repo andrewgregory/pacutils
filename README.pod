@@ -77,10 +77,10 @@ Install packages from sync repositories, similar to C<< pacman -S <pkgs> >>.
 Display basic information for installed packages, similar to
 C<< pacman -Qi <pkg> >>.
 
-=item pacown
+=item pacfile
 
-Search for the owner of a file, similar to C<< pacman -Qo <file> >>, but much
-less sophisticated.
+Display information about a file.  Includes information from C<pacman -Qo>,
+C<pacman -Qkk>, and C<pacman -Qii>.
 
 =back
 

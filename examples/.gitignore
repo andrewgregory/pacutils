@@ -1,6 +1,6 @@
 pacinfo
 pacinstall
-pacown
+pacfile
 pacsize
 pacconf
 pacsync
