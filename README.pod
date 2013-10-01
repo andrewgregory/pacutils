@@ -86,12 +86,6 @@ C<pacman -Qkk>, and C<pacman -Qii>.
 
 =head1 BUGS
 
-=over
-
-=item copius scrolling output from I<pacinstall>
-
-=back
-
 Not implemented yet:
 
 =over
