@@ -64,6 +64,9 @@ void pu_config_free(pu_config_t *config);
 alpm_handle_t *pu_initialize_handle_from_config(struct pu_config_t *config);
 
 void pu_cb_download(const char *filename, off_t xfered, off_t total);
+const char *pu_msg_progress(alpm_progress_t event);
+void pu_cb_progress(alpm_progress_t event, const char *pkgname, int percent,
+		size_t total, size_t current);
 
 #endif /* PACUTILS_H */
 

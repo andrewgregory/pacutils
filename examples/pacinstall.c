@@ -152,54 +152,6 @@ pu_config_t *parse_opts(int argc, char **argv)
 	return config;
 }
 
-const char *progress_msg(alpm_progress_t event)
-{
-	switch(event) {
-		case ALPM_PROGRESS_ADD_START:
-			return "installing";
-		case ALPM_PROGRESS_UPGRADE_START:
-			return "upgrading";
-		case ALPM_PROGRESS_DOWNGRADE_START:
-			return "downgrading";
-		case ALPM_PROGRESS_REINSTALL_START:
-			return "reinstalling";
-		case ALPM_PROGRESS_REMOVE_START:
-			return "removing";
-		case ALPM_PROGRESS_CONFLICTS_START:
-			return "checking for file conflicts";
-		case ALPM_PROGRESS_DISKSPACE_START:
-			return "checking available disk space";
-		case ALPM_PROGRESS_INTEGRITY_START:
-			return "checking package integrity";
-		case ALPM_PROGRESS_KEYRING_START:
-			return "checking keys in keyring";
-		case ALPM_PROGRESS_LOAD_START:
-			return "loading package files";
-		default:
-			return "working";
-	}
-}
-
-void cb_progress(alpm_progress_t event, const char *pkgname, int percent,
-		size_t total, size_t current)
-{
-	const char *opr = progress_msg(event);
-
-	if(pkgname && pkgname[0]) {
-		printf("%s %s (%d/%d) %d%%", opr, pkgname, current, total, percent);
-	} else {
-		printf("%s (%d/%d) %d%%", opr, current, total, percent);
-	}
-
-	if(percent == 100) {
-		putchar('\n');
-	} else {
-		putchar('\r');
-	}
-
-	fflush(stdout);
-}
-
 void cb_event(alpm_event_t event, void *data1, void *data2)
 {
 	switch(event) {
@@ -251,7 +203,7 @@ int main(int argc, char **argv)
 	}
 
 	alpm_option_set_eventcb(handle, cb_event);
-	alpm_option_set_progresscb(handle, cb_progress);
+	alpm_option_set_progresscb(handle, pu_cb_progress);
 	alpm_option_set_dlcb(handle, pu_cb_download);
 	alpm_option_set_logcb(handle, cb_log);
 

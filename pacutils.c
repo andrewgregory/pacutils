@@ -489,4 +489,52 @@ void pu_cb_download(const char *filename, off_t xfered, off_t total)
 	fflush(stdout);
 }
 
+const char *pu_msg_progress(alpm_progress_t event)
+{
+	switch(event) {
+		case ALPM_PROGRESS_ADD_START:
+			return "installing";
+		case ALPM_PROGRESS_UPGRADE_START:
+			return "upgrading";
+		case ALPM_PROGRESS_DOWNGRADE_START:
+			return "downgrading";
+		case ALPM_PROGRESS_REINSTALL_START:
+			return "reinstalling";
+		case ALPM_PROGRESS_REMOVE_START:
+			return "removing";
+		case ALPM_PROGRESS_CONFLICTS_START:
+			return "checking for file conflicts";
+		case ALPM_PROGRESS_DISKSPACE_START:
+			return "checking available disk space";
+		case ALPM_PROGRESS_INTEGRITY_START:
+			return "checking package integrity";
+		case ALPM_PROGRESS_KEYRING_START:
+			return "checking keys in keyring";
+		case ALPM_PROGRESS_LOAD_START:
+			return "loading package files";
+		default:
+			return "working";
+	}
+}
+
+void pu_cb_progress(alpm_progress_t event, const char *pkgname, int percent,
+		size_t total, size_t current)
+{
+	const char *opr = pu_msg_progress(event);
+
+	if(pkgname && pkgname[0]) {
+		printf("%s %s (%zd/%zd) %d%%", opr, pkgname, current, total, percent);
+	} else {
+		printf("%s (%zd/%zd) %d%%", opr, current, total, percent);
+	}
+
+	if(percent == 100) {
+		putchar('\n');
+	} else {
+		putchar('\r');
+	}
+
+	fflush(stdout);
+}
+
 /* vim: set ts=2 sw=2 noet: */
