@@ -7,13 +7,15 @@
 pu_config_t *config = NULL;
 alpm_handle_t *handle = NULL;
 alpm_loglevel_t log_level = ALPM_LOG_ERROR | ALPM_LOG_WARNING;
+alpm_transflag_t trans_flags = 0;
 int force = 0;
+int sysupgrade = 1;
+int downgrade = 0;
 
 enum longopt_flags {
-	FLAG_CONFIG,
+	FLAG_CONFIG = 1000,
 	FLAG_DBPATH,
 	FLAG_DEBUG,
-	FLAG_FORCE,
 	FLAG_HELP,
 	FLAG_LOGFILE,
 	FLAG_VERSION,
@@ -50,13 +52,15 @@ pu_config_t *parse_opts(int argc, char **argv)
 
 	char *short_opts = "";
 	struct option long_opts[] = {
-		{ "config"   , required_argument , NULL , FLAG_CONFIG   } ,
-		{ "dbpath"   , required_argument , NULL , FLAG_DBPATH   } ,
-		{ "debug"    , no_argument       , NULL , FLAG_DEBUG    } ,
-		{ "force"    , no_argument       , NULL , FLAG_FORCE    } ,
-		{ "help"     , no_argument       , NULL , FLAG_HELP     } ,
-		{ "version"  , no_argument       , NULL , FLAG_VERSION  } ,
-		{ "logfile"  , required_argument , NULL , FLAG_LOGFILE  } ,
+		{ "config"       , required_argument , NULL         , FLAG_CONFIG   } ,
+		{ "dbpath"       , required_argument , NULL         , FLAG_DBPATH   } ,
+		{ "debug"        , no_argument       , NULL         , FLAG_DEBUG    } ,
+		{ "force"        , no_argument       , &force       , 1             } ,
+		{ "no-upgrade"   , no_argument       , &sysupgrade  , 0             } ,
+		{ "downgrade"    , no_argument       , &downgrade   , 1             } ,
+		{ "help"         , no_argument       , NULL         , FLAG_HELP     } ,
+		{ "version"      , no_argument       , NULL         , FLAG_VERSION  } ,
+		{ "logfile"      , required_argument , NULL         , FLAG_LOGFILE  } ,
 		{ 0, 0, 0, 0 },
 	};
 
@@ -83,6 +87,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 	c = getopt_long(argc, argv, short_opts, long_opts, NULL);
 	while(c != -1) {
 		switch(c) {
+			case 0:
 			case FLAG_CONFIG:
 				/* already handled */
 				break;
@@ -93,9 +98,6 @@ pu_config_t *parse_opts(int argc, char **argv)
 			case FLAG_DEBUG:
 				log_level |= ALPM_LOG_DEBUG;
 				log_level |= ALPM_LOG_FUNCTION;
-				break;
-			case FLAG_FORCE:
-				force = 1;
 				break;
 			case FLAG_HELP:
 				usage(0);
@@ -184,6 +186,45 @@ int main(int argc, char **argv)
 			printf("%s is up to date\n", alpm_db_get_name(db));
 		}
 		/* else: callbacks display relevant information */
+	}
+
+	if(ret == 0 && sysupgrade) {
+		alpm_list_t * err_data = NULL;
+
+		if(alpm_trans_init(handle, trans_flags) != 0) {
+			fprintf(stderr, "%s\n", alpm_strerror(alpm_errno(handle)));
+			ret = 1;
+			goto cleanup;
+		}
+
+		if(alpm_sync_sysupgrade(handle, downgrade) != 0) {
+			fprintf(stderr, "%s\n", alpm_strerror(alpm_errno(handle)));
+			ret = 1;
+			goto transcleanup;
+		}
+
+		if(alpm_trans_get_add(handle) == NULL) {
+			fputs("System is up to date\n", stdout);
+			goto transcleanup;
+		}
+
+		if(alpm_trans_prepare(handle, &err_data) != 0) {
+			fprintf(stderr, "%s\n", alpm_strerror(alpm_errno(handle)));
+			ret = 1;
+			goto transcleanup;
+		}
+
+		if(alpm_trans_commit(handle, &err_data) != 0) {
+			fprintf(stderr, "%s\n", alpm_strerror(alpm_errno(handle)));
+			ret = 1;
+			goto transcleanup;
+		}
+
+transcleanup:
+		if(alpm_trans_release(handle) != 0) {
+			fprintf(stderr, "%s\n", alpm_strerror(alpm_errno(handle)));
+			ret = 1;
+		}
 	}
 
 cleanup:
