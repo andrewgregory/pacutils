@@ -21,22 +21,26 @@ enum longopt_flags {
 	FLAG_VERSION,
 };
 
+#define hputs(msg) fputs(msg"\n", stream);
 void usage(int ret)
 {
 	FILE *stream = (ret ? stderr : stdout);
-	fputs("pacsync - synchronize sync databases\n", stream);
-	fputs("usage:  pacsync [options] [repo]...\n", stream);
-	fputs("        pacsync (--help|--version)\n", stream);
-	fputs("options:\n", stream);
-	fputs("   --config=<path>    set an alternate configuration file\n", stream);
-	fputs("   --dbpath=<path>    set an alternate database location\n", stream);
-	fputs("   --force            sync repos even if already up-to-date\n", stream);
-	fputs("   --debug            enable extra debugging messages\n", stream);
-	fputs("   --logfile=<path>   set an alternate log file\n", stream);
-	fputs("   --help             display this help information\n", stream);
-	fputs("   --version          display version information\n", stream);
+	hputs("pacsync - synchronize sync databases and packages");
+	hputs("usage:  pacsync [options] [repo]...");
+	hputs("        pacsync (--help|--version)");
+	hputs("options:");
+	hputs("   --config=<path>    set an alternate configuration file");
+	hputs("   --dbpath=<path>    set an alternate database location");
+	hputs("   --force            sync repos even if already up-to-date");
+	hputs("   --debug            enable extra debugging messages");
+	hputs("   --logfile=<path>   set an alternate log file");
+	hputs("   --no-upgrade       do not run system upgrade after syncing");
+	hputs("   --downgrade        enable downgrading packages");
+	hputs("   --help             display this help information");
+	hputs("   --version          display version information");
 	exit(ret);
 }
+#undef hputs
 
 void version(void)
 {
