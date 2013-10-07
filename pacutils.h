@@ -10,6 +10,9 @@
 #ifndef PACUTILS_H
 #define PACUTILS_H
 
+char *pu_version(void);
+void pu_print_version(const char *progname, const char *progver);
+
 /* sync repos */
 typedef struct pu_repo_t {
 	char *name;

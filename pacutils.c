@@ -3,6 +3,17 @@
 #include <sys/time.h>
 #include <sys/utsname.h>
 
+char *pu_version(void)
+{
+	return "0.1";
+}
+
+void pu_print_version(const char *progname, const char *progver)
+{
+	printf("%s v%s - libalpm v%s - pacutils v%s\n", progname, progver,
+			alpm_version(), pu_version());
+}
+
 enum _pu_setting_name {
 	PU_CONFIG_OPTION_ROOTDIR,
 	PU_CONFIG_OPTION_DBPATH,

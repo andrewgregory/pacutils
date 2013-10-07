@@ -50,12 +50,6 @@ void usage(int ret)
 	exit(ret);
 }
 
-void version(void)
-{
-	printf("pacinstall v0.1 - libalpm %s\n", alpm_version());
-	exit(0);
-}
-
 pu_config_t *parse_opts(int argc, char **argv)
 {
 	char *config_file = "/etc/pacman.conf";
@@ -144,7 +138,8 @@ pu_config_t *parse_opts(int argc, char **argv)
 				config->rootdir = strdup(optarg);
 				break;
 			case FLAG_VERSION:
-				version();
+				pu_print_version("pacinstall", "0.1");
+				exit(0);
 				break;
 			case '?':
 			default:
