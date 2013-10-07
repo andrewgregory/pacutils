@@ -100,6 +100,14 @@ Not implemented yet:
 
 =back
 
+=head1 TODO
+
+=over
+
+=item add callback context to alpm and add event callback with logging
+
+=back
+
 =head1 COPYRIGHT AND LICENSE
 
 Copyright (c) 2012-2013 Andrew Gregory

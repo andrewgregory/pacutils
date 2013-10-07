@@ -124,6 +124,34 @@ pu_config_t *parse_opts(int argc, char **argv)
 	return config;
 }
 
+void cb_event(alpm_event_t event, void *data1, void *data2)
+{
+	switch(event) {
+		case ALPM_EVENT_ADD_DONE:
+			alpm_logaction(handle, LOG_PREFIX, "installed %s (%s)\n",
+					alpm_pkg_get_name(data1), alpm_pkg_get_version(data1));
+			break;
+		case ALPM_EVENT_REMOVE_DONE:
+			alpm_logaction(handle, LOG_PREFIX, "removed %s (%s)\n",
+					alpm_pkg_get_name(data1), alpm_pkg_get_version(data1));
+			break;
+		case ALPM_EVENT_UPGRADE_DONE:
+			alpm_logaction(handle, LOG_PREFIX, "upgraded %s (%s -> %s)\n",
+					alpm_pkg_get_name(data1),
+					alpm_pkg_get_version(data2), alpm_pkg_get_version(data1));
+			break;
+		case ALPM_EVENT_DOWNGRADE_DONE:
+			alpm_logaction(handle, LOG_PREFIX, "downgraded %s (%s -> %s)\n",
+					alpm_pkg_get_name(data1),
+					alpm_pkg_get_version(data2), alpm_pkg_get_version(data1));
+			break;
+		case ALPM_EVENT_REINSTALL_DONE:
+			alpm_logaction(handle, LOG_PREFIX, "reinstalled %s (%s)\n",
+					alpm_pkg_get_name(data1), alpm_pkg_get_version(data1));
+			break;
+	}
+}
+
 void cb_log(alpm_loglevel_t level, const char *fmt, va_list args)
 {
 	if(level & log_level) {
@@ -146,6 +174,7 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
+	alpm_option_set_eventcb(handle, cb_event);
 	alpm_option_set_progresscb(handle, pu_cb_progress);
 	alpm_option_set_dlcb(handle, pu_cb_download);
 	alpm_option_set_logcb(handle, cb_log);
