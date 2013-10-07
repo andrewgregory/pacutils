@@ -68,7 +68,8 @@ C<Server> directives and C<Architecture> will be replaced if set to C<auto>.
 
 =head1 EXAMPLES
 
-There are several example programs located in F<examples/>.
+There are several example programs located in F<examples/>.  Refer to each
+program's usage for more information.
 
 =over
 
@@ -89,6 +90,11 @@ C<auto>.
 
 Print the removable size of a set of packages (ie how much space would be
 gained by running C<< pacman -Rs <pkgs> >>).
+
+=item pacsync
+
+Synchronize the system with registered sync repositories.  Updates the
+repository databases and performs a sysupgrade.  Equivalent to C<pacman -Syu>.
 
 =item pacinstall
 
