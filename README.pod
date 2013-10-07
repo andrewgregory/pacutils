@@ -17,9 +17,10 @@ pacutils - utility library for libalpm front-ends
  alpm_release(handle);
  pu_config_free(config);
 
-The purpose of this library is to encapsulate several common tasks that most
-libalpm users need to perform, such as parsing pacman.conf and printing package
-information.
+B<pacutils> encapsulates several of the common tasks that most users of
+I<libalpm> need to perform, such as parsing F<pacman.conf> and providing
+standard output functions for callbacks.  The included examples can also be
+used as guides for how to accomplish particular actions using I<libalpm>.
 
 =head1 DESCRIPTION
 
