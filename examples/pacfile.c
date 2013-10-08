@@ -127,15 +127,15 @@ mode_t cmp_mode(mode_t pmode, mode_t fmode)
 	const char *ftype = mode_str(fmode);
 
 	if(pperm == fperm) {
-		printf("mode: %o\n", pperm);
+		printf("mode:   %o\n", pperm);
 	} else {
-		printf("mode: %o (%o on filesystem)\n", pperm, fperm);
+		printf("mode:   %o (%o on filesystem)\n", pperm, fperm);
 	}
 
 	if(ptype == ftype) {
-		printf("type: %s\n", ptype);
+		printf("type:   %s\n", ptype);
 	} else {
-		printf("type: %s (%s on filesystem)\n", ptype, ftype);
+		printf("type:   %s (%s on filesystem)\n", ptype, ftype);
 	}
 
 	return pmode;
@@ -147,9 +147,9 @@ void cmp_time(const char *label, time_t ptime, time_t ftime)
 	char time_buf[26];
 	strftime(time_buf, 26, "%F %T", localtime_r(&ptime, &ltime));
 	if(ftime == ptime) {
-		printf("%s: %s\n", label, time_buf);
+		printf("%s:  %s\n", label, time_buf);
 	} else {
-		printf("%s: %s ", label, time_buf);
+		printf("%s:  %s ", label, time_buf);
 		strftime(time_buf, 26, "%F %T", localtime_r(&ftime, &ltime));
 		printf("(%s on filesystem)\n", time_buf);
 	}
@@ -174,7 +174,7 @@ void cmp_uid(struct archive_entry *entry, struct stat *buf)
 {
 	uid_t puid = archive_entry_uid(entry);
 	struct passwd *pw = getpwuid(puid);
-	printf("owner: %d (%s)", puid, pw ? pw->pw_name : "unknown user");
+	printf("owner:  %d (%s)", puid, pw ? pw->pw_name : "unknown user");
 	if(puid != buf->st_uid) {
 		pw = getpwuid(buf->st_uid);
 		printf(" (%d (%s) on filesystem)",
@@ -187,7 +187,7 @@ void cmp_gid(struct archive_entry *entry, struct stat *buf)
 {
 	gid_t pgid = archive_entry_gid(entry);
 	struct group *gr = getgrgid(pgid);
-	printf("group: %d (%s)", pgid, gr ? gr->gr_name : "unknown group");
+	printf("group:  %d (%s)", pgid, gr ? gr->gr_name : "unknown group");
 	if(pgid != buf->st_gid) {
 		gr = getgrgid(buf->st_gid);
 		printf(" (%d (%s) on filesystem)",
@@ -201,9 +201,9 @@ void cmp_size(struct archive_entry *entry, struct stat *buf)
 	/* FIXME directories always show a discrepancy */
 	size_t psize = archive_entry_size(entry);
 	if(psize == buf->st_size) {
-		printf("size: %zd\n", psize);
+		printf("size:   %zd\n", psize);
 	} else {
-		printf("size: %zd (%zd on filesystem)\n", psize, buf->st_size);
+		printf("size:   %zd (%zd on filesystem)\n", psize, buf->st_size);
 	}
 }
 
@@ -237,8 +237,8 @@ int main(int argc, char **argv)
 				alpm_list_t *b;
 
 				if(found) putchar('\n');
-				printf("file: %s\n", filename);
-				printf("owner: %s\n", alpm_pkg_get_name(p->data));
+				printf("file:   %s\n", filename);
+				printf("owner:  %s\n", alpm_pkg_get_name(p->data));
 
 				found = 1;
 
