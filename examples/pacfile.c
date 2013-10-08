@@ -118,48 +118,55 @@ const char *mode_str(mode_t mode)
 	}
 }
 
-mode_t cmp_mode(mode_t pmode, mode_t fmode)
+mode_t cmp_mode(struct archive_entry *entry, struct stat *st)
 {
 	mode_t mask = 07777;
-	mode_t pperm = pmode & mask;
-	mode_t fperm = fmode & mask;
-	const char *ptype = mode_str(pmode);
-	const char *ftype = mode_str(fmode);
+	mode_t pmode = archive_entry_mode(entry);
+	mode_t perm = pmode & mask;
+	const char *type = mode_str(pmode);
 
-	if(pperm == fperm) {
-		printf("mode:   %o\n", pperm);
-	} else {
-		printf("mode:   %o (%o on filesystem)\n", pperm, fperm);
-	}
 
-	if(ptype == ftype) {
-		printf("type:   %s\n", ptype);
-	} else {
-		printf("type:   %s (%s on filesystem)\n", ptype, ftype);
+	printf("mode:   %o", perm);
+	if(st && perm != (st->st_mode & mask)) {
+		printf(" (%o on filesystem)", st->st_mode & mask);
 	}
+	putchar('\n');
+
+	printf("type:   %s", type);
+	if(st) {
+		const char *ftype = mode_str(st->st_mode);
+		if(strcmp(type, ftype) != 0) {
+			printf(" (%s on filesystem)", ftype);
+		}
+	}
+	putchar('\n');
 
 	return pmode;
 }
 
-void cmp_time(const char *label, time_t ptime, time_t ftime)
+void cmp_mtime(struct archive_entry *entry, struct stat *st)
 {
 	struct tm ltime;
 	char time_buf[26];
-	strftime(time_buf, 26, "%F %T", localtime_r(&ptime, &ltime));
-	if(ftime == ptime) {
-		printf("%s:  %s\n", label, time_buf);
-	} else {
-		printf("%s:  %s ", label, time_buf);
-		strftime(time_buf, 26, "%F %T", localtime_r(&ftime, &ltime));
-		printf("(%s on filesystem)\n", time_buf);
+
+	time_t t = archive_entry_mtime(entry);
+	strftime(time_buf, 26, "%F %T", localtime_r(&t, &ltime));
+	printf("mtime:  %s", time_buf);
+
+	if(st && t != st->st_mtime) {
+		strftime(time_buf, 26, "%F %T", localtime_r(&st->st_mtime, &ltime));
+		printf("(%s on filesystem)", time_buf);
 	}
+
+	putchar('\n');
 }
 
-void cmp_target(struct archive_entry *entry, const char *path, struct stat *buf)
+void cmp_target(struct archive_entry *entry, struct stat *st, const char *path)
 {
 	const char *ptarget = archive_entry_symlink(entry);
 	printf("target: %s", ptarget);
-	if(buf) {
+
+	if(st) {
 		char ftarget[PATH_MAX];
 		ssize_t len = readlink(path, ftarget, PATH_MAX);
 		ftarget[len] = '\0';
@@ -167,44 +174,54 @@ void cmp_target(struct archive_entry *entry, const char *path, struct stat *buf)
 			printf(" (%s on filesystem)", ftarget);
 		}
 	}
+
 	putchar('\n');
 }
 
-void cmp_uid(struct archive_entry *entry, struct stat *buf)
+void cmp_uid(struct archive_entry *entry, struct stat *st)
 {
 	uid_t puid = archive_entry_uid(entry);
 	struct passwd *pw = getpwuid(puid);
+
 	printf("owner:  %d (%s)", puid, pw ? pw->pw_name : "unknown user");
-	if(puid != buf->st_uid) {
-		pw = getpwuid(buf->st_uid);
+
+	if(st && puid != st->st_uid) {
+		pw = getpwuid(st->st_uid);
 		printf(" (%d (%s) on filesystem)",
-				buf->st_uid, pw ? pw->pw_name : "unknown_user");
+				st->st_uid, pw ? pw->pw_name : "unknown_user");
 	}
+
 	putchar('\n');
 }
 
-void cmp_gid(struct archive_entry *entry, struct stat *buf)
+void cmp_gid(struct archive_entry *entry, struct stat *st)
 {
 	gid_t pgid = archive_entry_gid(entry);
 	struct group *gr = getgrgid(pgid);
+
 	printf("group:  %d (%s)", pgid, gr ? gr->gr_name : "unknown group");
-	if(pgid != buf->st_gid) {
-		gr = getgrgid(buf->st_gid);
+
+	if(st && pgid != st->st_gid) {
+		gr = getgrgid(st->st_gid);
 		printf(" (%d (%s) on filesystem)",
-				buf->st_gid, gr ? gr->gr_name : "unknown_group");
+				st->st_gid, gr ? gr->gr_name : "unknown_group");
 	}
+
 	putchar('\n');
 }
 
-void cmp_size(struct archive_entry *entry, struct stat *buf)
+void cmp_size(struct archive_entry *entry, struct stat *st)
 {
 	/* FIXME directories always show a discrepancy */
 	size_t psize = archive_entry_size(entry);
-	if(psize == buf->st_size) {
-		printf("size:   %zd\n", psize);
-	} else {
-		printf("size:   %zd (%zd on filesystem)\n", psize, buf->st_size);
+
+	printf("size:   %zd", psize);
+
+	if(st && psize != st->st_size) {
+		printf(" (%zd on filesystem)", st->st_size);
 	}
+
+	putchar('\n');
 }
 
 int main(int argc, char **argv)
@@ -257,7 +274,7 @@ int main(int argc, char **argv)
 				if(access(full_path, R_OK) != 0) {
 					fprintf(stderr, "warning: could not read '%s' (%s)\n",
 							full_path, strerror(errno));
-					continue;
+					/*continue;*/
 				}
 
 				/* backup file status */
@@ -289,7 +306,7 @@ int main(int argc, char **argv)
 
 					struct archive_entry *entry;
 					while(alpm_pkg_mtree_next(p->data, mtree, &entry) == ARCHIVE_OK) {
-						struct stat sbuf;
+						struct stat sbuf, *st = NULL;
 
 						const char *ppath = archive_entry_pathname(entry);
 						if(strncmp("./", ppath, 2) == 0) ppath += 2;
@@ -299,16 +316,17 @@ int main(int argc, char **argv)
 						if(lstat(full_path, &sbuf) != 0) {
 							fprintf(stderr, "warning: could not stat '%s' (%s)\n",
 									full_path, strerror(errno));
-							continue;
+						} else {
+							st = &sbuf;
 						}
 
-						if(S_ISLNK(cmp_mode(archive_entry_mode(entry), sbuf.st_mode))) {
-							cmp_target(entry, full_path, &sbuf);
+						if(S_ISLNK(cmp_mode(entry, st))) {
+							cmp_target(entry, st, full_path);
 						}
-						cmp_time("mtime", archive_entry_mtime(entry), sbuf.st_mtime);
-						cmp_uid(entry, &sbuf);
-						cmp_gid(entry, &sbuf);
-						cmp_size(entry, &sbuf);
+						cmp_mtime(entry, st);
+						cmp_uid(entry, st);
+						cmp_gid(entry, st);
+						cmp_size(entry, st);
 
 						break;
 					}
