@@ -44,6 +44,24 @@ int pu_pathcmp(const char *p1, const char *p2)
 	return *p1 - *p2;
 }
 
+static int _pu_filelist_path_cmp(alpm_file_t *f1, alpm_file_t *f2)
+{
+	return pu_pathcmp(f1->name, f2->name);
+}
+
+alpm_file_t *pu_filelist_contains_path(alpm_filelist_t *files, const char *path)
+{
+	alpm_file_t needle;
+
+	if(files == NULL) {
+		return NULL;
+	}
+
+	needle.name = (char*) path;
+
+	return bsearch(&needle, files->files, files->count, sizeof(alpm_file_t),
+			(int(*)(const void*, const void*)) _pu_filelist_path_cmp);
+}
 
 enum _pu_setting_name {
 	PU_CONFIG_OPTION_ROOTDIR,

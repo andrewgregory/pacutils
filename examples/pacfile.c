@@ -233,11 +233,13 @@ int main(int argc, char **argv)
 		alpm_list_t *p;
 
 		for(p = alpm_db_get_pkgcache(alpm_get_localdb(handle)); p; p = p->next) {
-			if(alpm_filelist_contains(alpm_pkg_get_files(p->data), relfname)) {
+			alpm_file_t *pfile = pu_filelist_contains_path(
+					alpm_pkg_get_files(p->data), relfname);
+			if(pfile) {
 				alpm_list_t *b;
 
 				if(found) putchar('\n');
-				printf("file:   %s\n", filename);
+				printf("file:   %s\n", pfile->name);
 				printf("owner:  %s\n", alpm_pkg_get_name(p->data));
 
 				found = 1;

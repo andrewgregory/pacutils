@@ -14,6 +14,7 @@ char *pu_version(void);
 void pu_print_version(const char *progname, const char *progver);
 
 int pu_pathcmp(const char *p1, const char *p2);
+alpm_file_t *pu_filelist_contains_path(alpm_filelist_t *files, const char *path);
 
 /* sync repos */
 typedef struct pu_repo_t {
