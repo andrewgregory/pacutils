@@ -1,5 +1,8 @@
 #include <errno.h>
 #include <getopt.h>
+#include <limits.h>
+#include <pwd.h>
+#include <grp.h>
 
 #include <pacutils.h>
 
@@ -94,6 +97,116 @@ pu_config_t *parse_opts(int argc, char **argv)
 	return config;
 }
 
+const char *mode_str(mode_t mode)
+{
+	if(S_ISREG(mode)) {
+		return "file";
+	} else if(S_ISDIR(mode)) {
+		return "directory";
+	} else if(S_ISBLK(mode)) {
+		return "block";
+	} else if(S_ISCHR(mode)) {
+		return "character special file";
+	} else if(S_ISFIFO(mode)) {
+		return "fifo";
+	} else if(S_ISLNK(mode)) {
+		return "link";
+	} else if(S_ISSOCK(mode)) {
+		return "socket";
+	} else {
+		return "unknown type";
+	}
+}
+
+mode_t cmp_mode(mode_t pmode, mode_t fmode)
+{
+	mode_t mask = 07777;
+	mode_t pperm = pmode & mask;
+	mode_t fperm = fmode & mask;
+	const char *ptype = mode_str(pmode);
+	const char *ftype = mode_str(fmode);
+
+	if(pperm == fperm) {
+		printf("mode: %o\n", pperm);
+	} else {
+		printf("mode: %o (%o on filesystem)\n", pperm, fperm);
+	}
+
+	if(ptype == ftype) {
+		printf("type: %s\n", ptype);
+	} else {
+		printf("type: %s (%s on filesystem)\n", ptype, ftype);
+	}
+
+	return pmode;
+}
+
+void cmp_time(const char *label, time_t ptime, time_t ftime)
+{
+	struct tm ltime;
+	char time_buf[26];
+	strftime(time_buf, 26, "%F %T", localtime_r(&ptime, &ltime));
+	if(ftime == ptime) {
+		printf("%s: %s\n", label, time_buf);
+	} else {
+		printf("%s: %s ", label, time_buf);
+		strftime(time_buf, 26, "%F %T", localtime_r(&ftime, &ltime));
+		printf("(%s on filesystem)\n", time_buf);
+	}
+}
+
+void cmp_target(struct archive_entry *entry, const char *path, struct stat *buf)
+{
+	const char *ptarget = archive_entry_symlink(entry);
+	printf("target: %s", ptarget);
+	if(buf) {
+		char ftarget[PATH_MAX];
+		ssize_t len = readlink(path, ftarget, PATH_MAX);
+		ftarget[len] = '\0';
+		if(strcmp(ptarget, ftarget) != 0) {
+			printf(" (%s on filesystem)", ftarget);
+		}
+	}
+	putchar('\n');
+}
+
+void cmp_uid(struct archive_entry *entry, struct stat *buf)
+{
+	uid_t puid = archive_entry_uid(entry);
+	struct passwd *pw = getpwuid(puid);
+	printf("owner: %d (%s)", puid, pw ? pw->pw_name : "unknown user");
+	if(puid != buf->st_uid) {
+		pw = getpwuid(buf->st_uid);
+		printf(" (%d (%s) on filesystem)",
+				buf->st_uid, pw ? pw->pw_name : "unknown_user");
+	}
+	putchar('\n');
+}
+
+void cmp_gid(struct archive_entry *entry, struct stat *buf)
+{
+	gid_t pgid = archive_entry_gid(entry);
+	struct group *gr = getgrgid(pgid);
+	printf("group: %d (%s)", pgid, gr ? gr->gr_name : "unknown group");
+	if(pgid != buf->st_gid) {
+		gr = getgrgid(buf->st_gid);
+		printf(" (%d (%s) on filesystem)",
+				buf->st_gid, gr ? gr->gr_name : "unknown_group");
+	}
+	putchar('\n');
+}
+
+void cmp_size(struct archive_entry *entry, struct stat *buf)
+{
+	/* FIXME directories always show a discrepancy */
+	size_t psize = archive_entry_size(entry);
+	if(psize == buf->st_size) {
+		printf("size: %d\n", psize);
+	} else {
+		printf("size: %d (%d on filesystem)\n", psize, buf->st_size);
+	}
+}
+
 int main(int argc, char **argv)
 {
 	pu_config_t *config = NULL;
@@ -123,8 +236,11 @@ int main(int argc, char **argv)
 			if(alpm_filelist_contains(alpm_pkg_get_files(p->data), relfname)) {
 				alpm_list_t *b;
 
+				if(found) putchar('\n');
+				printf("file: %s\n", filename);
+				printf("owner: %s\n", alpm_pkg_get_name(p->data));
+
 				found = 1;
-				printf("'%s' is owned by %s\n", filename, alpm_pkg_get_name(p->data));
 
 				/* FIXME run this once per file, not once per package */
 				if(access(filename, R_OK) != 0) {
@@ -141,48 +257,58 @@ int main(int argc, char **argv)
 							fprintf(stderr, "warning: could not calculate md5sum for '%s'\n", filename);
 						} else {
 							if(strcmp(md5sum, bak->hash) == 0) {
-								puts("  backup file status: UNMODIFIED");
+								fputs("backup: yes (unmodified)\n", stdout);
 							} else {
-								puts("  backup file status: MODIFIED");
+								fputs("backup: yes (modified)\n", stdout);
 							}
 							free(md5sum);
 						}
+						break;
 					}
+				}
+				if(!b) {
+					fputs("backup: no\n", stdout);
 				}
 
 				/* MTREE info */
+				/* FIXME if file doesn't exist only show mtree info */
 				struct archive *mtree = alpm_pkg_mtree_open(p->data);
-				struct archive_entry *entry;
-				while(alpm_pkg_mtree_next(p->data, mtree, &entry) == ARCHIVE_OK) {
-					struct stat sbuf;
+				if(mtree) {
+					size_t len = strlen(relfname);
+					while(relfname[len - 1] == '/') len--;
 
-					const char *ppath = archive_entry_pathname(entry);
-					if(strncmp("./", ppath, 2) == 0) ppath += 2;
+					struct archive_entry *entry;
+					while(alpm_pkg_mtree_next(p->data, mtree, &entry) == ARCHIVE_OK) {
+						struct stat sbuf;
 
-					if(strcmp(relfname, ppath) != 0) continue;
+						const char *ppath = archive_entry_pathname(entry);
+						if(strncmp("./", ppath, 2) == 0) ppath += 2;
 
-					if(lstat(filename, &sbuf) != 0) {
-						fprintf(stderr, "warning: could not stat '%s' (%s)\n", filename, strerror(errno));
-						continue;
+						if(strncmp(relfname, ppath, len) != 0) continue;
+
+						if(lstat(filename, &sbuf) != 0) {
+							fprintf(stderr, "warning: could not stat '%s' (%s)\n",
+									filename, strerror(errno));
+							continue;
+						}
+
+						if(S_ISLNK(cmp_mode(archive_entry_mode(entry), sbuf.st_mode))) {
+							cmp_target(entry, filename, &sbuf);
+						}
+						cmp_time("mtime", archive_entry_mtime(entry), sbuf.st_mtime);
+						cmp_uid(entry, &sbuf);
+						cmp_gid(entry, &sbuf);
+						cmp_size(entry, &sbuf);
+
+						break;
 					}
-
-					/* TODO show the file/pkg values */
-					/* TODO type, permissions, link target, size */
-
-					if(sbuf.st_mtime == archive_entry_mtime(entry)) {
-						printf("  modification time MATCH\n", sbuf.st_mtime);
-					} else {
-						printf("  modification time MISMATCH\n", sbuf.st_mtime);
-					}
-
-					break;
+					alpm_pkg_mtree_close(p->data, mtree);
 				}
-				alpm_pkg_mtree_close(p->data, mtree);
 			}
 		}
 
 		if(!found) {
-			printf("'%s' is unowned\n", filename);
+			printf("no package owns '%s'\n", filename);
 		}
 	}
 
