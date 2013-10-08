@@ -213,6 +213,7 @@ int main(int argc, char **argv)
 	alpm_handle_t *handle = NULL;
 	int ret = 0;
 	size_t rootlen;
+	const char *root;
 
 	if(!(config = parse_opts(argc, argv))) {
 		goto cleanup;
@@ -224,39 +225,48 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
-	rootlen = strlen(alpm_option_get_root(handle));
+	root = alpm_option_get_root(handle);
+	rootlen = strlen(root);
 
 	for(; optind < argc; optind++) {
-		const char *filename = argv[optind];
-		const char *relfname = filename + rootlen;
+		const char *relfname, *filename = argv[optind];
+
 		int found = 0;
 		alpm_list_t *p;
+
+		if(strncmp(filename, root, rootlen) == 0) {
+			relfname = filename + rootlen;
+		} else {
+			relfname = filename;
+		}
 
 		for(p = alpm_db_get_pkgcache(alpm_get_localdb(handle)); p; p = p->next) {
 			alpm_file_t *pfile = pu_filelist_contains_path(
 					alpm_pkg_get_files(p->data), relfname);
 			if(pfile) {
 				alpm_list_t *b;
+				char full_path[PATH_MAX];
+				snprintf(full_path, PATH_MAX, "%s%s", root, pfile->name);
 
-				if(found) putchar('\n');
+				if(found++) putchar('\n');
+
 				printf("file:   %s\n", pfile->name);
 				printf("owner:  %s\n", alpm_pkg_get_name(p->data));
 
-				found = 1;
-
 				/* FIXME run this once per file, not once per package */
-				if(access(filename, R_OK) != 0) {
-					fprintf(stderr, "warning: could not read '%s' (%s)\n", filename, strerror(errno));
+				if(access(full_path, R_OK) != 0) {
+					fprintf(stderr, "warning: could not read '%s' (%s)\n",
+							full_path, strerror(errno));
 					continue;
 				}
 
 				/* backup file status */
 				for(b = alpm_pkg_get_backup(p->data); b; b = b->next) {
 					alpm_backup_t *bak = b->data;
-					if(strcmp(relfname, bak->name) == 0) {
-						char *md5sum = alpm_compute_md5sum(filename);
+					if(pu_pathcmp(relfname, bak->name) == 0) {
+						char *md5sum = alpm_compute_md5sum(full_path);
 						if(!md5sum) {
-							fprintf(stderr, "warning: could not calculate md5sum for '%s'\n", filename);
+							fprintf(stderr, "warning: could not calculate md5sum for '%s'\n", full_path);
 						} else {
 							if(strcmp(md5sum, bak->hash) == 0) {
 								fputs("backup: yes (unmodified)\n", stdout);
@@ -276,8 +286,6 @@ int main(int argc, char **argv)
 				/* FIXME if file doesn't exist only show mtree info */
 				struct archive *mtree = alpm_pkg_mtree_open(p->data);
 				if(mtree) {
-					size_t len = strlen(relfname);
-					while(relfname[len - 1] == '/') len--;
 
 					struct archive_entry *entry;
 					while(alpm_pkg_mtree_next(p->data, mtree, &entry) == ARCHIVE_OK) {
@@ -286,16 +294,16 @@ int main(int argc, char **argv)
 						const char *ppath = archive_entry_pathname(entry);
 						if(strncmp("./", ppath, 2) == 0) ppath += 2;
 
-						if(strncmp(relfname, ppath, len) != 0) continue;
+						if(pu_pathcmp(relfname, ppath) != 0) continue;
 
-						if(lstat(filename, &sbuf) != 0) {
+						if(lstat(full_path, &sbuf) != 0) {
 							fprintf(stderr, "warning: could not stat '%s' (%s)\n",
-									filename, strerror(errno));
+									full_path, strerror(errno));
 							continue;
 						}
 
 						if(S_ISLNK(cmp_mode(archive_entry_mode(entry), sbuf.st_mode))) {
-							cmp_target(entry, filename, &sbuf);
+							cmp_target(entry, full_path, &sbuf);
 						}
 						cmp_time("mtime", archive_entry_mtime(entry), sbuf.st_mtime);
 						cmp_uid(entry, &sbuf);
