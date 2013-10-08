@@ -6,8 +6,10 @@
 
 #include <pacutils.h>
 
+int checkfs = 1;
+
 enum longopt_flags {
-	FLAG_CONFIG,
+	FLAG_CONFIG = 1000,
 	FLAG_DBPATH,
 	FLAG_HELP,
 	FLAG_ROOT,
@@ -26,6 +28,7 @@ void usage(int ret)
 	fputs("   --root=<path>      set an alternate installation root\n", stream);
 	fputs("   --help             display this help information\n", stream);
 	fputs("   --version          display version information\n", stream);
+	fputs("   --no-check         do not compare pkg values to fs\n", stream);
 	exit(ret);
 }
 
@@ -37,11 +40,12 @@ pu_config_t *parse_opts(int argc, char **argv)
 
 	char *short_opts = "";
 	struct option long_opts[] = {
-		{ "config"       , required_argument , NULL , FLAG_CONFIG       } ,
-		{ "dbpath"       , required_argument , NULL , FLAG_DBPATH       } ,
-		{ "help"         , no_argument       , NULL , FLAG_HELP         } ,
-		{ "root"         , required_argument , NULL , FLAG_ROOT         } ,
-		{ "version"      , no_argument       , NULL , FLAG_VERSION      } ,
+		{ "config"       , required_argument , NULL       , FLAG_CONFIG       } ,
+		{ "dbpath"       , required_argument , NULL       , FLAG_DBPATH       } ,
+		{ "help"         , no_argument       , NULL       , FLAG_HELP         } ,
+		{ "root"         , required_argument , NULL       , FLAG_ROOT         } ,
+		{ "version"      , no_argument       , NULL       , FLAG_VERSION      } ,
+		{ "no-check"     , no_argument       , &checkfs   , 0                 } ,
 		{ 0, 0, 0, 0 },
 	};
 
@@ -68,6 +72,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 	c = getopt_long(argc, argv, short_opts, long_opts, NULL);
 	while(c != -1) {
 		switch(c) {
+			case 0:
 			case FLAG_CONFIG:
 				/* already handled */
 				break;
@@ -212,7 +217,7 @@ void cmp_gid(struct archive_entry *entry, struct stat *st)
 
 void cmp_size(struct archive_entry *entry, struct stat *st)
 {
-	/* FIXME directories always show a discrepancy */
+	/* FIXME directories and symlinks always show a discrepancy */
 	size_t psize = archive_entry_size(entry);
 
 	printf("size:   %zd", psize);
@@ -270,28 +275,29 @@ int main(int argc, char **argv)
 				printf("file:   %s\n", pfile->name);
 				printf("owner:  %s\n", alpm_pkg_get_name(p->data));
 
-				/* FIXME run this once per file, not once per package */
-				if(access(full_path, R_OK) != 0) {
-					fprintf(stderr, "warning: could not read '%s' (%s)\n",
-							full_path, strerror(errno));
-					/*continue;*/
-				}
-
 				/* backup file status */
 				for(b = alpm_pkg_get_backup(p->data); b; b = b->next) {
 					alpm_backup_t *bak = b->data;
 					if(pu_pathcmp(relfname, bak->name) == 0) {
-						char *md5sum = alpm_compute_md5sum(full_path);
-						if(!md5sum) {
-							fprintf(stderr, "warning: could not calculate md5sum for '%s'\n", full_path);
-						} else {
-							if(strcmp(md5sum, bak->hash) == 0) {
-								fputs("backup: yes (unmodified)\n", stdout);
+						fputs("backup: yes", stdout);
+
+						if(checkfs) {
+							char *md5sum = alpm_compute_md5sum(full_path);
+							if(!md5sum) {
+								fprintf(stderr, "warning: could not calculate md5sum for '%s'\n",
+										full_path);
+								ret = 1;
 							} else {
-								fputs("backup: yes (modified)\n", stdout);
+								if(strcmp(md5sum, bak->hash) == 0) {
+									fputs(" (unmodified)", stdout);
+								} else {
+									fputs(" (modified)", stdout);
+								}
+								free(md5sum);
 							}
-							free(md5sum);
 						}
+
+						putchar('\n');
 						break;
 					}
 				}
@@ -300,7 +306,6 @@ int main(int argc, char **argv)
 				}
 
 				/* MTREE info */
-				/* FIXME if file doesn't exist only show mtree info */
 				struct archive *mtree = alpm_pkg_mtree_open(p->data);
 				if(mtree) {
 
@@ -313,11 +318,14 @@ int main(int argc, char **argv)
 
 						if(pu_pathcmp(relfname, ppath) != 0) continue;
 
-						if(lstat(full_path, &sbuf) != 0) {
-							fprintf(stderr, "warning: could not stat '%s' (%s)\n",
-									full_path, strerror(errno));
-						} else {
-							st = &sbuf;
+						if(checkfs) {
+							if(lstat(full_path, &sbuf) != 0) {
+								fprintf(stderr, "warning: could not stat '%s' (%s)\n",
+										full_path, strerror(errno));
+								ret = 1;
+							} else {
+								st = &sbuf;
+							}
 						}
 
 						if(S_ISLNK(cmp_mode(entry, st))) {
