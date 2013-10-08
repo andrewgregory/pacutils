@@ -35,8 +35,6 @@ off_t pkg_size(alpm_pkg_t *pkg, alpm_list_t *pkgs, alpm_list_t **seen)
 			continue;
 		}
 
-		const char *pname = alpm_pkg_get_name(p);
-
 		if(alpm_pkg_get_reason(p) == ALPM_PKG_REASON_EXPLICIT) {
 			continue;
 		}

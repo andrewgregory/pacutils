@@ -1,4 +1,4 @@
-CFLAGS += -I..
+CFLAGS += -Wall -I..
 LDFLAGS += -L..
 LDLIBS += -lpacutils -lalpm -larchive
 

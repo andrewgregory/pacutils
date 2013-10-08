@@ -199,7 +199,7 @@ int main(int argc, char **argv)
 			}
 			if(!found) {
 				ret = 1;
-				fprintf(stderr, "error: no sync db '%s' configured\n");
+				fprintf(stderr, "error: no sync db '%s' configured\n", argv[optind]);
 			}
 		}
 	}

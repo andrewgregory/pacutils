@@ -224,7 +224,7 @@ void list_repo_directives(alpm_list_t *directives)
 		} else if(strcasecmp(i->data, "SigLevel") == 0) {
 			show_siglevel("SigLevel", repo->siglevel);
 		} else {
-			fprintf(stderr, "warning: unknown directive '%s'\n", i->data);
+			fprintf(stderr, "warning: unknown directive '%s'\n", (char*) i->data);
 		}
 	}
 }
@@ -295,7 +295,7 @@ void list_directives(alpm_list_t *directives)
 			fputs("warning: 'Include' directives cannot be queried\n", stderr);
 
 		} else {
-			fprintf(stderr, "warning: unknown directive '%s'\n", i->data);
+			fprintf(stderr, "warning: unknown directive '%s'\n", (char*) i->data);
 		}
 	}
 }

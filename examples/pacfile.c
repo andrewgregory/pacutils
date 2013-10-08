@@ -201,9 +201,9 @@ void cmp_size(struct archive_entry *entry, struct stat *buf)
 	/* FIXME directories always show a discrepancy */
 	size_t psize = archive_entry_size(entry);
 	if(psize == buf->st_size) {
-		printf("size: %d\n", psize);
+		printf("size: %zd\n", psize);
 	} else {
-		printf("size: %d (%d on filesystem)\n", psize, buf->st_size);
+		printf("size: %zd (%zd on filesystem)\n", psize, buf->st_size);
 	}
 }
 
