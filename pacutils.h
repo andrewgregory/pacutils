@@ -13,6 +13,8 @@
 char *pu_version(void);
 void pu_print_version(const char *progname, const char *progver);
 
+int pu_pathcmp(const char *p1, const char *p2);
+
 /* sync repos */
 typedef struct pu_repo_t {
 	char *name;

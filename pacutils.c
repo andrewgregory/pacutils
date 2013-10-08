@@ -14,6 +14,37 @@ void pu_print_version(const char *progname, const char *progver)
 			alpm_version(), pu_version());
 }
 
+int pu_pathcmp(const char *p1, const char *p2)
+{
+	/* ignore leading '/' */
+	while(*p1 == '/') p1++;
+	while(*p2 == '/') p2++;
+
+	while(*p1) {
+		if(*p1 != *p2) break;
+
+		/* skip repeated '/' */
+		if(*p1 == '/') {
+			while(*++p1 == '/');
+			while(*++p2 == '/');
+		} else {
+			p1++;
+			p2++;
+		}
+	}
+
+	/* skip trailing '/' */
+	if(*p1 == '\0') {
+		while(*p2 == '/') p2++;
+	}
+	if(*p2 == '\0') {
+		while(*p1 == '/') p1++;
+	}
+
+	return *p1 - *p2;
+}
+
+
 enum _pu_setting_name {
 	PU_CONFIG_OPTION_ROOTDIR,
 	PU_CONFIG_OPTION_DBPATH,
