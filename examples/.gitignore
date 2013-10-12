@@ -3,5 +3,6 @@ pacinstall
 pacfile
 pacsize
 pacconf
+pacsift
 pacsync
 pactrans

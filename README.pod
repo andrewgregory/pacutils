@@ -105,6 +105,10 @@ Install packages from sync repositories, similar to C<< pacman -S <pkgs> >>.
 Display basic information for installed packages, similar to
 C<< pacman -Qi <pkg> >>.
 
+=item pacsift
+
+Package search/filter tool.
+
 =item pacfile
 
 Display information about a file.  Includes information from C<pacman -Qo>,
