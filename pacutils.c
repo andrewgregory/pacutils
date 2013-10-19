@@ -570,6 +570,12 @@ void pu_cb_progress(alpm_progress_t event, const char *pkgname, int percent,
 		size_t total, size_t current)
 {
 	const char *opr = pu_msg_progress(event);
+	static int percent_last = -1;
+
+	/* don't update if nothing has changed */
+	if(percent_last == percent) {
+		return;
+	}
 
 	if(pkgname && pkgname[0]) {
 		printf("%s %s (%zd/%zd) %d%%", opr, pkgname, current, total, percent);
@@ -584,6 +590,7 @@ void pu_cb_progress(alpm_progress_t event, const char *pkgname, int percent,
 	}
 
 	fflush(stdout);
+	percent_last = percent;
 }
 
 /* vim: set ts=2 sw=2 noet: */
