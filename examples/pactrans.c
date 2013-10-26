@@ -320,6 +320,12 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
+	if(!add && !rem && !files) {
+		fprintf(stderr, "error: no targets provided.\n");
+		ret = 1;
+		goto cleanup;
+	}
+
 	if(!(handle = pu_initialize_handle_from_config(config))) {
 		fprintf(stderr, "error: failed to initialize alpm.\n");
 		ret = 1;
@@ -340,16 +346,6 @@ int main(int argc, char **argv)
 
 	for(i = sync_dbs; i; i = i->next) {
 		alpm_db_set_usage(i->data, ALPM_DB_USAGE_ALL);
-	}
-
-	if((ret = load_pkg_files()) != 0) {
-		goto cleanup;
-	}
-
-	if(!add && !rem) {
-		fprintf(stderr, "error: no targets provided.\n");
-		ret = 1;
-		goto cleanup;
 	}
 
 	for(i = add; i; i = i->next) {
@@ -377,6 +373,8 @@ int main(int argc, char **argv)
 		}
 		free(pkgspec);
 	}
+
+	ret += load_pkg_files();
 
 	if(ret) {
 		goto cleanup;
