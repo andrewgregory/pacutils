@@ -593,4 +593,94 @@ void pu_cb_progress(alpm_progress_t event, const char *pkgname, int percent,
 	percent_last = percent;
 }
 
+alpm_pkg_t *pu_find_pkgspec(alpm_handle_t *handle, const char *pkgspec)
+{
+	char *c;
+
+	if(strstr(pkgspec, "://")) {
+		alpm_pkg_t *pkg;
+		alpm_siglevel_t sl
+			= strncmp(pkgspec, "file://", 7) == 0
+			? alpm_option_get_local_file_siglevel(handle)
+			: alpm_option_get_remote_file_siglevel(handle);
+		char *path = alpm_fetch_pkgurl(handle, pkgspec);
+
+		if(path &&  alpm_pkg_load(handle, path, 1, sl, &pkg) == 0) {
+			return pkg;
+		} else {
+			return NULL;
+		}
+	} else if((c = strchr(pkgspec, '/')))  {
+		alpm_db_t *db;
+		size_t dblen = c - pkgspec;
+
+		if(dblen == strlen("local") && strncmp(pkgspec, "local", dblen) == 0) {
+			db = alpm_get_localdb(handle);
+		} else {
+			alpm_list_t *i;
+			for(i = alpm_get_syncdbs(handle); i; i = i->next) {
+				const char *dbname = alpm_db_get_name(i->data);
+				if(dblen == strlen(dbname) && strncmp(pkgspec, dbname, dblen) == 0) {
+					db = i->data;
+					break;
+				}
+			}
+		}
+
+		if(!db) {
+			return NULL;
+		} else {
+			return alpm_db_get_pkg(db, c + 1);
+		}
+	}
+
+	return NULL;
+}
+
+/**
+ * @brief print unique identifier for a package
+ *
+ * @param pkg
+ */
+void pu_print_pkgspec(alpm_pkg_t *pkg)
+{
+	const char *c;
+	switch(alpm_pkg_get_origin(pkg)) {
+		case ALPM_PKG_FROM_FILE:
+			c = alpm_pkg_get_filename(pkg);
+			if(strstr(c, "://")) {
+				printf("%s\n", alpm_pkg_get_filename(pkg));
+			} else {
+				c = realpath(c, NULL);
+				printf("file://%s\n", c);
+				free((char*) c);
+			}
+			break;
+		case ALPM_PKG_FROM_LOCALDB:
+			printf("local/%s\n", alpm_pkg_get_name(pkg));
+			break;
+		case ALPM_PKG_FROM_SYNCDB:
+			printf("%s/%s\n",
+					alpm_db_get_name(alpm_pkg_get_db(pkg)), alpm_pkg_get_name(pkg));
+			break;
+		default:
+			/* no idea where this package came from, fall back to its name */
+			printf("%s\n", alpm_pkg_get_name(pkg));
+			break;
+	}
+}
+
+void pu_display_transaction(alpm_handle_t *handle)
+{
+	alpm_list_t *i;
+	for(i = alpm_trans_get_remove(handle); i; i = i->next) {
+		fputs("removing ", stdout);
+		pu_print_pkgspec(i->data);
+	}
+	for(i = alpm_trans_get_add(handle); i; i = i->next) {
+		fputs("installing ", stdout);
+		pu_print_pkgspec(i->data);
+	}
+}
+
 /* vim: set ts=2 sw=2 noet: */
