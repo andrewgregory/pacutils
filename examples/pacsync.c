@@ -188,8 +188,9 @@ int main(int argc, char **argv)
 			int found = 0;
 			for(i = sync_dbs; i; i = i->next) {
 				if(strcmp(argv[optind], alpm_db_get_name(i->data)) == 0) {
-					found = 1;
 					targets = alpm_list_add(targets, i->data);
+					found = 1;
+					break;
 				}
 			}
 			if(!found) {
