@@ -244,6 +244,12 @@ int main(int argc, char **argv)
 			goto transcleanup;
 		}
 
+		pu_display_transaction(handle);
+
+		if(!pu_confirm(1, "Proceed with transaction [Y/n]? ") ) {
+			goto transcleanup;
+		}
+
 		if(alpm_trans_commit(handle, &err_data) != 0) {
 			fprintf(stderr, "%s\n", alpm_strerror(alpm_errno(handle)));
 			ret = 1;

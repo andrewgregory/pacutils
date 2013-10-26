@@ -13,6 +13,7 @@ alpm_loglevel_t log_level = ALPM_LOG_ERROR | ALPM_LOG_WARNING;
 alpm_transflag_t trans_flags = 0;
 
 alpm_list_t *add = NULL, *rem = NULL, *files = NULL, **list = &add;
+int printonly = 0;
 
 enum longopt_flags {
 	FLAG_ADD = 1000,
@@ -55,6 +56,7 @@ void usage(int ret)
 	hputs("   --nodeps");
 	hputs("   --dbonly");
 	hputs("   --noscriptlet");
+	hputs("   --print-only");
 	hputs("   --cachedir=<path>  set an alternate cache location");
 	hputs("   --config=<path>    set an alternate configuration file");
 	hputs("   --dbpath=<path>    set an alternate database location");
@@ -85,21 +87,22 @@ pu_config_t *parse_opts(int argc, char **argv)
 
 	char *short_opts = "-";
 	struct option long_opts[] = {
-		{ "add"          , no_argument       , NULL , FLAG_ADD          } ,
-		{ "file"         , no_argument       , NULL , FLAG_FILE         } ,
-		{ "remove"       , no_argument       , NULL , FLAG_REMOVE       } ,
-		{ "asdeps"       , no_argument       , NULL , FLAG_ASDEPS       } ,
-		{ "asexplicit"   , no_argument       , NULL , FLAG_ASEXPLICIT   } ,
-		{ "recursive"    , no_argument       , NULL , FLAG_RECURSIVE    } ,
-		{ "config"       , required_argument , NULL , FLAG_CONFIG       } ,
-		{ "dbpath"       , required_argument , NULL , FLAG_DBPATH       } ,
-		{ "debug"        , no_argument       , NULL , FLAG_DEBUG        } ,
-		{ "downloadonly" , no_argument       , NULL , FLAG_DLONLY       } ,
-		{ "help"         , no_argument       , NULL , FLAG_HELP         } ,
-		{ "root"         , required_argument , NULL , FLAG_ROOT         } ,
-		{ "version"      , no_argument       , NULL , FLAG_VERSION      } ,
-		{ "logfile"      , required_argument , NULL , FLAG_LOGFILE      } ,
-		{ "cachedir"     , required_argument , NULL , FLAG_CACHEDIR     } ,
+		{ "add"          , no_argument       , NULL       , FLAG_ADD          } ,
+		{ "file"         , no_argument       , NULL       , FLAG_FILE         } ,
+		{ "remove"       , no_argument       , NULL       , FLAG_REMOVE       } ,
+		{ "asdeps"       , no_argument       , NULL       , FLAG_ASDEPS       } ,
+		{ "asexplicit"   , no_argument       , NULL       , FLAG_ASEXPLICIT   } ,
+		{ "recursive"    , no_argument       , NULL       , FLAG_RECURSIVE    } ,
+		{ "config"       , required_argument , NULL       , FLAG_CONFIG       } ,
+		{ "dbpath"       , required_argument , NULL       , FLAG_DBPATH       } ,
+		{ "debug"        , no_argument       , NULL       , FLAG_DEBUG        } ,
+		{ "downloadonly" , no_argument       , NULL       , FLAG_DLONLY       } ,
+		{ "help"         , no_argument       , NULL       , FLAG_HELP         } ,
+		{ "root"         , required_argument , NULL       , FLAG_ROOT         } ,
+		{ "version"      , no_argument       , NULL       , FLAG_VERSION      } ,
+		{ "logfile"      , required_argument , NULL       , FLAG_LOGFILE      } ,
+		{ "cachedir"     , required_argument , NULL       , FLAG_CACHEDIR     } ,
+		{ "print-only"   , no_argument       , &printonly , 1                 } ,
 		{ 0, 0, 0, 0 },
 	};
 
@@ -380,21 +383,6 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
-	/* notify the user of the targets we found */
-	for(i = add; i; i = i->next) {
-		if(alpm_pkg_get_origin(i->data) == ALPM_PKG_FROM_FILE) {
-			printf("installing '%s/%s'\n", "[file]", alpm_pkg_get_name(i->data));
-		} else {
-			printf("installing '%s/%s'\n",
-					alpm_db_get_name(alpm_pkg_get_db(i->data)),
-					alpm_pkg_get_name(i->data));
-		}
-	}
-	for(i = rem; i; i = i->next) {
-		printf("removing '%s'\n",
-				alpm_pkg_get_name(i->data));
-	}
-
 	if(alpm_trans_init(handle, trans_flags) != 0) {
 		fprintf(stderr, "%s\n", alpm_strerror(alpm_errno(handle)));
 		ret = 1;
@@ -412,6 +400,12 @@ int main(int argc, char **argv)
 	if(alpm_trans_prepare(handle, &err_data) != 0) {
 		fprintf(stderr, "%s\n", alpm_strerror(alpm_errno(handle)));
 		ret = 1;
+		goto transcleanup;
+	}
+
+	pu_display_transaction(handle);
+
+	if(printonly || !pu_confirm(1, "Proceed with transaction") ) {
 		goto transcleanup;
 	}
 
