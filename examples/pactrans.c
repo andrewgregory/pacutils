@@ -104,14 +104,11 @@ pu_config_t *parse_opts(int argc, char **argv)
 	};
 
 	/* check for a custom config file location */
-	opterr = 0;
-	c = getopt_long(argc, argv, short_opts, long_opts, NULL);
-	while(c != -1) {
+	while((c = getopt_long(argc, argv, short_opts, long_opts, NULL)) != -1) {
 		if(c == FLAG_CONFIG) {
 			config_file = optarg;
 			break;
 		}
-		c = getopt_long(argc, argv, short_opts, long_opts, NULL);
 	}
 
 	/* load the config file */
@@ -122,9 +119,8 @@ pu_config_t *parse_opts(int argc, char **argv)
 	}
 
 	/* process remaining command-line options */
-	optind = opterr = 1;
-	c = getopt_long(argc, argv, short_opts, long_opts, NULL);
-	while(c != -1) {
+	optind = 1;
+	while((c = getopt_long(argc, argv, short_opts, long_opts, NULL)) != -1) {
 		switch(c) {
 
 			/* already handled */
@@ -204,7 +200,6 @@ pu_config_t *parse_opts(int argc, char **argv)
 				usage(1);
 				break;
 		}
-		c = getopt_long(argc, argv, short_opts, long_opts, NULL);
 	}
 
 	return config;
