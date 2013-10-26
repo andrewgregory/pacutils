@@ -683,4 +683,24 @@ void pu_display_transaction(alpm_handle_t *handle)
 	}
 }
 
+int pu_confirm(int def, const char *prompt)
+{
+	while(1) {
+		printf("%s %s? ", prompt, def ? "[Y/n]" : "[y/N]");
+
+		switch(getchar()) {
+			case '\n':
+				return def;
+			case 'Y':
+			case 'y':
+				return 1;
+			case 'N':
+			case 'n':
+				return 0;
+			default:
+				while(getchar() != '\n');
+		}
+	}
+}
+
 /* vim: set ts=2 sw=2 noet: */
