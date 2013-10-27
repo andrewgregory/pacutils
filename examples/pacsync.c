@@ -251,7 +251,7 @@ int main(int argc, char **argv)
 
 		pu_display_transaction(handle);
 
-		if(!pu_confirm(1, "Proceed with transaction [Y/n]? ") ) {
+		if(!pu_confirm(1, "Proceed with sysupgrade") ) {
 			goto transcleanup;
 		}
 
