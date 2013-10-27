@@ -725,9 +725,14 @@ void pu_display_transaction(alpm_handle_t *handle)
 int pu_confirm(int def, const char *prompt)
 {
 	while(1) {
-		printf("%s %s? ", prompt, def ? "[Y/n]" : "[y/N]");
+		printf("\n:: %s %s? ", prompt, def ? "[Y/n]" : "[y/N]");
 
-		switch(getchar()) {
+		int c = getchar();
+		if(c != '\n') {
+			while(getchar() != '\n');
+		}
+
+		switch(c) {
 			case '\n':
 				return def;
 			case 'Y':
@@ -736,8 +741,6 @@ int pu_confirm(int def, const char *prompt)
 			case 'N':
 			case 'n':
 				return 0;
-			default:
-				while(getchar() != '\n');
 		}
 	}
 }
