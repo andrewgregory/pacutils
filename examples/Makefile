@@ -13,10 +13,10 @@ OBJECTS = pacsize pacinfo pacinstall pacremove pacfile pacconf pacsync pactrans 
 all: $(OBJECTS)
 
 pacremove: | pactrans
-	ln -fs $< $@
+	ln -fs $| $@
 
 pacinstall: | pactrans
-	ln -fs $< $@
+	ln -fs $| $@
 
 install: all
 	install -d ${DESTDIR}${BINDIR}
