@@ -17,12 +17,12 @@ int main(int argc, char **argv) {
 			continue;
 		}
 
-		printf("Name:					%s\n", alpm_pkg_get_name(pkg));
-		printf("Version:			%s\n", alpm_pkg_get_version(pkg));
-		printf("Description:	%s\n", alpm_pkg_get_desc(pkg));
+		printf("Name:         %s\n", alpm_pkg_get_name(pkg));
+		printf("Version:      %s\n", alpm_pkg_get_version(pkg));
+		printf("Description:  %s\n", alpm_pkg_get_desc(pkg));
 		printf("Architecture: %s\n", alpm_pkg_get_arch(pkg));
-		printf("URL:					%s\n", alpm_pkg_get_url(pkg));
-		printf("Packager:			%s\n", alpm_pkg_get_packager(pkg));
+		printf("URL:          %s\n", alpm_pkg_get_url(pkg));
+		printf("Packager:     %s\n", alpm_pkg_get_packager(pkg));
 
 		if(*(argv+1)) {
 			putchar('\n');
