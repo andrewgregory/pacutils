@@ -160,7 +160,7 @@ void cmp_mtime(struct archive_entry *entry, struct stat *st)
 
 	if(st && t != st->st_mtime) {
 		strftime(time_buf, 26, "%F %T", localtime_r(&st->st_mtime, &ltime));
-		printf("(%s on filesystem)", time_buf);
+		printf(" (%s on filesystem)", time_buf);
 	}
 
 	putchar('\n');
@@ -219,11 +219,12 @@ void cmp_size(struct archive_entry *entry, struct stat *st)
 {
 	/* FIXME directories and symlinks always show a discrepancy */
 	size_t psize = archive_entry_size(entry);
+	char hr_size[20];
 
-	printf("size:   %zd", psize);
+	printf("size:   %s", pu_hr_size(psize, hr_size));
 
 	if(st && psize != st->st_size) {
-		printf(" (%zd on filesystem)", st->st_size);
+		printf(" (%s on filesystem)", pu_hr_size(st->st_size, hr_size));
 	}
 
 	putchar('\n');

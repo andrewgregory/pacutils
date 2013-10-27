@@ -81,6 +81,8 @@ int pu_log_command(alpm_handle_t *handle, const char *caller, int argc, char **a
 
 char *pu_basename(char *path);
 
+char *pu_hr_size(off_t bytes, char *dest);
+
 #endif /* PACUTILS_H */
 
 /* vim: set ts=2 sw=2 noet: */
