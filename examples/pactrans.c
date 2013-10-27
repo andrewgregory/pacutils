@@ -12,7 +12,8 @@ alpm_handle_t *handle = NULL;
 alpm_loglevel_t log_level = ALPM_LOG_ERROR | ALPM_LOG_WARNING;
 alpm_transflag_t trans_flags = 0;
 
-alpm_list_t *add = NULL, *rem = NULL, *files = NULL, **list = &add;
+alpm_list_t *spec = NULL, *add = NULL, *rem = NULL, *files = NULL;
+alpm_list_t **list = &spec;
 int printonly = 0;
 
 enum longopt_flags {
@@ -30,6 +31,7 @@ enum longopt_flags {
 	FLAG_RECURSIVE,
 	FLAG_REMOVE,
 	FLAG_ROOT,
+	FLAG_SPEC,
 	FLAG_VERSION,
 };
 
@@ -48,7 +50,8 @@ void usage(int ret)
 	hputs("        pactrans (--help|--version)");
 	hputs("");
 	hputs("actions (may be used together):");
-	hputs("   --add              install packages from sync database (default)");
+	hputs("   --spec             install sync/file specs, remove local specs (default)");
+	hputs("   --add              install packages from sync database");
 	hputs("   --file             install packages from files");
 	hputs("   --remove           remove packages");
 	hputs("");
@@ -87,6 +90,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 
 	char *short_opts = "-";
 	struct option long_opts[] = {
+		{ "spec"         , no_argument       , NULL       , FLAG_SPEC         } ,
 		{ "add"          , no_argument       , NULL       , FLAG_ADD          } ,
 		{ "file"         , no_argument       , NULL       , FLAG_FILE         } ,
 		{ "remove"       , no_argument       , NULL       , FLAG_REMOVE       } ,
@@ -145,6 +149,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 				break;
 			case FLAG_REMOVE:
 				list = &rem;
+				break;
+			case FLAG_SPEC:
+				list = &spec;
 				break;
 
 			/* options */
@@ -323,7 +330,7 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
-	if(!add && !rem && !files) {
+	if(!spec && !add && !rem && !files) {
 		fprintf(stderr, "error: no targets provided.\n");
 		ret = 1;
 		goto cleanup;
@@ -372,6 +379,26 @@ int main(int argc, char **argv)
 		} else {
 			fprintf(stderr, "error: could not locate package '%s'\n", pkgspec);
 			i->data = NULL;
+			ret = 1;
+		}
+		free(pkgspec);
+	}
+
+	for(i = spec; i; i = i->next) {
+		char *pkgspec = i->data;
+		alpm_pkg_t *p = pu_find_pkgspec(handle, pkgspec);
+		if(p) {
+			switch(alpm_pkg_get_origin(p)) {
+				case ALPM_PKG_FROM_SYNCDB:
+				case ALPM_PKG_FROM_FILE:
+					add = alpm_list_add(add, p);
+					break;
+				case ALPM_PKG_FROM_LOCALDB:
+					rem = alpm_list_add(rem, p);
+					break;
+			}
+		} else {
+			fprintf(stderr, "error: could not locate package '%s'\n", pkgspec);
 			ret = 1;
 		}
 		free(pkgspec);
