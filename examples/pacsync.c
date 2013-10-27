@@ -181,6 +181,11 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
+	/* FIXME */
+	for(i = sync_dbs; i; i = i->next) {
+		alpm_db_set_usage(i->data, ALPM_DB_USAGE_ALL);
+	}
+
 	if(optind >= argc) {
 		targets = sync_dbs;
 	} else {
