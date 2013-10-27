@@ -153,10 +153,31 @@ void show_siglevel(const char *directive, alpm_siglevel_t siglevel)
 	// TODO
 }
 
+void show_usage(const char *directive, alpm_db_usage_t usage)
+{
+	if(usage & ALPM_DB_USAGE_ALL) {
+		show_str(directive, "All");
+	} else {
+		if(usage & ALPM_DB_USAGE_SYNC) {
+			show_str(directive, "Sync");
+		}
+		if(usage & ALPM_DB_USAGE_SEARCH) {
+			show_str(directive, "Search");
+		}
+		if(usage & ALPM_DB_USAGE_INSTALL) {
+			show_str(directive, "Install");
+		}
+		if(usage & ALPM_DB_USAGE_UPGRADE) {
+			show_str(directive, "Upgrade");
+		}
+	}
+}
+
 void dump_repo(pu_repo_t *repo)
 {
-	show_list_str("Server", repo->servers);
+	show_usage("Usage", repo->usage);
 	show_siglevel("SigLevel", repo->siglevel);
+	show_list_str("Server", repo->servers);
 }
 
 void dump_config(void)

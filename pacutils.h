@@ -21,6 +21,7 @@ typedef struct pu_repo_t {
 	char *name;
 	alpm_siglevel_t siglevel;
 	alpm_list_t *servers;
+	alpm_db_usage_t usage;
 } pu_repo_t;
 
 struct pu_repo_t *pu_repo_new(void);

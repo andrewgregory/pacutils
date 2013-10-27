@@ -90,6 +90,8 @@ enum _pu_setting_name {
 
 	PU_CONFIG_OPTION_SERVER,
 
+	PU_CONFIG_OPTION_USAGE,
+
 	PU_CONFIG_OPTION_INCLUDE
 };
 
@@ -119,6 +121,8 @@ struct _pu_config_setting {
 	{"NoUpgrade",       PU_CONFIG_OPTION_NOUPGRADE},
 	{"NoExtract",       PU_CONFIG_OPTION_NOEXTRACT},
 	{"CacheDir",        PU_CONFIG_OPTION_CACHEDIRS},
+
+	{"Usage",           PU_CONFIG_OPTION_USAGE},
 
 	{"Include",         PU_CONFIG_OPTION_INCLUDE},
 
@@ -297,6 +301,7 @@ int _pu_config_read_file(const char *filename, pu_config_t *config,
 		} else {
 			char *key = strtok_r(buf, " =", &ptr);
 			char *val = strtok_r(NULL, " =", &ptr);
+			char *v, *ctx;
 			struct _pu_config_setting *s = _pu_config_lookup_setting(key);
 
 			if(!s) {
@@ -314,6 +319,23 @@ int _pu_config_read_file(const char *filename, pu_config_t *config,
 						break;
 					case PU_CONFIG_OPTION_SERVER:
 						repo->servers = alpm_list_add(repo->servers, strdup(val));
+						break;
+					case PU_CONFIG_OPTION_USAGE:
+						for(v = strtok_r(val, " ", &ctx); v; v = strtok_r(NULL, " ", &ctx)) {
+							if(strcmp(v, "Sync") == 0) {
+								repo->usage |= ALPM_DB_USAGE_SYNC;
+							} else if(strcmp(v, "Search") == 0) {
+								repo->usage |= ALPM_DB_USAGE_SEARCH;
+							} else if(strcmp(v, "Install") == 0) {
+								repo->usage |= ALPM_DB_USAGE_INSTALL;
+							} else if(strcmp(v, "Upgrade") == 0) {
+								repo->usage |= ALPM_DB_USAGE_UPGRADE;
+							} else if(strcmp(v, "All") == 0) {
+								repo->usage |= ALPM_DB_USAGE_ALL;
+							} else {
+								printf("unknown db usage level '%s'\n", v);
+							}
+						}
 						break;
 					default:
 						/* TODO */
@@ -446,6 +468,8 @@ void _pu_subst_server_vars(pu_config_t *config)
 pu_config_t *pu_config_new_from_file(const char *filename)
 {
 	pu_config_t *config = pu_config_new();
+	alpm_list_t *i;
+
 	if(_pu_config_read_file(filename, config, NULL) != 0) {
 		 pu_config_free(config);
 		return NULL;
@@ -462,6 +486,11 @@ pu_config_t *pu_config_new_from_file(const char *filename)
 		struct utsname un;
 		uname(&un);
 		config->architecture = strdup(un.machine);
+	}
+
+	for(i = config->repos; i; i = i->next) {
+		pu_repo_t *r = i->data;
+		SETDEFAULT(r->usage, ALPM_DB_USAGE_ALL);
 	}
 
 	_pu_subst_server_vars(config);
@@ -502,6 +531,7 @@ alpm_db_t *pu_register_syncdb(alpm_handle_t *handle, struct pu_repo_t *repo)
 	alpm_db_t *db = alpm_register_syncdb(handle, repo->name, ALPM_SIG_USE_DEFAULT);
 	if(db) {
 		alpm_db_set_servers(db, alpm_list_strdup(repo->servers));
+		alpm_db_set_usage(db, repo->usage);
 	}
 	return db;
 }

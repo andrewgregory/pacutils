@@ -364,10 +364,6 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
-	for(i = sync_dbs; i; i = i->next) {
-		alpm_db_set_usage(i->data, ALPM_DB_USAGE_ALL);
-	}
-
 	for(i = add; i; i = i->next) {
 		char *pkgspec = i->data;
 		alpm_pkg_t *p = find_sync_pkg(pkgspec);
