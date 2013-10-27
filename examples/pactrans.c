@@ -437,6 +437,8 @@ int main(int argc, char **argv)
 		goto transcleanup;
 	}
 
+	pu_log_command(handle, LOG_PREFIX, argc, argv);
+
 	if(alpm_trans_commit(handle, &err_data) != 0) {
 		fprintf(stderr, "%s\n", alpm_strerror(alpm_errno(handle)));
 		ret = 1;
