@@ -250,7 +250,7 @@ int main(int argc, char **argv)
 	root = alpm_option_get_root(handle);
 	rootlen = strlen(root);
 
-	for(; optind < argc; optind++) {
+	while(optind < argc) {
 		const char *relfname, *filename = argv[optind];
 
 		int found = 0;
@@ -345,6 +345,11 @@ int main(int argc, char **argv)
 
 		if(!found) {
 			printf("no package owns '%s'\n", filename);
+		}
+
+		++optind;
+		if(optind < argc) {
+			fputs("\n", stdout);
 		}
 	}
 
