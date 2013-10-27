@@ -29,6 +29,11 @@ alpm_db_t *pu_register_syncdb(alpm_handle_t *handle, struct pu_repo_t *repo);
 alpm_list_t *pu_register_syncdbs(alpm_handle_t *handle, alpm_list_t *repos);
 
 /* config */
+typedef enum pu_config_cleanmethod_t {
+	PU_CONFIG_CLEANMETHOD_KEEP_INSTALLED = (1 << 0),
+	PU_CONFIG_CLEANMETHOD_KEEP_CURRENT   = (1 << 1),
+} pu_config_cleanmethod_t;
+
 typedef struct pu_config_t {
 	char *rootdir;
 	char *dbpath;
@@ -37,7 +42,6 @@ typedef struct pu_config_t {
 	char *architecture;
 	char *xfercommand;
 
-	unsigned short cleanmethod;
 	unsigned short usesyslog;
 	unsigned short totaldownload;
 	unsigned short checkspace;
@@ -56,6 +60,8 @@ typedef struct pu_config_t {
 	alpm_list_t *noupgrade;
 	alpm_list_t *noextract;
 	alpm_list_t *cachedirs;
+
+	pu_config_cleanmethod_t cleanmethod;
 
 	alpm_list_t *repos;
 } pu_config_t;

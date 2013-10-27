@@ -127,6 +127,21 @@ struct _pu_config_setting {
 	{NULL, 0}
 };
 
+void _pu_parse_cleanmethod(pu_config_t *config, char *val)
+{
+	char *v, *ctx;
+	for(v = strtok_r(val, " ", &ctx); v; v = strtok_r(NULL, " ", &ctx)) {
+		if(strcmp(v, "KeepInstalled") == 0) {
+			config->cleanmethod |= PU_CONFIG_CLEANMETHOD_KEEP_INSTALLED;
+		} else if(strcmp(v, "KeepCurrent") == 0) {
+			config->cleanmethod |= PU_CONFIG_CLEANMETHOD_KEEP_CURRENT;
+		} else {
+			printf("unknown clean method '%s'\n", v);
+		}
+	}
+}
+
+
 static struct _pu_config_setting *_pu_config_lookup_setting(const char *optname)
 {
 	int i;
@@ -331,7 +346,7 @@ int _pu_config_read_file(const char *filename, pu_config_t *config,
 						config->xfercommand = strdup(val);
 						break;
 					case PU_CONFIG_OPTION_CLEANMETHOD:
-						/* TODO */
+						_pu_parse_cleanmethod(config, val);
 						break;
 					case PU_CONFIG_OPTION_USESYSLOG:
 						config->usesyslog = 1;
@@ -441,6 +456,7 @@ pu_config_t *pu_config_new_from_file(const char *filename)
 	SETDEFAULT(config->logfile, strdup("/var/log/pacman.log"));
 	SETDEFAULT(config->cachedirs,
 			alpm_list_add(NULL, strdup("/var/cache/pacman/pkg")));
+	SETDEFAULT(config->cleanmethod, PU_CONFIG_CLEANMETHOD_KEEP_INSTALLED);
 
 	if(!config->architecture || strcmp(config->architecture, "auto") == 0) {
 		struct utsname un;

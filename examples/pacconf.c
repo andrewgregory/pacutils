@@ -140,7 +140,12 @@ void show_list_str(const char *directive, alpm_list_t *list)
 
 void show_cleanmethod(const char *directive, unsigned int method)
 {
-	// TODO
+	if(method & PU_CONFIG_CLEANMETHOD_KEEP_INSTALLED) {
+		show_str(directive, "KeepInstalled");
+	}
+	if(method & PU_CONFIG_CLEANMETHOD_KEEP_CURRENT) {
+		show_str(directive, "KeepCurrent");
+	}
 }
 
 void show_siglevel(const char *directive, alpm_siglevel_t siglevel)
