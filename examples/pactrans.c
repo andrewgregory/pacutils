@@ -72,6 +72,7 @@ void usage(int ret)
 	hputs("add/file options:");
 	hputs("   --as-deps          install packages as dependencies");
 	hputs("   --as-explicit      install packages as explicit");
+	hputs("   --download-only    download packages without installing");
 	hputs("");
 	hputs("remove options:");
 	hputs("   --cascade");
@@ -90,23 +91,23 @@ pu_config_t *parse_opts(int argc, char **argv)
 
 	char *short_opts = "-";
 	struct option long_opts[] = {
-		{ "spec"         , no_argument       , NULL       , FLAG_SPEC         } ,
-		{ "add"          , no_argument       , NULL       , FLAG_ADD          } ,
-		{ "file"         , no_argument       , NULL       , FLAG_FILE         } ,
-		{ "remove"       , no_argument       , NULL       , FLAG_REMOVE       } ,
-		{ "asdeps"       , no_argument       , NULL       , FLAG_ASDEPS       } ,
-		{ "asexplicit"   , no_argument       , NULL       , FLAG_ASEXPLICIT   } ,
-		{ "recursive"    , no_argument       , NULL       , FLAG_RECURSIVE    } ,
-		{ "config"       , required_argument , NULL       , FLAG_CONFIG       } ,
-		{ "dbpath"       , required_argument , NULL       , FLAG_DBPATH       } ,
-		{ "debug"        , no_argument       , NULL       , FLAG_DEBUG        } ,
-		{ "downloadonly" , no_argument       , NULL       , FLAG_DLONLY       } ,
-		{ "help"         , no_argument       , NULL       , FLAG_HELP         } ,
-		{ "root"         , required_argument , NULL       , FLAG_ROOT         } ,
-		{ "version"      , no_argument       , NULL       , FLAG_VERSION      } ,
-		{ "logfile"      , required_argument , NULL       , FLAG_LOGFILE      } ,
-		{ "cachedir"     , required_argument , NULL       , FLAG_CACHEDIR     } ,
-		{ "print-only"   , no_argument       , &printonly , 1                 } ,
+		{ "spec"          , no_argument       , NULL       , FLAG_SPEC         } ,
+		{ "add"           , no_argument       , NULL       , FLAG_ADD          } ,
+		{ "file"          , no_argument       , NULL       , FLAG_FILE         } ,
+		{ "remove"        , no_argument       , NULL       , FLAG_REMOVE       } ,
+		{ "asdeps"        , no_argument       , NULL       , FLAG_ASDEPS       } ,
+		{ "asexplicit"    , no_argument       , NULL       , FLAG_ASEXPLICIT   } ,
+		{ "recursive"     , no_argument       , NULL       , FLAG_RECURSIVE    } ,
+		{ "config"        , required_argument , NULL       , FLAG_CONFIG       } ,
+		{ "dbpath"        , required_argument , NULL       , FLAG_DBPATH       } ,
+		{ "debug"         , no_argument       , NULL       , FLAG_DEBUG        } ,
+		{ "download-only" , no_argument       , NULL       , FLAG_DLONLY       } ,
+		{ "help"          , no_argument       , NULL       , FLAG_HELP         } ,
+		{ "root"          , required_argument , NULL       , FLAG_ROOT         } ,
+		{ "version"       , no_argument       , NULL       , FLAG_VERSION      } ,
+		{ "logfile"       , required_argument , NULL       , FLAG_LOGFILE      } ,
+		{ "cachedir"      , required_argument , NULL       , FLAG_CACHEDIR     } ,
+		{ "print-only"    , no_argument       , &printonly , 1                 } ,
 		{ 0, 0, 0, 0 },
 	};
 
