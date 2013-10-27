@@ -670,17 +670,56 @@ void pu_print_pkgspec(alpm_pkg_t *pkg)
 	}
 }
 
+char *pu_hr_size(off_t bytes, char *dest)
+{
+	static char *suff[] = {"", "K", "M", "G", "T", "P", "E", NULL};
+	float hrsize;
+	int s = 0;
+	while((bytes >= 1000000 || bytes <= -1000000) && suff[s + 1]) {
+		bytes /= 1024;
+		++s;
+	}
+	hrsize = bytes;
+	if((hrsize >= 1000 || hrsize <= -1000) && suff[s + 1]) {
+		hrsize /= 1024;
+		++s;
+	}
+	sprintf(dest, "%7.2f %s", hrsize, suff[s]);
+	return dest;
+}
+
 void pu_display_transaction(alpm_handle_t *handle)
 {
+	off_t install = 0, download = 0, delta = 0;
+	char size[20];
+	alpm_db_t *ldb = alpm_get_localdb(handle);
 	alpm_list_t *i;
+
 	for(i = alpm_trans_get_remove(handle); i; i = i->next) {
 		fputs("removing ", stdout);
 		pu_print_pkgspec(i->data);
+
+		install -= alpm_pkg_get_isize(i->data);
+		delta -= alpm_pkg_get_isize(i->data);
 	}
+
 	for(i = alpm_trans_get_add(handle); i; i = i->next) {
 		fputs("installing ", stdout);
 		pu_print_pkgspec(i->data);
+
+		alpm_pkg_t *lpkg = alpm_db_get_pkg(ldb, alpm_pkg_get_name(i->data));
+		install  += alpm_pkg_get_isize(i->data);
+		download += alpm_pkg_download_size(i->data);
+		delta    += alpm_pkg_get_isize(i->data);
+		if(lpkg) {
+			delta  -= alpm_pkg_get_isize(lpkg);
+		}
 	}
+
+	fputs("\n", stdout);
+	printf("Download Size:  %s\n", pu_hr_size(download, size));
+	printf("Installed Size: %s\n", pu_hr_size(install, size));
+	printf("Size Delta:     %s\n", pu_hr_size(delta, size));
 }
 
 int pu_confirm(int def, const char *prompt)
