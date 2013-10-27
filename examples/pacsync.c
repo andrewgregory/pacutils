@@ -209,6 +209,8 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
+	pu_log_command(handle, LOG_PREFIX, argc, argv);
+
 	for(i = targets; i; i = i->next) {
 		alpm_db_t *db = i->data;
 		int res = alpm_db_update(force, db);
