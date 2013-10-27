@@ -77,6 +77,8 @@ void pu_display_transaction(alpm_handle_t *handle);
 
 int pu_confirm(int def, const char *prompt);
 
+int pu_log_command(alpm_handle_t *handle, const char *caller, int argc, char **argv);
+
 #endif /* PACUTILS_H */
 
 /* vim: set ts=2 sw=2 noet: */

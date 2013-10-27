@@ -703,4 +703,32 @@ int pu_confirm(int def, const char *prompt)
 	}
 }
 
+int pu_log_command(alpm_handle_t *handle, const char *caller, int argc, char **argv)
+{
+	int i;
+	char *cmd;
+	size_t cmdlen = strlen("Running");
+
+	for(i = 0; i < argc; ++i) {
+		cmdlen =+ strlen(argv[i]) + 1;
+	}
+
+	cmd = malloc(cmdlen + 1);
+	if(!cmd) {
+		return -1;
+	}
+
+	strcpy(cmd, "Running");
+	for(i = 0; i < argc; ++i) {
+		strcat(cmd, " ");
+		strcat(cmd, argv[i]);
+	}
+
+	alpm_logaction(handle, caller, cmd);
+
+	free(cmd);
+
+	return 0;
+}
+
 /* vim: set ts=2 sw=2 noet: */
