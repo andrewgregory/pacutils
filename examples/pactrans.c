@@ -2,8 +2,7 @@
 
 #include <pacutils.h>
 
-#define MYNAME "pactrans"
-#define VERSION "0.1"
+const char *myname, *myver = "0.1";
 #define LOG_PREFIX "PACTRANS"
 
 pu_config_t *config = NULL;
@@ -44,16 +43,17 @@ void fatal(const char *msg)
 void usage(int ret)
 {
 	FILE *stream = (ret ? stderr : stdout);
+#define hputf(format, ...) fprintf(stream, format"\n", __VA_ARGS__);
 #define hputs(s) fputs(s"\n", stream);
-	hputs("pactrans - install and remove packages in a single transaction");
-	hputs("usage:  pactrans [options] ([<action>] <target>...)...");
-	hputs("        pactrans (--help|--version)");
+	hputf("%s - install/remove packages", myname);
+	hputf("usage:  %s [options] ([<action>] <target>...)...", myname);
+	hputf("        %s (--help|--version)", myname);
 	hputs("");
 	hputs("actions (may be used together):");
-	hputs("   --spec             install sync/file specs, remove local specs (default)");
-	hputs("   --add              install packages from sync database");
+	hputf("   --spec             install sync/file specs, remove local specs%s", list == &spec ? " (default)" : "");
+	hputf("   --add              install packages from sync database%s", list == &add ? " (default)" : "");
 	hputs("   --file             install packages from files");
-	hputs("   --remove           remove packages");
+	hputf("   --remove           remove packages%s", list == &rem ? " (default)" : "");
 	hputs("");
 	hputs("options:");
 	hputs("   --nodeps");
@@ -80,6 +80,7 @@ void usage(int ret)
 	hputs("   --recursive");
 	hputs("   --unneeded");
 #undef hputs
+#undef hputf
 	exit(ret);
 }
 
@@ -113,9 +114,17 @@ pu_config_t *parse_opts(int argc, char **argv)
 
 	/* check for a custom config file location */
 	while((c = getopt_long(argc, argv, short_opts, long_opts, NULL)) != -1) {
-		if(c == FLAG_CONFIG) {
-			config_file = optarg;
-			break;
+		switch(c) {
+			case FLAG_CONFIG:
+				config_file = optarg;
+				break;
+			case FLAG_HELP:
+				usage(0);
+				break;
+			case FLAG_VERSION:
+				pu_print_version(myname, myver);
+				exit(0);
+				break;
 		}
 	}
 
@@ -191,9 +200,6 @@ pu_config_t *parse_opts(int argc, char **argv)
 				trans_flags |= ALPM_TRANS_FLAG_DOWNLOADONLY;
 				trans_flags |= ALPM_TRANS_FLAG_NOCONFLICTS;
 				break;
-			case FLAG_HELP:
-				usage(0);
-				break;
 			case FLAG_LOGFILE:
 				free(config->logfile);
 				config->logfile = strdup(optarg);
@@ -201,10 +207,6 @@ pu_config_t *parse_opts(int argc, char **argv)
 			case FLAG_ROOT:
 				free(config->rootdir);
 				config->rootdir = strdup(optarg);
-				break;
-			case FLAG_VERSION:
-				pu_print_version(MYNAME, VERSION);
-				exit(0);
 				break;
 			case '?':
 			default:
@@ -326,6 +328,13 @@ int main(int argc, char **argv)
 {
 	alpm_list_t *i, *sync_dbs = NULL, *err_data = NULL;
 	int ret = 0;
+
+	myname = pu_basename(argv[0]);
+	if(strcasecmp(myname, "pacinstall") == 0) {
+		list = &add;
+	} else if(strcasecmp(myname, "pacremove") == 0) {
+		list = &rem;
+	}
 
 	if(!(config = parse_opts(argc, argv))) {
 		goto cleanup;
