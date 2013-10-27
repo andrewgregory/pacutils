@@ -79,6 +79,8 @@ int pu_confirm(int def, const char *prompt);
 
 int pu_log_command(alpm_handle_t *handle, const char *caller, int argc, char **argv);
 
+char *pu_basename(char *path);
+
 #endif /* PACUTILS_H */
 
 /* vim: set ts=2 sw=2 noet: */
