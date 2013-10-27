@@ -752,10 +752,10 @@ int pu_log_command(alpm_handle_t *handle, const char *caller, int argc, char **a
 	size_t cmdlen = strlen("Running");
 
 	for(i = 0; i < argc; ++i) {
-		cmdlen =+ strlen(argv[i]) + 1;
+		cmdlen += strlen(argv[i]) + 1;
 	}
 
-	cmd = malloc(cmdlen + 1);
+	cmd = malloc(cmdlen + 2);
 	if(!cmd) {
 		return -1;
 	}
@@ -765,6 +765,7 @@ int pu_log_command(alpm_handle_t *handle, const char *caller, int argc, char **a
 		strcat(cmd, " ");
 		strcat(cmd, argv[i]);
 	}
+	strcat(cmd, "\n");
 
 	alpm_logaction(handle, caller, cmd);
 
