@@ -672,7 +672,7 @@ void pu_print_pkgspec(alpm_pkg_t *pkg)
 
 char *pu_hr_size(off_t bytes, char *dest)
 {
-	static char *suff[] = {"", "K", "M", "G", "T", "P", "E", NULL};
+	static char *suff[] = {"B", "K", "M", "G", "T", "P", "E", NULL};
 	float hrsize;
 	int s = 0;
 	while((bytes >= 1000000 || bytes <= -1000000) && suff[s + 1]) {
@@ -684,7 +684,7 @@ char *pu_hr_size(off_t bytes, char *dest)
 		hrsize /= 1024;
 		++s;
 	}
-	sprintf(dest, "%7.2f %s", hrsize, suff[s]);
+	sprintf(dest, "%.2f %s", hrsize, suff[s]);
 	return dest;
 }
 
@@ -717,9 +717,9 @@ void pu_display_transaction(alpm_handle_t *handle)
 	}
 
 	fputs("\n", stdout);
-	printf("Download Size:  %s\n", pu_hr_size(download, size));
-	printf("Installed Size: %s\n", pu_hr_size(install, size));
-	printf("Size Delta:     %s\n", pu_hr_size(delta, size));
+	printf("Download Size:  %10s\n", pu_hr_size(download, size));
+	printf("Installed Size: %10s\n", pu_hr_size(install, size));
+	printf("Size Delta:     %10s\n", pu_hr_size(delta, size));
 }
 
 int pu_confirm(int def, const char *prompt)
