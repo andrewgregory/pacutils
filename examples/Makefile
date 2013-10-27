@@ -8,9 +8,15 @@ BINDIR      ?= ${EXEC_PREFIX}/bin
 INCLUDEDIR  ?= ${PREFIX}/include
 LIBDIR      ?= ${EXEC_PREFIX}/lib
 
-OBJECTS = pacsize pacinfo pacinstall pacfile pacconf pacsync pactrans pacsift
+OBJECTS = pacsize pacinfo pacinstall pacremove pacfile pacconf pacsync pactrans pacsift
 
 all: $(OBJECTS)
+
+pacremove: | pactrans
+	ln -fs $< $@
+
+pacinstall: | pactrans
+	ln -fs $< $@
 
 install: all
 	install -d ${DESTDIR}${BINDIR}
@@ -19,9 +25,10 @@ install: all
 	install -m 755 pacfile    ${DESTDIR}${BINDIR}/pacfile
 	install -m 755 pacconf    ${DESTDIR}${BINDIR}/pacconf
 	install -m 755 pacsync    ${DESTDIR}${BINDIR}/pacsync
-	install -m 755 pactrans   ${DESTDIR}${BINDIR}/pactrans
 	install -m 755 pacsift    ${DESTDIR}${BINDIR}/pacsift
-	install -m 755 pacinstall ${DESTDIR}${BINDIR}/pacinstall
+	install -m 755 pactrans   ${DESTDIR}${BINDIR}/pactrans
+	cp -d          pacinstall ${DESTDIR}${BINDIR}/pacinstall
+	cp -d          pacremove  ${DESTDIR}${BINDIR}/pacremove
 
 clean:
 	$(RM) $(OBJECTS)
