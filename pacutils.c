@@ -657,7 +657,7 @@ alpm_pkg_t *pu_find_pkgspec(alpm_handle_t *handle, const char *pkgspec)
 			return NULL;
 		}
 	} else if((c = strchr(pkgspec, '/')))  {
-		alpm_db_t *db;
+		alpm_db_t *db = NULL;
 		size_t dblen = c - pkgspec;
 
 		if(dblen == strlen("local") && strncmp(pkgspec, "local", dblen) == 0) {
