@@ -79,6 +79,8 @@ enum _pu_setting_name {
 	PU_CONFIG_OPTION_VERBOSEPKGLISTS,
 
 	PU_CONFIG_OPTION_SIGLEVEL,
+	PU_CONFIG_OPTION_LOCAL_SIGLEVEL,
+	PU_CONFIG_OPTION_REMOTE_SIGLEVEL,
 
 	PU_CONFIG_OPTION_HOLDPKGS,
 	PU_CONFIG_OPTION_IGNOREPKGS,
@@ -145,6 +147,66 @@ void _pu_parse_cleanmethod(pu_config_t *config, char *val)
 	}
 }
 
+alpm_siglevel_t _pu_parse_siglevel(
+		alpm_siglevel_t level, alpm_siglevel_t fallback, char *val)
+{
+	char *v, *ctx;
+
+	if(level == ALPM_SIG_USE_DEFAULT) {
+		level = fallback;
+	}
+
+	for(v = strtok_r(val, " ", &ctx); v; v = strtok_r(NULL, " ", &ctx)) {
+		int pkg = 1, db = 1;
+
+		if(strncmp(v, "Package", 7) == 0) {
+			v += 7;
+			db = 0;
+		} else if(strncmp(v, "Database", 8) == 0) {
+			v += 8;
+			pkg = 0;
+		}
+
+		if(strcmp(v, "Never") == 0) {
+			if(pkg) {
+				level |= ALPM_SIG_PACKAGE_SET;
+				level &= ~ALPM_SIG_PACKAGE;
+			}
+			if(db) {
+				level |= ALPM_SIG_PACKAGE_SET;
+				level &= ~ALPM_SIG_DATABASE;
+			}
+		} else if(strcmp(v, "Optional") == 0) {
+			if(pkg) level |= (ALPM_SIG_PACKAGE_SET | ALPM_SIG_PACKAGE | ALPM_SIG_PACKAGE_OPTIONAL);
+			if(db)  level |= (ALPM_SIG_DATABASE | ALPM_SIG_DATABASE_OPTIONAL);
+		} else if(strcmp(v, "Required") == 0) {
+			if(pkg) {
+				level |= ALPM_SIG_PACKAGE;
+				level |= ALPM_SIG_PACKAGE_SET;
+				level &= ~ALPM_SIG_PACKAGE_OPTIONAL;
+			}
+			if(db) {
+				level |= ALPM_SIG_DATABASE;
+				level &= ~ALPM_SIG_DATABASE_OPTIONAL;
+			}
+		} else if(strcmp(v, "TrustedOnly") == 0) {
+			if(pkg){
+				level |= ALPM_SIG_PACKAGE_TRUST_SET;
+				level &= ~(ALPM_SIG_PACKAGE_MARGINAL_OK | ALPM_SIG_PACKAGE_UNKNOWN_OK);
+			}
+			if(db)  level &= ~(ALPM_SIG_DATABASE_MARGINAL_OK | ALPM_SIG_DATABASE_UNKNOWN_OK);
+		} else if(strcmp(v, "TrustAll") == 0) {
+			if(pkg) level |= (ALPM_SIG_PACKAGE_TRUST_SET | ALPM_SIG_PACKAGE_MARGINAL_OK | ALPM_SIG_PACKAGE_UNKNOWN_OK);
+			if(db)  level |= (ALPM_SIG_DATABASE_MARGINAL_OK | ALPM_SIG_DATABASE_UNKNOWN_OK);
+		} else {
+			fprintf(stderr, "Invalid SigLevel value '%s'\n", v);
+		}
+	}
+
+	level &= ~ALPM_SIG_USE_DEFAULT;
+
+	return level;
+}
 
 static struct _pu_config_setting *_pu_config_lookup_setting(const char *optname)
 {
@@ -296,6 +358,7 @@ int _pu_config_read_file(const char *filename, pu_config_t *config,
 			} else {
 				repo = pu_repo_new();
 				repo->name = strdup(ptr);
+				repo->siglevel = ALPM_SIG_USE_DEFAULT;
 				config->repos = alpm_list_add(config->repos, repo);
 			}
 		} else {
@@ -315,7 +378,8 @@ int _pu_config_read_file(const char *filename, pu_config_t *config,
 						_pu_config_read_file(val, config, repo);
 						break;
 					case PU_CONFIG_OPTION_SIGLEVEL:
-						/* TODO */
+						repo->siglevel = _pu_parse_siglevel(
+								repo->siglevel, config->siglevel, val);
 						break;
 					case PU_CONFIG_OPTION_SERVER:
 						repo->servers = alpm_list_add(repo->servers, strdup(val));
@@ -396,7 +460,16 @@ int _pu_config_read_file(const char *filename, pu_config_t *config,
 						config->verbosepkglists = 1;
 						break;
 					case PU_CONFIG_OPTION_SIGLEVEL:
-						/* TODO */
+						config->siglevel = _pu_parse_siglevel(
+								config->siglevel, config->siglevel, val);
+						break;
+					case PU_CONFIG_OPTION_LOCAL_SIGLEVEL:
+						config->localfilesiglevel = _pu_parse_siglevel(
+								config->localfilesiglevel, config->siglevel, val);
+						break;
+					case PU_CONFIG_OPTION_REMOTE_SIGLEVEL:
+						config->remotefilesiglevel = _pu_parse_siglevel(
+								config->remotefilesiglevel, config->siglevel, val);
 						break;
 					case PU_CONFIG_OPTION_HOLDPKGS:
 						while(val) {
@@ -470,6 +543,13 @@ pu_config_t *pu_config_new_from_file(const char *filename)
 	pu_config_t *config = pu_config_new();
 	alpm_list_t *i;
 
+	/* 0 is a valid siglevel value, so these must be set before parsing */
+	config->siglevel = (
+			ALPM_SIG_PACKAGE | ALPM_SIG_PACKAGE_OPTIONAL |
+			ALPM_SIG_DATABASE | ALPM_SIG_DATABASE_OPTIONAL);
+	config->localfilesiglevel = ALPM_SIG_USE_DEFAULT;
+	config->remotefilesiglevel = ALPM_SIG_USE_DEFAULT;
+
 	if(_pu_config_read_file(filename, config, NULL) != 0) {
 		 pu_config_free(config);
 		return NULL;
@@ -519,16 +599,16 @@ alpm_handle_t *pu_initialize_handle_from_config(struct pu_config_t *config)
 	alpm_option_set_usesyslog(handle, config->usesyslog);
 	alpm_option_set_arch(handle, config->architecture);
 
-	/*alpm_option_set_default_siglevel(handle, config->siglevel);*/
-	/*alpm_option_set_local_file_siglevel(handle, config->localfilesiglevel);*/
-	/*alpm_option_set_remote_file_siglevel(handle, config->remotefilesiglevel);*/
+	alpm_option_set_default_siglevel(handle, config->siglevel);
+	alpm_option_set_local_file_siglevel(handle, config->localfilesiglevel);
+	alpm_option_set_remote_file_siglevel(handle, config->remotefilesiglevel);
 
 	return handle;
 }
 
 alpm_db_t *pu_register_syncdb(alpm_handle_t *handle, struct pu_repo_t *repo)
 {
-	alpm_db_t *db = alpm_register_syncdb(handle, repo->name, ALPM_SIG_USE_DEFAULT);
+	alpm_db_t *db = alpm_register_syncdb(handle, repo->name, repo->siglevel);
 	if(db) {
 		alpm_db_set_servers(db, alpm_list_strdup(repo->servers));
 		alpm_db_set_usage(db, repo->usage);

@@ -148,9 +148,43 @@ void show_cleanmethod(const char *directive, unsigned int method)
 	}
 }
 
-void show_siglevel(const char *directive, alpm_siglevel_t siglevel)
+void show_siglevel(const char *directive, alpm_siglevel_t level, int pkgonly)
 {
-	// TODO
+	if(level & ALPM_SIG_PACKAGE) {
+		if(level & ALPM_SIG_PACKAGE_OPTIONAL) {
+			show_str(directive, "PackageOptional");
+		} else {
+			show_str(directive, "PackageRequired");
+		}
+
+		if(level & ALPM_SIG_PACKAGE_UNKNOWN_OK) {
+			show_str(directive, "PackageTrustAll");
+		} else {
+			show_str(directive, "PackageTrustedOnly");
+		}
+	} else {
+		show_str(directive, "PackageNever");
+	}
+
+	if(pkgonly) {
+		return;
+	}
+
+	if(level & ALPM_SIG_DATABASE) {
+		if(level & ALPM_SIG_DATABASE_OPTIONAL) {
+			show_str(directive, "DatabaseOptional");
+		} else {
+			show_str(directive, "DatabaseRequired");
+		}
+
+		if(level & ALPM_SIG_DATABASE_UNKNOWN_OK) {
+			show_str(directive, "DatabaseTrustAll");
+		} else {
+			show_str(directive, "DatabaseTrustedOnly");
+		}
+	} else {
+		show_str(directive, "DatabaseNever");
+	}
 }
 
 void show_usage(const char *directive, alpm_db_usage_t usage)
@@ -176,7 +210,7 @@ void show_usage(const char *directive, alpm_db_usage_t usage)
 void dump_repo(pu_repo_t *repo)
 {
 	show_usage("Usage", repo->usage);
-	show_siglevel("SigLevel", repo->siglevel);
+	show_siglevel("SigLevel", repo->siglevel, 0);
 	show_list_str("Server", repo->servers);
 }
 
@@ -211,9 +245,9 @@ void dump_config(void)
 
 	show_cleanmethod("CleanMethod", config->cleanmethod);
 
-	show_siglevel("SigLevel", config->siglevel);
-	show_siglevel("LocalFileSigLevel", config->localfilesiglevel);
-	show_siglevel("RemoteFileSigLevel", config->remotefilesiglevel);
+	show_siglevel("SigLevel", config->siglevel, 0);
+	show_siglevel("LocalFileSigLevel", config->localfilesiglevel, 1);
+	show_siglevel("RemoteFileSigLevel", config->remotefilesiglevel, 1);
 
 	for(i = config->repos; i; i = i->next) {
 		pu_repo_t *repo = i->data;
@@ -248,7 +282,7 @@ void list_repo_directives(alpm_list_t *directives)
 		if(strcasecmp(i->data, "Server") == 0) {
 			show_list_str("Server", repo->servers);
 		} else if(strcasecmp(i->data, "SigLevel") == 0) {
-			show_siglevel("SigLevel", repo->siglevel);
+			show_siglevel("SigLevel", repo->siglevel, 0);
 		} else {
 			fprintf(stderr, "warning: unknown directive '%s'\n", (char*) i->data);
 		}
@@ -311,11 +345,11 @@ void list_directives(alpm_list_t *directives)
 			show_cleanmethod("CleanMethod", config->cleanmethod);
 
 		} else if(strcasecmp(i->data, "SigLevel") == 0) {
-			show_siglevel("SigLevel", config->siglevel);
+			show_siglevel("SigLevel", config->siglevel, 0);
 		} else if(strcasecmp(i->data, "LocalFileSigLevel") == 0) {
-			show_siglevel("LocalFileSigLevel", config->localfilesiglevel);
+			show_siglevel("LocalFileSigLevel", config->localfilesiglevel, 1);
 		} else if(strcasecmp(i->data, "RemoteFileSigLevel") == 0) {
-			show_siglevel("RemoteFileSigLevel", config->remotefilesiglevel);
+			show_siglevel("RemoteFileSigLevel", config->remotefilesiglevel, 1);
 
 		} else if(strcasecmp(i->data, "Include") == 0) {
 			fputs("warning: 'Include' directives cannot be queried\n", stderr);

@@ -131,8 +131,6 @@ Not implemented yet:
 
 =item globs in Include directives
 
-=item SigLevel, LocalFileSigLevel, RemoteFileSigLevel
-
 =item error reporting
 
 =back
