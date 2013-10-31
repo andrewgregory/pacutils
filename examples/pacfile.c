@@ -188,11 +188,11 @@ void cmp_uid(struct archive_entry *entry, struct stat *st)
 	uid_t puid = archive_entry_uid(entry);
 	struct passwd *pw = getpwuid(puid);
 
-	printf("owner:  %d (%s)", puid, pw ? pw->pw_name : "unknown user");
+	printf("owner:  %d/%s", puid, pw ? pw->pw_name : "unknown user");
 
 	if(st && puid != st->st_uid) {
 		pw = getpwuid(st->st_uid);
-		printf(" (%d (%s) on filesystem)",
+		printf(" (%d/%s on filesystem)",
 				st->st_uid, pw ? pw->pw_name : "unknown_user");
 	}
 
@@ -204,11 +204,11 @@ void cmp_gid(struct archive_entry *entry, struct stat *st)
 	gid_t pgid = archive_entry_gid(entry);
 	struct group *gr = getgrgid(pgid);
 
-	printf("group:  %d (%s)", pgid, gr ? gr->gr_name : "unknown group");
+	printf("group:  %d/%s", pgid, gr ? gr->gr_name : "unknown group");
 
 	if(st && pgid != st->st_gid) {
 		gr = getgrgid(st->st_gid);
-		printf(" (%d (%s) on filesystem)",
+		printf(" (%d/%s on filesystem)",
 				st->st_gid, gr ? gr->gr_name : "unknown_group");
 	}
 
