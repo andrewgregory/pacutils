@@ -557,6 +557,7 @@ pu_config_t *pu_config_new_from_file(const char *filename)
 
 	SETDEFAULT(config->rootdir, strdup("/"));
 	SETDEFAULT(config->dbpath, strdup("/var/lib/pacman/"));
+	SETDEFAULT(config->gpgdir, strdup("/etc/pacman.d/gnupg/"));
 	SETDEFAULT(config->logfile, strdup("/var/log/pacman.log"));
 	SETDEFAULT(config->cachedirs,
 			alpm_list_add(NULL, strdup("/var/cache/pacman/pkg")));
