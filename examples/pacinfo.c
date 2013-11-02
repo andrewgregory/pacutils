@@ -1,6 +1,21 @@
+#include <getopt.h>
 #include <stdio.h>
 
 #include <pacutils.h>
+
+const char *myname = "pacinfo", *myver = "0.1";
+
+pu_config_t *config = NULL;
+alpm_handle_t *handle = NULL;
+
+enum longopt_flags {
+	FLAG_CONFIG = 1000,
+	FLAG_DBPATH,
+	FLAG_DEBUG,
+	FLAG_HELP,
+	FLAG_ROOT,
+	FLAG_VERSION,
+};
 
 /*********************************************
  * Displays installed package info ala pacman -Qi
@@ -31,12 +46,114 @@ void printd(const char *field, alpm_list_t *values) {
 	}
 }
 
+void usage(int ret)
+{
+	FILE *stream = (ret ? stderr : stdout);
+#define hputs(s) fputs(s"\n", stream);
+	hputs("pacinfo - display package information");
+	hputs("usage:  pacinfo [options] <pkgspec>...");
+	hputs("        pacinfo (--help|--version)");
+	hputs("");
+	hputs("options:");
+	hputs("   --cachedir=<path>  set an alternate cache location");
+	hputs("   --config=<path>    set an alternate configuration file");
+	hputs("   --dbpath=<path>    set an alternate database location");
+	hputs("   --debug            enable extra debugging messages");
+	hputs("   --root=<path>      set an alternate installation root");
+	hputs("   --help             display this help information");
+	hputs("   --version          display version information");
+#undef hputs
+	exit(ret);
+}
+
+
+pu_config_t *parse_opts(int argc, char **argv)
+{
+	char *config_file = "/etc/pacman.conf";
+	pu_config_t *config = NULL;
+	int c;
+
+	char *short_opts = "";
+	struct option long_opts[] = {
+		{ "config"        , required_argument , NULL       , FLAG_CONFIG       } ,
+		{ "help"          , no_argument       , NULL       , FLAG_HELP         } ,
+		{ "version"       , no_argument       , NULL       , FLAG_VERSION      } ,
+
+		{ "dbpath"        , required_argument , NULL       , FLAG_DBPATH       } ,
+		{ "debug"         , no_argument       , NULL       , FLAG_DEBUG        } ,
+		{ "root"          , required_argument , NULL       , FLAG_ROOT         } ,
+		{ 0, 0, 0, 0 },
+	};
+
+	/* check for a custom config file location */
+	while((c = getopt_long(argc, argv, short_opts, long_opts, NULL)) != -1) {
+		switch(c) {
+			case FLAG_CONFIG:
+				config_file = optarg;
+				break;
+			case FLAG_HELP:
+				usage(0);
+				break;
+			case FLAG_VERSION:
+				pu_print_version(myname, myver);
+				exit(0);
+				break;
+		}
+	}
+
+	/* load the config file */
+	config = pu_config_new_from_file(config_file);
+	if(!config) {
+		fprintf(stderr, "error: could not parse '%s'\n", config_file);
+		return NULL;
+	}
+
+	/* process remaining command-line options */
+	optind = 1;
+	while((c = getopt_long(argc, argv, short_opts, long_opts, NULL)) != -1) {
+		switch(c) {
+
+			case 0:
+			case FLAG_CONFIG:
+				/* already handled */
+				break;
+
+			case FLAG_DBPATH:
+				free(config->dbpath);
+				config->dbpath = strdup(optarg);
+				break;
+			case FLAG_DEBUG:
+				break;
+			case FLAG_ROOT:
+				free(config->rootdir);
+				config->rootdir = strdup(optarg);
+				break;
+			case '?':
+			default:
+				usage(1);
+				break;
+		}
+	}
+
+	return config;
+}
+
 int main(int argc, char **argv) {
-	struct pu_config_t *config = pu_config_new_from_file("/etc/pacman.conf");
-	alpm_handle_t *handle = pu_initialize_handle_from_config(config);
+	int ret = 0;
+
+	if(!(config = parse_opts(argc, argv))) {
+		goto cleanup;
+	}
+
+	if(!(handle = pu_initialize_handle_from_config(config))) {
+		fprintf(stderr, "error: failed to initialize alpm.\n");
+		ret = 1;
+		goto cleanup;
+	}
+
 	alpm_list_t *syncdbs = pu_register_syncdbs(handle, config->repos);
 
-	for(++argv; *argv; ++argv) {
+	for(argv += optind; *argv; ++argv) {
 		alpm_pkg_t *pkg = pu_find_pkgspec(handle, *argv);
 		if(!pkg) {
 			fprintf(stderr, "Unable to load package '%s'\n", *argv);
@@ -73,12 +190,12 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	/* cleanup */
+cleanup:
 	alpm_list_free(syncdbs);
 	alpm_release(handle);
 	pu_config_free(config);
 
-	return 0;
+	return ret;
 }
 
 /* vim: set ts=2 sw=2 noet: */
