@@ -9,38 +9,26 @@
 void printt(const char *field, alpm_time_t t) {
 		char time_buf[26];
 		struct tm ltime;
-		fputs(field, stdout);
 		if(t) {
 			strftime(time_buf, 26, "%F %T", localtime_r(&t, &ltime));
-			fputs(time_buf, stdout);
+			printf(field, time_buf);
 		}
-		putchar('\n');
 }
 
 void printl(const char *field, alpm_list_t *values) {
-	fputs(field, stdout);
 	while(values) {
-		fputs(values->data, stdout);
+		printf(field, values->data);
 		values = values->next;
-		if(values) {
-			putchar(' ');
-		}
 	}
-	putchar('\n');
 }
 
 void printd(const char *field, alpm_list_t *values) {
-	fputs(field, stdout);
 	while(values) {
 		char *s = alpm_dep_compute_string(values->data);
-		fputs(s, stdout);
+		printf(field, s);
 		free(s);
 		values = values->next;
-		if(values) {
-			putchar(' ');
-		}
 	}
-	putchar('\n');
 }
 
 int main(int argc, char **argv) {
@@ -62,17 +50,17 @@ int main(int argc, char **argv) {
 		printf("Description:    %s\n",  alpm_pkg_get_desc(pkg));
 		printf("Architecture:   %s\n",  alpm_pkg_get_arch(pkg));
 		printf("URL:            %s\n",  alpm_pkg_get_url(pkg));
-		printl("Licenses:       ",      alpm_pkg_get_licenses(pkg));
-		printl("Groups:         ",      alpm_pkg_get_groups(pkg));
-		printd("Provides:       ",      alpm_pkg_get_provides(pkg));
-		printd("Requires:       ",      alpm_pkg_get_depends(pkg));
-		printd("Conflicts:      ",      alpm_pkg_get_conflicts(pkg));
-		printd("Replaces:       ",      alpm_pkg_get_replaces(pkg));
+		printl("Licenses:       %s\n",  alpm_pkg_get_licenses(pkg));
+		printl("Groups:         %s\n",  alpm_pkg_get_groups(pkg));
+		printd("Provides:       %s\n",  alpm_pkg_get_provides(pkg));
+		printd("Requires:       %s\n",  alpm_pkg_get_depends(pkg));
+		printd("Conflicts:      %s\n",  alpm_pkg_get_conflicts(pkg));
+		printd("Replaces:       %s\n",  alpm_pkg_get_replaces(pkg));
 		printf("Download Size:  %zd\n", alpm_pkg_get_size(pkg));
 		printf("Installed Size: %zd\n", alpm_pkg_get_isize(pkg));
 		printf("Packager:       %s\n",  alpm_pkg_get_packager(pkg));
-		printt("Build Date:     ", alpm_pkg_get_builddate(pkg));
-		printt("Install Date:   ", alpm_pkg_get_installdate(pkg));
+		printt("Build Date:     %s\n",  alpm_pkg_get_builddate(pkg));
+		printt("Install Date:   %s\n",  alpm_pkg_get_installdate(pkg));
 
 		/*printd("Required For:   ",      alpm_pkg_get_provides(pkg));*/
 		/*printd("Optional For:   ",      alpm_pkg_get_provides(pkg));*/
