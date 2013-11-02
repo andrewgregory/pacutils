@@ -27,6 +27,7 @@ enum longopt_flags {
 	FLAG_FILE,
 	FLAG_HELP,
 	FLAG_LOGFILE,
+	FLAG_PRINT,
 	FLAG_RECURSIVE,
 	FLAG_REMOVE,
 	FLAG_ROOT,
@@ -108,7 +109,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "version"       , no_argument       , NULL       , FLAG_VERSION      } ,
 		{ "logfile"       , required_argument , NULL       , FLAG_LOGFILE      } ,
 		{ "cachedir"      , required_argument , NULL       , FLAG_CACHEDIR     } ,
-		{ "print-only"    , no_argument       , &printonly , 1                 } ,
+		{ "print-only"    , no_argument       , NULL       , FLAG_PRINT        } ,
 		{ 0, 0, 0, 0 },
 	};
 
@@ -203,6 +204,10 @@ pu_config_t *parse_opts(int argc, char **argv)
 			case FLAG_LOGFILE:
 				free(config->logfile);
 				config->logfile = strdup(optarg);
+				break;
+			case FLAG_PRINT:
+				printonly = 1;
+				trans_flags |= ALPM_TRANS_FLAG_NOLOCK;
 				break;
 			case FLAG_ROOT:
 				free(config->rootdir);
