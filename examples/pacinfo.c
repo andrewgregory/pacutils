@@ -8,11 +8,14 @@ const char *myname = "pacinfo", *myver = "0.1";
 pu_config_t *config = NULL;
 alpm_handle_t *handle = NULL;
 
+int removable_size = 0;
+
 enum longopt_flags {
 	FLAG_CONFIG = 1000,
 	FLAG_DBPATH,
 	FLAG_DEBUG,
 	FLAG_HELP,
+	FLAG_REMOVABLE,
 	FLAG_ROOT,
 	FLAG_VERSION,
 };
@@ -46,6 +49,59 @@ void printd(const char *field, alpm_list_t *values) {
 	}
 }
 
+off_t _pkg_removable_size(alpm_pkg_t *pkg, alpm_list_t *pkgs, alpm_list_t **seen)
+{
+	const char *pkgname = alpm_pkg_get_name(pkg);
+	if(alpm_list_find_ptr(*seen, pkgname))
+		return 0;
+
+	off_t size = alpm_pkg_get_isize(pkg);
+	*seen = alpm_list_add(*seen,(void*) pkgname);
+
+	alpm_list_t *d, *deps = alpm_pkg_get_depends(pkg);
+	for(d = deps; d; d = d->next) {
+		char *depstring = alpm_dep_compute_string(d->data);
+		alpm_pkg_t *p = alpm_find_satisfier(pkgs, depstring);
+		free(depstring);
+
+		if(!p) {
+			continue;
+		}
+
+		if(alpm_pkg_get_reason(p) == ALPM_PKG_REASON_EXPLICIT) {
+			continue;
+		}
+
+		if(alpm_list_find_ptr(*seen, p)) {
+			continue;
+		}
+
+		alpm_list_t *rb = alpm_pkg_compute_requiredby(p);
+
+		if(rb) {
+			alpm_list_t *diff = alpm_list_diff(rb, *seen,
+					(alpm_list_fn_cmp) strcmp);
+			if(diff) {
+				alpm_list_free(diff);
+				FREELIST(rb);
+				continue;
+			}
+			FREELIST(rb);
+		}
+
+		size += _pkg_removable_size(p, pkgs, seen);
+	}
+
+	return size;
+}
+
+off_t pkg_removable_size(alpm_handle_t *handle, alpm_pkg_t *pkg) {
+	alpm_db_t *localdb = alpm_get_localdb(handle);
+	alpm_list_t *seen = NULL, *installed = alpm_db_get_pkgcache(localdb);
+	alpm_list_free(seen);
+	return _pkg_removable_size(pkg, installed, &seen);
+}
+
 void usage(int ret)
 {
 	FILE *stream = (ret ? stderr : stdout);
@@ -60,6 +116,7 @@ void usage(int ret)
 	hputs("   --dbpath=<path>    set an alternate database location");
 	hputs("   --debug            enable extra debugging messages");
 	hputs("   --root=<path>      set an alternate installation root");
+	hputs("   --removable-size   include removable dependencies in size");
 	hputs("   --help             display this help information");
 	hputs("   --version          display version information");
 #undef hputs
@@ -82,6 +139,8 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "dbpath"        , required_argument , NULL       , FLAG_DBPATH       } ,
 		{ "debug"         , no_argument       , NULL       , FLAG_DEBUG        } ,
 		{ "root"          , required_argument , NULL       , FLAG_ROOT         } ,
+
+		{ "removable-size", no_argument       , NULL       , FLAG_REMOVABLE    } ,
 		{ 0, 0, 0, 0 },
 	};
 
@@ -123,6 +182,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 				config->dbpath = strdup(optarg);
 				break;
 			case FLAG_DEBUG:
+				break;
+			case FLAG_REMOVABLE:
+				removable_size = 1;
 				break;
 			case FLAG_ROOT:
 				free(config->rootdir);
@@ -174,7 +236,10 @@ int main(int argc, char **argv) {
 		printd("Conflicts:      %s\n",  alpm_pkg_get_conflicts(pkg));
 		printd("Replaces:       %s\n",  alpm_pkg_get_replaces(pkg));
 		printf("Download Size:  %zd\n", alpm_pkg_get_size(pkg));
-		printf("Installed Size: %zd\n", alpm_pkg_get_isize(pkg));
+		printf("Installed Size: %zd\n",
+				removable_size
+				? pkg_removable_size(handle, pkg)
+				: alpm_pkg_get_isize(pkg));
 		printf("Packager:       %s\n",  alpm_pkg_get_packager(pkg));
 		printt("Build Date:     %s\n",  alpm_pkg_get_builddate(pkg));
 		printt("Install Date:   %s\n",  alpm_pkg_get_installdate(pkg));

@@ -1,7 +1,6 @@
 pacinfo
 pacinstall
 pacfile
-pacsize
 pacconf
 pacremove
 pacsift
