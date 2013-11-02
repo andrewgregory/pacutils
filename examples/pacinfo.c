@@ -49,6 +49,12 @@ void printd(const char *field, alpm_list_t *values) {
 	}
 }
 
+void printo(const char *field, off_t size) {
+	char hrsize[10];
+	pu_hr_size(size, hrsize);
+	printf(field, hrsize);
+}
+
 off_t _pkg_removable_size(alpm_pkg_t *pkg, alpm_list_t *pkgs, alpm_list_t **seen)
 {
 	const char *pkgname = alpm_pkg_get_name(pkg);
@@ -222,27 +228,27 @@ int main(int argc, char **argv) {
 			continue;
 		}
 
-		printf("Name:           %s\n",  alpm_pkg_get_name(pkg));
-		printf("Repository:     %s\n",  alpm_db_get_name(alpm_pkg_get_db(pkg)));
-		printf("File:           %s\n",  alpm_pkg_get_filename(pkg));
-		printf("Version:        %s\n",  alpm_pkg_get_version(pkg));
-		printf("Description:    %s\n",  alpm_pkg_get_desc(pkg));
-		printf("Architecture:   %s\n",  alpm_pkg_get_arch(pkg));
-		printf("URL:            %s\n",  alpm_pkg_get_url(pkg));
-		printl("Licenses:       %s\n",  alpm_pkg_get_licenses(pkg));
-		printl("Groups:         %s\n",  alpm_pkg_get_groups(pkg));
-		printd("Provides:       %s\n",  alpm_pkg_get_provides(pkg));
-		printd("Requires:       %s\n",  alpm_pkg_get_depends(pkg));
-		printd("Conflicts:      %s\n",  alpm_pkg_get_conflicts(pkg));
-		printd("Replaces:       %s\n",  alpm_pkg_get_replaces(pkg));
-		printf("Download Size:  %zd\n", alpm_pkg_get_size(pkg));
-		printf("Installed Size: %zd\n",
+		printf("Name:           %s\n", alpm_pkg_get_name(pkg));
+		printf("Repository:     %s\n", alpm_db_get_name(alpm_pkg_get_db(pkg)));
+		printf("File:           %s\n", alpm_pkg_get_filename(pkg));
+		printf("Version:        %s\n", alpm_pkg_get_version(pkg));
+		printf("Description:    %s\n", alpm_pkg_get_desc(pkg));
+		printf("Architecture:   %s\n", alpm_pkg_get_arch(pkg));
+		printf("URL:            %s\n", alpm_pkg_get_url(pkg));
+		printl("Licenses:       %s\n", alpm_pkg_get_licenses(pkg));
+		printl("Groups:         %s\n", alpm_pkg_get_groups(pkg));
+		printd("Provides:       %s\n", alpm_pkg_get_provides(pkg));
+		printd("Requires:       %s\n", alpm_pkg_get_depends(pkg));
+		printd("Conflicts:      %s\n", alpm_pkg_get_conflicts(pkg));
+		printd("Replaces:       %s\n", alpm_pkg_get_replaces(pkg));
+		printo("Download Size:  %s\n", alpm_pkg_get_size(pkg));
+		printo("Installed Size: %s\n",
 				removable_size
 				? pkg_removable_size(handle, pkg)
 				: alpm_pkg_get_isize(pkg));
-		printf("Packager:       %s\n",  alpm_pkg_get_packager(pkg));
-		printt("Build Date:     %s\n",  alpm_pkg_get_builddate(pkg));
-		printt("Install Date:   %s\n",  alpm_pkg_get_installdate(pkg));
+		printf("Packager:       %s\n", alpm_pkg_get_packager(pkg));
+		printt("Build Date:     %s\n", alpm_pkg_get_builddate(pkg));
+		printt("Install Date:   %s\n", alpm_pkg_get_installdate(pkg));
 
 		/*printd("Required For:   ",      alpm_pkg_get_provides(pkg));*/
 		/*printd("Optional For:   ",      alpm_pkg_get_provides(pkg));*/
