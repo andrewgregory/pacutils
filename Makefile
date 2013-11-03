@@ -7,6 +7,8 @@ BINDIR      = ${EXEC_PREFIX}/bin
 INCLUDEDIR  = ${PREFIX}/include
 LIBDIR      = ${EXEC_PREFIX}/lib
 
+all: libpacutils.so src
+
 libpacutils.so: pacutils.c
 	$(CC) $(CFLAGS) -o $@ $^
 
@@ -22,3 +24,5 @@ install: libpacutils.so
 clean:
 	$(RM) *.o *.so*
 	$(MAKE) -C src $@
+
+.PHONY: src
