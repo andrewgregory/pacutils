@@ -11,6 +11,7 @@ pu_config_t *config = NULL;
 alpm_handle_t *handle = NULL;
 alpm_loglevel_t log_level = ALPM_LOG_ERROR | ALPM_LOG_WARNING;
 
+int srch_local = 0, srch_sync = 0;
 int invert = 0, re = 0, exact = 0, or = 0;
 char sep = '\n';
 alpm_list_t *search_dbs = NULL;
@@ -283,6 +284,8 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "help"          , no_argument       , NULL    , FLAG_HELP          } ,
 		{ "version"       , no_argument       , NULL    , FLAG_VERSION       } ,
 
+		{ "local"         , no_argument       , &srch_local, 1               } ,
+		{ "sync"          , no_argument       , &srch_sync , 1               } ,
 
 		{ "invert"        , no_argument       , &invert , 1                  } ,
 		{ "regex"         , no_argument       , &re     , 1                  } ,
@@ -362,6 +365,11 @@ pu_config_t *parse_opts(int argc, char **argv)
 				break;
 		}
 		c = getopt_long(argc, argv, short_opts, long_opts, NULL);
+	}
+
+	if(!srch_local && !srch_sync) {
+		srch_local = 1;
+		srch_sync = 1;
 	}
 
 	return config;
@@ -460,12 +468,16 @@ int main(int argc, char **argv)
 		}
 	} else {
 		alpm_list_t *p, *s;
-		for(p = alpm_db_get_pkgcache(alpm_get_localdb(handle)); p; p = p->next) {
-			haystack = alpm_list_add(haystack, p->data);
-		}
-		for(s = alpm_get_syncdbs(handle); s; s = s->next) {
-			for(p = alpm_db_get_pkgcache(s->data); p; p = p->next) {
+		if(srch_local) {
+			for(p = alpm_db_get_pkgcache(alpm_get_localdb(handle)); p; p = p->next) {
 				haystack = alpm_list_add(haystack, p->data);
+			}
+		}
+		if(srch_sync) {
+			for(s = alpm_get_syncdbs(handle); s; s = s->next) {
+				for(p = alpm_db_get_pkgcache(s->data); p; p = p->next) {
+					haystack = alpm_list_add(haystack, p->data);
+				}
 			}
 		}
 	}
