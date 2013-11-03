@@ -20,6 +20,23 @@ alpm_list_t *provides, *dependson, *conflicts, *replaces;
 typedef const char* (str_accessor) (alpm_pkg_t* pkg);
 typedef alpm_list_t* (str_list_accessor) (alpm_pkg_t* pkg);
 
+void cleanup(int ret)
+{
+	alpm_list_free(search_dbs);
+	alpm_release(handle);
+	pu_config_free(config);
+
+	FREELIST(repo);
+	FREELIST(name);
+	FREELIST(description);
+	FREELIST(packager);
+
+	FREELIST(group);
+	FREELIST(license);
+
+	exit(ret);
+}
+
 const char *get_dbname(alpm_pkg_t *pkg)
 {
 	return alpm_db_get_name(alpm_pkg_get_db(pkg));
@@ -191,7 +208,7 @@ void usage(int ret)
 void version(void)
 {
 	printf("pacsift v0.1 - libalpm %s\n", alpm_version());
-	exit(0);
+	cleanup(0);
 }
 
 pu_config_t *parse_opts(int argc, char **argv)
@@ -406,19 +423,9 @@ int main(int argc, char **argv)
 	alpm_list_free(matches);
 
 cleanup:
-	alpm_list_free(search_dbs);
-	alpm_release(handle);
-	pu_config_free(config);
+	cleanup(ret);
 
-	FREELIST(repo);
-	FREELIST(name);
-	FREELIST(description);
-	FREELIST(packager);
-
-	FREELIST(group);
-	FREELIST(license);
-
-	return ret;
+	return 0;
 }
 
 /* vim: set ts=2 sw=2 noet: */
