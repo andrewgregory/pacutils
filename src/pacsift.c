@@ -22,6 +22,20 @@ alpm_list_t *provides, *dependson, *conflicts, *replaces;
 typedef const char* (str_accessor) (alpm_pkg_t* pkg);
 typedef alpm_list_t* (str_list_accessor) (alpm_pkg_t* pkg);
 
+enum longopt_flags {
+	FLAG_CONFIG = 1000,
+	FLAG_DBPATH,
+	FLAG_DEBUG,
+	FLAG_HELP,
+	FLAG_ROOT,
+	FLAG_VERSION,
+
+	FLAG_NAME,
+	FLAG_DESCRIPTION,
+	FLAG_PACKAGER,
+	FLAG_REPO,
+};
+
 void cleanup(int ret)
 {
 	alpm_list_free(search_dbs);
@@ -153,24 +167,6 @@ alpm_list_t *filter_pkgs(alpm_list_t *pkgs)
 	}
 }
 
-enum longopt_flags {
-	FLAG_CONFIG = 1000,
-	FLAG_DBPATH,
-	FLAG_DEBUG,
-	FLAG_HELP,
-	FLAG_ROOT,
-	FLAG_VERSION,
-
-	FLAG_INVERT,
-	FLAG_REPO,
-	FLAG_RE,
-	FLAG_EXACT,
-
-	FLAG_NAME,
-	FLAG_DESCRIPTION,
-	FLAG_PACKAGER,
-};
-
 void usage(int ret)
 {
 	FILE *stream = (ret ? stderr : stdout);
@@ -227,20 +223,21 @@ pu_config_t *parse_opts(int argc, char **argv)
 
 	char *short_opts = "";
 	struct option long_opts[] = {
-		{ "config"   , required_argument , NULL , FLAG_CONFIG   } ,
-		{ "dbpath"   , required_argument , NULL , FLAG_DBPATH   } ,
-		{ "debug"    , no_argument       , NULL , FLAG_DEBUG    } ,
-		{ "help"     , no_argument       , NULL , FLAG_HELP     } ,
-		{ "version"  , no_argument       , NULL , FLAG_VERSION  } ,
+		{ "config"        , required_argument , NULL    , FLAG_CONFIG        } ,
+		{ "dbpath"        , required_argument , NULL    , FLAG_DBPATH        } ,
+		{ "debug"         , no_argument       , NULL    , FLAG_DEBUG         } ,
+		{ "help"          , no_argument       , NULL    , FLAG_HELP          } ,
+		{ "version"       , no_argument       , NULL    , FLAG_VERSION       } ,
 
-		{ "invert"   , no_argument       , NULL , FLAG_INVERT   } ,
-		{ "re"       , no_argument       , NULL , FLAG_RE       } ,
-		{ "exact"    , no_argument       , NULL , FLAG_EXACT    } ,
 
-		{ "repo"     , required_argument , NULL , FLAG_REPO     } ,
-		{ "packager" , required_argument , NULL , FLAG_PACKAGER } ,
-		{ "name"     , required_argument , NULL , FLAG_NAME     } ,
-		{ "description", required_argument, NULL , FLAG_DESCRIPTION } ,
+		{ "invert"        , no_argument       , &invert , 1                  } ,
+		{ "regex"         , no_argument       , &re     , 1                  } ,
+		{ "exact"         , no_argument       , &exact  , 1                  } ,
+
+		{ "repo"          , required_argument , NULL    , FLAG_REPO          } ,
+		{ "packager"      , required_argument , NULL    , FLAG_PACKAGER      } ,
+		{ "name"          , required_argument , NULL    , FLAG_NAME          } ,
+		{ "description"   , required_argument , NULL    , FLAG_DESCRIPTION   } ,
 
 		{ 0, 0, 0, 0 },
 	};
@@ -286,16 +283,6 @@ pu_config_t *parse_opts(int argc, char **argv)
 			case FLAG_VERSION:
 				pu_print_version(myname, myver);
 				cleanup(0);
-				break;
-
-			case FLAG_INVERT:
-				invert = 1;
-				break;
-			case FLAG_RE:
-				re = 1;
-				break;
-			case FLAG_EXACT:
-				exact = 1;
 				break;
 
 			case FLAG_REPO:
