@@ -16,6 +16,7 @@ char sep = '\n';
 alpm_list_t *search_dbs = NULL;
 alpm_list_t *repo, *name, *description, *packager;
 alpm_list_t *group, *license;
+alpm_list_t *ownsfile;
 alpm_list_t *requiredby;
 alpm_list_t *provides, *dependson, *conflicts, *replaces;
 
@@ -32,6 +33,7 @@ enum longopt_flags {
 
 	FLAG_NAME,
 	FLAG_DESCRIPTION,
+	FLAG_OWNSFILE,
 	FLAG_PACKAGER,
 	FLAG_REPO,
 };
@@ -73,6 +75,47 @@ void _regcomp(regex_t *preg, const char *regex, int cflags)
 		fprintf(stderr, "error: invalid regex '%s' (%s)\n", regex,  errstr);
 		cleanup(1);
 	}
+}
+
+alpm_list_t *filter_filelist(alpm_list_t **pkgs, const char *str)
+{
+	alpm_list_t *p, *matches = NULL;
+	if(re) {
+		regex_t preg;
+		_regcomp(&preg, str, REG_EXTENDED | REG_ICASE | REG_NOSUB);
+		for(p = *pkgs; p; p = p->next) {
+			alpm_filelist_t *files = alpm_pkg_get_files(p->data);
+			int i;
+			for(i = 0; i < files->count; ++i) {
+				if(regexec(&preg, files->files[i].name, 0, NULL, 0) == 0) {
+					matches = alpm_list_add(matches, p->data);
+					break;
+				}
+			}
+		}
+		regfree(&preg);
+	} else if (exact) {
+		for(p = *pkgs; p; p = p->next) {
+			if(alpm_filelist_contains(alpm_pkg_get_files(p->data), str)) {
+				matches = alpm_list_add(matches, p->data);
+			}
+		}
+	} else {
+		for(p = *pkgs; p; p = p->next) {
+			alpm_filelist_t *files = alpm_pkg_get_files(p->data);
+			int i;
+			for(i = 0; i < files->count; ++i) {
+				if(strcasestr(files->files[i].name, str)) {
+					matches = alpm_list_add(matches, p->data);
+					break;
+				}
+			}
+		}
+	}
+	for(p = matches; p; p = p->next) {
+		*pkgs = alpm_list_remove(*pkgs, p->data, ptr_cmp, NULL);
+	}
+	return matches;
 }
 
 alpm_list_t *filter_str(alpm_list_t **pkgs, const char *str, str_accessor *func)
@@ -157,6 +200,16 @@ alpm_list_t *filter_pkgs(alpm_list_t *pkgs)
 		}
 	}
 
+	if(ownsfile) {
+		for(i = ownsfile; i; i = i->next) {
+			matches = alpm_list_join(matches, filter_filelist(&haystack, i->data));
+		}
+		if(!or) {
+			alpm_list_free(haystack);
+			haystack = matches;
+			matches = NULL;
+		}
+	}
 
 	if(invert) {
 		matches = alpm_list_diff(pkgs, haystack, ptr_cmp);
@@ -204,6 +257,7 @@ void usage(int ret)
 	hputs("   --description=<desc>");
 	hputs("   --packager=<name>");
 	hputs("   --group=<name>      search packages in group <name>");
+	hputs("   --owns-file=<path>  search packages that own <path>");
 	/*hputs("   --license");*/
 	/*hputs("   --provides");*/
 	/*hputs("   --depends-on");*/
@@ -238,6 +292,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "packager"      , required_argument , NULL    , FLAG_PACKAGER      } ,
 		{ "name"          , required_argument , NULL    , FLAG_NAME          } ,
 		{ "description"   , required_argument , NULL    , FLAG_DESCRIPTION   } ,
+		{ "owns-file"     , required_argument , NULL    , FLAG_OWNSFILE      } ,
 
 		{ 0, 0, 0, 0 },
 	};
@@ -296,6 +351,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 				break;
 			case FLAG_DESCRIPTION:
 				description = alpm_list_add(description, strdup(optarg));
+				break;
+			case FLAG_OWNSFILE:
+				ownsfile = alpm_list_add(ownsfile, strdup(optarg));
 				break;
 
 			case '?':
