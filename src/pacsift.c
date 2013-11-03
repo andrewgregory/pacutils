@@ -5,6 +5,8 @@
 
 #include <pacutils.h>
 
+const char *myname = "pacsift", *myver = "0.1";
+
 pu_config_t *config = NULL;
 alpm_handle_t *handle = NULL;
 alpm_loglevel_t log_level = ALPM_LOG_ERROR | ALPM_LOG_WARNING;
@@ -205,12 +207,6 @@ void usage(int ret)
 	cleanup(ret);
 }
 
-void version(void)
-{
-	printf("pacsift v0.1 - libalpm %s\n", alpm_version());
-	cleanup(0);
-}
-
 pu_config_t *parse_opts(int argc, char **argv)
 {
 	char *config_file = "/etc/pacman.conf";
@@ -276,7 +272,8 @@ pu_config_t *parse_opts(int argc, char **argv)
 				usage(0);
 				break;
 			case FLAG_VERSION:
-				version();
+				pu_print_version(myname, myver);
+				cleanup(0);
 				break;
 
 			case FLAG_INVERT:
