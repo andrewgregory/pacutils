@@ -49,12 +49,24 @@ int ptr_cmp(const void *p1, const void *p2)
 	return p2 - p1;
 }
 
+/* regcmp wrapper with error handling */
+void _regcomp(regex_t *preg, const char *regex, int cflags)
+{
+	int err;
+	if((err = regcomp(preg, regex, REG_EXTENDED | REG_ICASE | REG_NOSUB)) != 0) {
+		char errstr[100];
+		regerror(err, preg, errstr, 100);
+		fprintf(stderr, "error: invalid regex '%s' (%s)\n", regex,  errstr);
+		cleanup(1);
+	}
+}
+
 alpm_list_t *filter_str(alpm_list_t **pkgs, const char *str, str_accessor *func)
 {
 	alpm_list_t *p, *matches = NULL;
 	if(re) {
 		regex_t preg;
-		regcomp(&preg, str, REG_EXTENDED | REG_ICASE | REG_NOSUB);
+		_regcomp(&preg, str, REG_EXTENDED | REG_ICASE | REG_NOSUB);
 		for(p = *pkgs; p; p = p->next) {
 			const char *s = func(p->data);
 			if(s && regexec(&preg, s, 0, NULL, 0) == 0) {
