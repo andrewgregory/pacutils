@@ -19,7 +19,7 @@ pacutils - utility library for libalpm front-ends
 
 B<pacutils> encapsulates several of the common tasks that most users of
 I<libalpm> need to perform, such as parsing F<pacman.conf> and providing
-standard output functions for callbacks.  The included examples can also be
+standard output functions for callbacks.  The included programs can also be
 used as guides for how to accomplish particular actions using I<libalpm>.
 
 =head1 DESCRIPTION
@@ -66,10 +66,10 @@ C<Server> directives and C<Architecture> will be replaced if set to C<auto>.
 
 =back
 
-=head1 EXAMPLES
+=head1 PROGRAMS
 
-There are several example programs located in F<examples/>.  Refer to each
-program's usage for more information.
+There are several programs located in F<src/>.  Refer to each program's
+documentation for more information.
 
 =over
 

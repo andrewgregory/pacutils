@@ -10,7 +10,7 @@ LIBDIR      = ${EXEC_PREFIX}/lib
 libpacutils.so: pacutils.c
 	$(CC) $(CFLAGS) -o $@ $^
 
-examples: libpacutils.so
+src: libpacutils.so
 	$(MAKE) -C $@ all
 
 install: libpacutils.so
@@ -21,4 +21,4 @@ install: libpacutils.so
 
 clean:
 	$(RM) *.o *.so*
-	$(MAKE) -C examples $@
+	$(MAKE) -C src $@
