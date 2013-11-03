@@ -140,52 +140,53 @@ enum longopt_flags {
 	FLAG_PACKAGER,
 };
 
-#define hputs(str) fputs(str"\n", stream);
-
 void usage(int ret)
 {
 	FILE *stream = (ret ? stderr : stdout);
+#define hputs(str) fputs(str"\n", stream);
 	hputs("pacsift - query packages");
 	hputs("usage:  pacsift [options] (<field> <term>)...");
 	hputs("        pacsift (--help|--version)");
 	hputs("options:");
-	hputs("   --config=<path>  set an alternate configuration file");
-	hputs("   --dbpath=<path>  set an alternate database location");
-	hputs("   --help           display this help information");
-	hputs("   --version        display version information");
+	hputs("   --config=<path>     set an alternate configuration file");
+	hputs("   --dbpath=<path>     set an alternate database location");
+	hputs("   --help              display this help information");
+	hputs("   --version           display version information");
 
-	hputs("   --invert         display packages which DO NOT match search criteria");
-	hputs("   --or             OR search terms instead of AND");
+	hputs("   --invert            display packages which DO NOT match search criteria");
+	/*hputs("   --or                OR search terms instead of AND");*/
+
+	hputs("   --exact");
+	hputs("   --regex");
 
 	hputs(" Filters:");
 	hputs("   Note: filters are unaffected by --invert and --or");
-	hputs("   --local          search installed packages");
-	hputs("   --sync           search packages in all sync repositories");
-	hputs("   --depends        limit to packages installed as dependencies");
-	hputs("   --explicit       limit to packages installed explicitly");
-	hputs("   --unrequired     limit to unrequired packages");
-	hputs("   --required       limit to required packages");
-	hputs("   --foreign        limit to packages not in a sync repo");
-	hputs("   --native         limit to packages in a sync repo");
+	hputs("   --local             search installed packages");
+	hputs("   --sync              search packages in all sync repositories");
+	/*hputs("   --depends           limit to packages installed as dependencies");*/
+	/*hputs("   --explicit          limit to packages installed explicitly");*/
+	/*hputs("   --unrequired        limit to unrequired packages");*/
+	/*hputs("   --required          limit to required packages");*/
+	/*hputs("   --foreign           limit to packages not in a sync repo");*/
+	/*hputs("   --native            limit to packages in a sync repo");*/
 
 	hputs(" Package Fields:");
 	hputs("   Note: options specified multiple times will be OR'd");
-	hputs("   --repo=<name>    search packages in repo <name>");
-	hputs("   --name");
-	hputs("   --description");
-	hputs("   --license");
-	hputs("   --group=<name>   search packages in group <name>");
-	hputs("   --provides");
-	hputs("   --depends-on");
-	hputs("   --required-by");
-	hputs("   --conflicts");
-	hputs("   --replaces");
-	hputs("   --packager");
-
-	exit(ret);
-}
-
+	hputs("   --repo=<name>       search packages in repo <name>");
+	hputs("   --name=<name>");
+	hputs("   --description=<desc>");
+	hputs("   --packager=<name>");
+	hputs("   --group=<name>      search packages in group <name>");
+	/*hputs("   --license");*/
+	/*hputs("   --provides");*/
+	/*hputs("   --depends-on");*/
+	/*hputs("   --required-by");*/
+	/*hputs("   --conflicts");*/
+	/*hputs("   --replaces");*/
 #undef hputs
+
+	cleanup(ret);
+}
 
 void version(void)
 {
