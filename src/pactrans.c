@@ -20,18 +20,24 @@ enum longopt_flags {
 	FLAG_ASDEPS,
 	FLAG_ASEXPLICIT,
 	FLAG_CACHEDIR,
+	FLAG_CASCADE,
 	FLAG_CONFIG,
+	FLAG_DBONLY,
 	FLAG_DBPATH,
 	FLAG_DEBUG,
 	FLAG_DLONLY,
 	FLAG_FILE,
 	FLAG_HELP,
 	FLAG_LOGFILE,
+	FLAG_NOBACKUP,
+	FLAG_NODEPS,
+	FLAG_NOSCRIPTLET,
 	FLAG_PRINT,
 	FLAG_RECURSIVE,
 	FLAG_REMOVE,
 	FLAG_ROOT,
 	FLAG_SPEC,
+	FLAG_UNNEEDED,
 	FLAG_VERSION,
 };
 
@@ -52,25 +58,25 @@ void usage(int ret)
 	hputs("");
 	hputs("actions (may be used together):");
 	hputf("   --spec             install sync/file specs, remove local specs%s", list == &spec ? " (default)" : "");
-	hputf("   --add              install packages from sync database%s", list == &add ? " (default)" : "");
+	hputf("   --install          install packages from sync database%s", list == &add ? " (default)" : "");
 	hputs("   --file             install packages from files");
 	hputf("   --remove           remove packages%s", list == &rem ? " (default)" : "");
 	hputs("");
 	hputs("options:");
-	hputs("   --nodeps");
-	hputs("   --dbonly");
-	hputs("   --noscriptlet");
-	hputs("   --print-only");
 	hputs("   --cachedir=<path>  set an alternate cache location");
 	hputs("   --config=<path>    set an alternate configuration file");
+	hputs("   --dbonly");
 	hputs("   --dbpath=<path>    set an alternate database location");
 	hputs("   --debug            enable extra debugging messages");
 	hputs("   --logfile=<path>   set an alternate log file");
+	hputs("   --print-only");
+	hputs("   --no-deps");
+	hputs("   --no-scriptlet");
 	hputs("   --root=<path>      set an alternate installation root");
 	hputs("   --help             display this help information");
 	hputs("   --version          display version information");
 	hputs("");
-	hputs("add/file options:");
+	hputs("install/file options:");
 	hputs("   --as-deps          install packages as dependencies");
 	hputs("   --as-explicit      install packages as explicit");
 	hputs("   --download-only    download packages without installing");
@@ -94,22 +100,33 @@ pu_config_t *parse_opts(int argc, char **argv)
 	char *short_opts = "-";
 	struct option long_opts[] = {
 		{ "spec"          , no_argument       , NULL       , FLAG_SPEC         } ,
-		{ "add"           , no_argument       , NULL       , FLAG_ADD          } ,
+		{ "install"       , no_argument       , NULL       , FLAG_ADD          } ,
 		{ "file"          , no_argument       , NULL       , FLAG_FILE         } ,
 		{ "remove"        , no_argument       , NULL       , FLAG_REMOVE       } ,
-		{ "asdeps"        , no_argument       , NULL       , FLAG_ASDEPS       } ,
-		{ "asexplicit"    , no_argument       , NULL       , FLAG_ASEXPLICIT   } ,
-		{ "recursive"     , no_argument       , NULL       , FLAG_RECURSIVE    } ,
+
+		{ "cachedir"      , required_argument , NULL       , FLAG_CACHEDIR     } ,
 		{ "config"        , required_argument , NULL       , FLAG_CONFIG       } ,
+		{ "dbonly"        , no_argument       , NULL       , FLAG_DBONLY       } ,
 		{ "dbpath"        , required_argument , NULL       , FLAG_DBPATH       } ,
 		{ "debug"         , no_argument       , NULL       , FLAG_DEBUG        } ,
-		{ "download-only" , no_argument       , NULL       , FLAG_DLONLY       } ,
-		{ "help"          , no_argument       , NULL       , FLAG_HELP         } ,
-		{ "root"          , required_argument , NULL       , FLAG_ROOT         } ,
-		{ "version"       , no_argument       , NULL       , FLAG_VERSION      } ,
 		{ "logfile"       , required_argument , NULL       , FLAG_LOGFILE      } ,
-		{ "cachedir"      , required_argument , NULL       , FLAG_CACHEDIR     } ,
 		{ "print-only"    , no_argument       , NULL       , FLAG_PRINT        } ,
+		{ "no-deps"       , no_argument       , NULL       , FLAG_NODEPS       } ,
+		{ "no-scriptlet"  , no_argument       , NULL       , FLAG_NOSCRIPTLET  } ,
+		{ "root"          , required_argument , NULL       , FLAG_ROOT         } ,
+
+		{ "help"          , no_argument       , NULL       , FLAG_HELP         } ,
+		{ "version"       , no_argument       , NULL       , FLAG_VERSION      } ,
+
+		{ "as-deps"       , no_argument       , NULL       , FLAG_ASDEPS       } ,
+		{ "as-explicit"   , no_argument       , NULL       , FLAG_ASEXPLICIT   } ,
+		{ "download-only" , no_argument       , NULL       , FLAG_DLONLY       } ,
+
+		{ "cascade"       , no_argument       , NULL       , FLAG_CASCADE      } ,
+		{ "no-backup"     , no_argument       , NULL       , FLAG_NOBACKUP     } ,
+		{ "recursive"     , no_argument       , NULL       , FLAG_RECURSIVE    } ,
+		{ "unneeded"      , no_argument       , NULL       , FLAG_UNNEEDED     } ,
+
 		{ 0, 0, 0, 0 },
 	};
 
@@ -141,9 +158,8 @@ pu_config_t *parse_opts(int argc, char **argv)
 	while((c = getopt_long(argc, argv, short_opts, long_opts, NULL)) != -1) {
 		switch(c) {
 
-			/* already handled */
 			case 0:
-			case FLAG_CONFIG:
+				/* already handled */
 				break;
 
 			/* non-option arguments */
@@ -165,7 +181,50 @@ pu_config_t *parse_opts(int argc, char **argv)
 				list = &spec;
 				break;
 
-			/* options */
+			/* general options */
+			case FLAG_CACHEDIR:
+				FREELIST(config->cachedirs);
+				config->cachedirs = alpm_list_add(NULL, strdup(optarg));
+				break;
+			case FLAG_CONFIG:
+				/* already handled */
+				break;
+			case FLAG_DBONLY:
+				trans_flags |= ALPM_TRANS_FLAG_DBONLY;
+				trans_flags |= ALPM_TRANS_FLAG_NOSCRIPTLET;
+				break;
+			case FLAG_DBPATH:
+				free(config->dbpath);
+				config->dbpath = strdup(optarg);
+				break;
+			case FLAG_DEBUG:
+				log_level |= ALPM_LOG_DEBUG;
+				log_level |= ALPM_LOG_FUNCTION;
+				break;
+			case FLAG_LOGFILE:
+				free(config->logfile);
+				config->logfile = strdup(optarg);
+				break;
+			case FLAG_PRINT:
+				printonly = 1;
+				trans_flags |= ALPM_TRANS_FLAG_NOLOCK;
+				break;
+			case FLAG_NODEPS:
+				if(trans_flags & ALPM_TRANS_FLAG_NODEPVERSION) {
+					trans_flags |= ALPM_TRANS_FLAG_NODEPS;
+				} else {
+					trans_flags |= ALPM_TRANS_FLAG_NODEPVERSION;
+				}
+				break;
+			case FLAG_NOSCRIPTLET:
+				trans_flags |= ALPM_TRANS_FLAG_NOSCRIPTLET;
+				break;
+			case FLAG_ROOT:
+				free(config->rootdir);
+				config->rootdir = strdup(optarg);
+				break;
+
+			/* install options */
 			case FLAG_ASDEPS:
 				if(trans_flags & ALPM_TRANS_FLAG_ALLEXPLICIT) {
 					fatal("error: --asdeps and --asexplicit may not be used together\n");
@@ -178,6 +237,18 @@ pu_config_t *parse_opts(int argc, char **argv)
 				}
 				trans_flags |= ALPM_TRANS_FLAG_ALLEXPLICIT;
 				break;
+			case FLAG_DLONLY:
+				trans_flags |= ALPM_TRANS_FLAG_DOWNLOADONLY;
+				trans_flags |= ALPM_TRANS_FLAG_NOCONFLICTS;
+				break;
+
+			/* remove options */
+			case FLAG_CASCADE:
+				trans_flags |= ALPM_TRANS_FLAG_CASCADE;
+				break;
+			case FLAG_NOBACKUP:
+				trans_flags |= ALPM_TRANS_FLAG_NOSAVE;
+				break;
 			case FLAG_RECURSIVE:
 				if(trans_flags & ALPM_TRANS_FLAG_RECURSE) {
 					trans_flags |= ALPM_TRANS_FLAG_RECURSEALL;
@@ -185,34 +256,10 @@ pu_config_t *parse_opts(int argc, char **argv)
 					trans_flags |= ALPM_TRANS_FLAG_RECURSE;
 				}
 				break;
-			case FLAG_CACHEDIR:
-				FREELIST(config->cachedirs);
-				config->cachedirs = alpm_list_add(NULL, strdup(optarg));
+			case FLAG_UNNEEDED:
+				trans_flags |= ALPM_TRANS_FLAG_UNNEEDED;
 				break;
-			case FLAG_DBPATH:
-				free(config->dbpath);
-				config->dbpath = strdup(optarg);
-				break;
-			case FLAG_DEBUG:
-				log_level |= ALPM_LOG_DEBUG;
-				log_level |= ALPM_LOG_FUNCTION;
-				break;
-			case FLAG_DLONLY:
-				trans_flags |= ALPM_TRANS_FLAG_DOWNLOADONLY;
-				trans_flags |= ALPM_TRANS_FLAG_NOCONFLICTS;
-				break;
-			case FLAG_LOGFILE:
-				free(config->logfile);
-				config->logfile = strdup(optarg);
-				break;
-			case FLAG_PRINT:
-				printonly = 1;
-				trans_flags |= ALPM_TRANS_FLAG_NOLOCK;
-				break;
-			case FLAG_ROOT:
-				free(config->rootdir);
-				config->rootdir = strdup(optarg);
-				break;
+
 			case '?':
 			default:
 				usage(1);
