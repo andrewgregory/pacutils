@@ -13,6 +13,7 @@ alpm_transflag_t trans_flags = 0;
 
 alpm_list_t *spec = NULL, *add = NULL, *rem = NULL, *files = NULL;
 alpm_list_t **list = &spec;
+alpm_list_t *ignore_pkg = NULL, *ignore_group = NULL;
 int printonly = 0, noconfirm = 0, sysupgrade = 0, downgrade = 0;
 
 enum longopt_flags {
@@ -29,6 +30,8 @@ enum longopt_flags {
 	FLAG_DOWNGRADE,
 	FLAG_FILE,
 	FLAG_HELP,
+	FLAG_IGNORE_PKG,
+	FLAG_IGNORE_GROUP,
 	FLAG_LOGFILE,
 	FLAG_NOBACKUP,
 	FLAG_NOCONFIRM,
@@ -62,8 +65,9 @@ void usage(int ret)
 	hputs("actions (may be used together):");
 	hputf("   --spec             install sync/file specs, remove local specs%s", list == &spec ? " (default)" : "");
 	hputf("   --install          install packages from sync database%s", list == &add ? " (default)" : "");
-	hputs("   --file             install packages from files");
 	hputf("   --remove           remove packages%s", list == &rem ? " (default)" : "");
+	hputs("   --file             install packages from files");
+	hputs("   --sysupgrade       upgrade installed packages");
 	hputs("");
 	hputs("options:");
 	hputs("   --cachedir=<path>  set an alternate cache location");
@@ -77,9 +81,14 @@ void usage(int ret)
 	hputs("   --no-deps");
 	hputs("   --no-scriptlet");
 	hputs("   --root=<path>      set an alternate installation root");
-	hputs("   --sysupgrade       upgrade installed packages");
 	hputs("   --help             display this help information");
 	hputs("   --version          display version information");
+	hputs("");
+	hputs("sysupgrade options:");
+	hputs("   --ignore-pkg=<package>");
+	hputs("                      ignore upgrades for <package>");
+	hputs("   --ignore-group=<group>");
+	hputs("                      ignore upgrades for packages in group <group>");
 	hputs("");
 	hputs("install/file options:");
 	hputs("   --as-deps          install packages as dependencies");
@@ -126,6 +135,11 @@ pu_config_t *parse_opts(int argc, char **argv)
 
 		{ "help"          , no_argument       , NULL       , FLAG_HELP         } ,
 		{ "version"       , no_argument       , NULL       , FLAG_VERSION      } ,
+
+		{ "ignore-pkg"    , required_argument , NULL       , FLAG_IGNORE_PKG   } ,
+		{ "ignore"        , required_argument , NULL       , FLAG_IGNORE_PKG   } ,
+		{ "ignore-group"  , required_argument , NULL       , FLAG_IGNORE_GROUP } ,
+		{ "ignoregroup"   , required_argument , NULL       , FLAG_IGNORE_GROUP } ,
 
 		{ "as-deps"       , no_argument       , NULL       , FLAG_ASDEPS       } ,
 		{ "as-explicit"   , no_argument       , NULL       , FLAG_ASEXPLICIT   } ,
@@ -210,9 +224,6 @@ pu_config_t *parse_opts(int argc, char **argv)
 				log_level |= ALPM_LOG_DEBUG;
 				log_level |= ALPM_LOG_FUNCTION;
 				break;
-			case FLAG_DOWNGRADE:
-				downgrade = 1;
-				break;
 			case FLAG_LOGFILE:
 				free(config->logfile);
 				config->logfile = strdup(optarg);
@@ -240,6 +251,17 @@ pu_config_t *parse_opts(int argc, char **argv)
 				break;
 			case FLAG_SYSUPGRADE:
 				sysupgrade = 1;
+				break;
+
+			/* sysupgrade options */
+			case FLAG_DOWNGRADE:
+				downgrade = 1;
+				break;
+			case FLAG_IGNORE_PKG:
+				ignore_pkg = alpm_list_add(ignore_pkg, strdup(optarg));
+				break;
+			case FLAG_IGNORE_GROUP:
+				ignore_group = alpm_list_add(ignore_group, strdup(optarg));
 				break;
 
 			/* install options */
@@ -438,7 +460,7 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
-	if(!spec && !add && !rem && !files) {
+	if(!spec && !add && !rem && !files && !sysupgrade) {
 		fprintf(stderr, "error: no targets provided.\n");
 		ret = 1;
 		goto cleanup;
@@ -454,6 +476,13 @@ int main(int argc, char **argv)
 	alpm_option_set_progresscb(handle, pu_cb_progress);
 	alpm_option_set_dlcb(handle, pu_cb_download);
 	alpm_option_set_logcb(handle, cb_log);
+
+	for(i = ignore_pkg; i; i = i->next) {
+		alpm_option_add_ignorepkg(handle, i->data);
+	}
+	for(i = ignore_group; i; i = i->next) {
+		alpm_option_add_ignoregroup(handle, i->data);
+	}
 
 	sync_dbs = pu_register_syncdbs(handle, config->repos);
 	if(!sync_dbs) {
@@ -604,6 +633,8 @@ cleanup:
 	alpm_list_free(add);
 	alpm_list_free(rem);
 	FREELIST(files);
+	FREELIST(ignore_pkg);
+	FREELIST(ignore_group);
 	alpm_release(handle);
 	pu_config_free(config);
 
