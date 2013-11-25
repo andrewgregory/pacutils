@@ -525,11 +525,19 @@ int main(int argc, char **argv)
 	}
 
 	for(i = add; i; i = i->next) {
-		alpm_add_pkg(handle, i->data);
+		if(alpm_add_pkg(handle, i->data) != 0) {
+			fprintf(stderr, "%s\n", alpm_strerror(alpm_errno(handle)));
+			ret = 1;
+			goto transcleanup;
+		}
 	}
 
 	for(i = rem; i; i = i->next) {
-		alpm_remove_pkg(handle, i->data);
+		if(alpm_remove_pkg(handle, i->data) != 0) {
+			fprintf(stderr, "%s\n", alpm_strerror(alpm_errno(handle)));
+			ret = 1;
+			goto transcleanup;
+		}
 	}
 
 	if(sysupgrade && alpm_sync_sysupgrade(handle, downgrade) != 0) {
