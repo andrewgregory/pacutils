@@ -108,7 +108,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "config"        , required_argument , NULL       , FLAG_CONFIG       } ,
 		{ "dbonly"        , no_argument       , NULL       , FLAG_DBONLY       } ,
 		{ "dbpath"        , required_argument , NULL       , FLAG_DBPATH       } ,
-		{ "debug"         , no_argument       , NULL       , FLAG_DEBUG        } ,
+		{ "debug"         , optional_argument , NULL       , FLAG_DEBUG        } ,
 		{ "logfile"       , required_argument , NULL       , FLAG_LOGFILE      } ,
 		{ "print-only"    , no_argument       , NULL       , FLAG_PRINT        } ,
 		{ "no-deps"       , no_argument       , NULL       , FLAG_NODEPS       } ,
