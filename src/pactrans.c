@@ -13,7 +13,7 @@ alpm_transflag_t trans_flags = 0;
 
 alpm_list_t *spec = NULL, *add = NULL, *rem = NULL, *files = NULL;
 alpm_list_t **list = &spec;
-int printonly = 0;
+int printonly = 0, noconfirm = 0;
 
 enum longopt_flags {
 	FLAG_ADD = 1000,
@@ -30,6 +30,7 @@ enum longopt_flags {
 	FLAG_HELP,
 	FLAG_LOGFILE,
 	FLAG_NOBACKUP,
+	FLAG_NOCONFIRM,
 	FLAG_NODEPS,
 	FLAG_NOSCRIPTLET,
 	FLAG_PRINT,
@@ -70,6 +71,7 @@ void usage(int ret)
 	hputs("   --debug            enable extra debugging messages");
 	hputs("   --logfile=<path>   set an alternate log file");
 	hputs("   --print-only");
+	hputs("   --no-confirm");
 	hputs("   --no-deps");
 	hputs("   --no-scriptlet");
 	hputs("   --root=<path>      set an alternate installation root");
@@ -111,6 +113,8 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "debug"         , optional_argument , NULL       , FLAG_DEBUG        } ,
 		{ "logfile"       , required_argument , NULL       , FLAG_LOGFILE      } ,
 		{ "print-only"    , no_argument       , NULL       , FLAG_PRINT        } ,
+		{ "no-confirm"    , no_argument       , NULL       , FLAG_NOCONFIRM    } ,
+		{ "noconfirm"     , no_argument       , NULL       , FLAG_NOCONFIRM    } ,
 		{ "no-deps"       , no_argument       , NULL       , FLAG_NODEPS       } ,
 		{ "no-scriptlet"  , no_argument       , NULL       , FLAG_NOSCRIPTLET  } ,
 		{ "root"          , required_argument , NULL       , FLAG_ROOT         } ,
@@ -208,6 +212,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 			case FLAG_PRINT:
 				printonly = 1;
 				trans_flags |= ALPM_TRANS_FLAG_NOLOCK;
+				break;
+			case FLAG_NOCONFIRM:
+				noconfirm = 1;
 				break;
 			case FLAG_NODEPS:
 				if(trans_flags & ALPM_TRANS_FLAG_NODEPVERSION) {
@@ -522,7 +529,7 @@ int main(int argc, char **argv)
 
 	pu_display_transaction(handle);
 
-	if(printonly || !pu_confirm(1, "Proceed with transaction") ) {
+	if(printonly || (!noconfirm && !pu_confirm(1, "Proceed with transaction")) ) {
 		goto transcleanup;
 	}
 
