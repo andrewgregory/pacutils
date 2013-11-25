@@ -13,7 +13,7 @@ alpm_transflag_t trans_flags = 0;
 
 alpm_list_t *spec = NULL, *add = NULL, *rem = NULL, *files = NULL;
 alpm_list_t **list = &spec;
-int printonly = 0, noconfirm = 0;
+int printonly = 0, noconfirm = 0, sysupgrade = 0, downgrade = 0;
 
 enum longopt_flags {
 	FLAG_ADD = 1000,
@@ -26,6 +26,7 @@ enum longopt_flags {
 	FLAG_DBPATH,
 	FLAG_DEBUG,
 	FLAG_DLONLY,
+	FLAG_DOWNGRADE,
 	FLAG_FILE,
 	FLAG_HELP,
 	FLAG_LOGFILE,
@@ -38,6 +39,7 @@ enum longopt_flags {
 	FLAG_REMOVE,
 	FLAG_ROOT,
 	FLAG_SPEC,
+	FLAG_SYSUPGRADE,
 	FLAG_UNNEEDED,
 	FLAG_VERSION,
 };
@@ -75,6 +77,7 @@ void usage(int ret)
 	hputs("   --no-deps");
 	hputs("   --no-scriptlet");
 	hputs("   --root=<path>      set an alternate installation root");
+	hputs("   --sysupgrade       upgrade installed packages");
 	hputs("   --help             display this help information");
 	hputs("   --version          display version information");
 	hputs("");
@@ -118,6 +121,8 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "no-deps"       , no_argument       , NULL       , FLAG_NODEPS       } ,
 		{ "no-scriptlet"  , no_argument       , NULL       , FLAG_NOSCRIPTLET  } ,
 		{ "root"          , required_argument , NULL       , FLAG_ROOT         } ,
+		{ "sysupgrade"    , no_argument       , NULL       , FLAG_SYSUPGRADE   } ,
+		{ "downgrade"     , no_argument       , NULL       , FLAG_DOWNGRADE    } ,
 
 		{ "help"          , no_argument       , NULL       , FLAG_HELP         } ,
 		{ "version"       , no_argument       , NULL       , FLAG_VERSION      } ,
@@ -205,6 +210,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 				log_level |= ALPM_LOG_DEBUG;
 				log_level |= ALPM_LOG_FUNCTION;
 				break;
+			case FLAG_DOWNGRADE:
+				downgrade = 1;
+				break;
 			case FLAG_LOGFILE:
 				free(config->logfile);
 				config->logfile = strdup(optarg);
@@ -229,6 +237,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 			case FLAG_ROOT:
 				free(config->rootdir);
 				config->rootdir = strdup(optarg);
+				break;
+			case FLAG_SYSUPGRADE:
+				sysupgrade = 1;
 				break;
 
 			/* install options */
@@ -519,6 +530,12 @@ int main(int argc, char **argv)
 
 	for(i = rem; i; i = i->next) {
 		alpm_remove_pkg(handle, i->data);
+	}
+
+	if(sysupgrade && alpm_sync_sysupgrade(handle, downgrade) != 0) {
+		fprintf(stderr, "%s\n", alpm_strerror(alpm_errno(handle)));
+		ret = 1;
+		goto transcleanup;
 	}
 
 	if(alpm_trans_prepare(handle, &err_data) != 0) {
