@@ -9,8 +9,6 @@ alpm_handle_t *handle = NULL;
 alpm_loglevel_t log_level = ALPM_LOG_ERROR | ALPM_LOG_WARNING;
 alpm_transflag_t trans_flags = 0;
 int force = 0;
-int sysupgrade = 1;
-int downgrade = 0;
 
 enum longopt_flags {
 	FLAG_CONFIG = 1000,
@@ -34,8 +32,6 @@ void usage(int ret)
 	hputs("   --force            sync repos even if already up-to-date");
 	hputs("   --debug            enable extra debugging messages");
 	hputs("   --logfile=<path>   set an alternate log file");
-	hputs("   --no-upgrade       do not run system upgrade after syncing");
-	hputs("   --downgrade        enable downgrading packages");
 	hputs("   --help             display this help information");
 	hputs("   --version          display version information");
 	exit(ret);
@@ -60,8 +56,6 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "dbpath"       , required_argument , NULL         , FLAG_DBPATH   } ,
 		{ "debug"        , no_argument       , NULL         , FLAG_DEBUG    } ,
 		{ "force"        , no_argument       , &force       , 1             } ,
-		{ "no-upgrade"   , no_argument       , &sysupgrade  , 0             } ,
-		{ "downgrade"    , no_argument       , &downgrade   , 1             } ,
 		{ "help"         , no_argument       , NULL         , FLAG_HELP     } ,
 		{ "version"      , no_argument       , NULL         , FLAG_VERSION  } ,
 		{ "logfile"      , required_argument , NULL         , FLAG_LOGFILE  } ,
@@ -119,34 +113,6 @@ pu_config_t *parse_opts(int argc, char **argv)
 	return config;
 }
 
-void cb_event(alpm_event_t event, void *data1, void *data2)
-{
-	switch(event) {
-		case ALPM_EVENT_ADD_DONE:
-			alpm_logaction(handle, LOG_PREFIX, "installed %s (%s)\n",
-					alpm_pkg_get_name(data1), alpm_pkg_get_version(data1));
-			break;
-		case ALPM_EVENT_REMOVE_DONE:
-			alpm_logaction(handle, LOG_PREFIX, "removed %s (%s)\n",
-					alpm_pkg_get_name(data1), alpm_pkg_get_version(data1));
-			break;
-		case ALPM_EVENT_UPGRADE_DONE:
-			alpm_logaction(handle, LOG_PREFIX, "upgraded %s (%s -> %s)\n",
-					alpm_pkg_get_name(data1),
-					alpm_pkg_get_version(data2), alpm_pkg_get_version(data1));
-			break;
-		case ALPM_EVENT_DOWNGRADE_DONE:
-			alpm_logaction(handle, LOG_PREFIX, "downgraded %s (%s -> %s)\n",
-					alpm_pkg_get_name(data1),
-					alpm_pkg_get_version(data2), alpm_pkg_get_version(data1));
-			break;
-		case ALPM_EVENT_REINSTALL_DONE:
-			alpm_logaction(handle, LOG_PREFIX, "reinstalled %s (%s)\n",
-					alpm_pkg_get_name(data1), alpm_pkg_get_version(data1));
-			break;
-	}
-}
-
 void cb_log(alpm_loglevel_t level, const char *fmt, va_list args)
 {
 	if(level & log_level) {
@@ -169,7 +135,6 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
-	alpm_option_set_eventcb(handle, cb_event);
 	alpm_option_set_progresscb(handle, pu_cb_progress);
 	alpm_option_set_dlcb(handle, pu_cb_download);
 	alpm_option_set_logcb(handle, cb_log);
@@ -218,51 +183,6 @@ int main(int argc, char **argv)
 			printf("%s is up to date\n", alpm_db_get_name(db));
 		}
 		/* else: callbacks display relevant information */
-	}
-
-	if(ret == 0 && sysupgrade) {
-		alpm_list_t * err_data = NULL;
-
-		if(alpm_trans_init(handle, trans_flags) != 0) {
-			fprintf(stderr, "%s\n", alpm_strerror(alpm_errno(handle)));
-			ret = 1;
-			goto cleanup;
-		}
-
-		if(alpm_sync_sysupgrade(handle, downgrade) != 0) {
-			fprintf(stderr, "%s\n", alpm_strerror(alpm_errno(handle)));
-			ret = 1;
-			goto transcleanup;
-		}
-
-		if(alpm_trans_get_add(handle) == NULL) {
-			fputs("System is up to date\n", stdout);
-			goto transcleanup;
-		}
-
-		if(alpm_trans_prepare(handle, &err_data) != 0) {
-			fprintf(stderr, "%s\n", alpm_strerror(alpm_errno(handle)));
-			ret = 1;
-			goto transcleanup;
-		}
-
-		pu_display_transaction(handle);
-
-		if(!pu_confirm(1, "Proceed with sysupgrade") ) {
-			goto transcleanup;
-		}
-
-		if(alpm_trans_commit(handle, &err_data) != 0) {
-			fprintf(stderr, "%s\n", alpm_strerror(alpm_errno(handle)));
-			ret = 1;
-			goto transcleanup;
-		}
-
-transcleanup:
-		if(alpm_trans_release(handle) != 0) {
-			fprintf(stderr, "%s\n", alpm_strerror(alpm_errno(handle)));
-			ret = 1;
-		}
 	}
 
 cleanup:
