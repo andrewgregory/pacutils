@@ -376,6 +376,34 @@ int load_pkg_files()
 	return ret;
 }
 
+void free_fileconflict(alpm_fileconflict_t *conflict) {
+	free(conflict->file);
+	free(conflict->target);
+	free(conflict->ctarget);
+	free(conflict);
+}
+
+void print_fileconflict(alpm_fileconflict_t *conflict) {
+	switch(conflict->type) {
+		case ALPM_FILECONFLICT_TARGET:
+			fprintf(stderr, "file conflict: '%s' exists in '%s' and '%s'\n",
+				conflict->file, conflict->target, conflict->ctarget);
+			break;
+		case ALPM_FILECONFLICT_FILESYSTEM:
+			if(conflict->ctarget && *conflict->ctarget) {
+				fprintf(stderr, "file conflict: '%s' exists in '%s' and filesystem (%s)\n",
+						conflict->file, conflict->target, conflict->ctarget);
+			} else {
+				fprintf(stderr, "file conflict: '%s' exists in '%s' and filesystem\n",
+						conflict->file, conflict->target);
+			}
+			break;
+		default:
+			fprintf(stderr, "%s\n", alpm_strerror(alpm_errno(handle)));
+			break;
+	}
+}
+
 int main(int argc, char **argv)
 {
 	alpm_list_t *i, *sync_dbs = NULL, *err_data = NULL;
@@ -468,6 +496,10 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
+	/**************************************
+	 * begin transaction
+	 **************************************/
+
 	if(alpm_trans_init(handle, trans_flags) != 0) {
 		fprintf(stderr, "%s\n", alpm_strerror(alpm_errno(handle)));
 		ret = 1;
@@ -497,7 +529,33 @@ int main(int argc, char **argv)
 	pu_log_command(handle, LOG_PREFIX, argc, argv);
 
 	if(alpm_trans_commit(handle, &err_data) != 0) {
-		fprintf(stderr, "%s\n", alpm_strerror(alpm_errno(handle)));
+		switch(alpm_errno(handle)) {
+				case ALPM_ERR_DLT_INVALID:
+				case ALPM_ERR_PKG_INVALID:
+				case ALPM_ERR_PKG_INVALID_CHECKSUM:
+				case ALPM_ERR_PKG_INVALID_SIG:
+					for(i = err_data; i; i = i->next) {
+						char *path = i->data;
+						fprintf(stderr, "%s is invalid or corrupted\n", path);
+						free(path);
+					}
+					break;
+
+				case ALPM_ERR_FILE_CONFLICTS:
+					for(i = err_data; i; i = i->next) {
+						print_fileconflict(i->data);
+						free_fileconflict(i->data);
+					}
+					break;
+
+				default:
+					/* FIXME: possible memory leak */
+					fprintf(stderr, "%s\n", alpm_strerror(alpm_errno(handle)));
+					break;
+		}
+
+		alpm_list_free(err_data);
+		err_data = NULL;
 		ret = 1;
 		goto transcleanup;
 	}
