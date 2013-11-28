@@ -276,7 +276,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 	pu_config_t *config = NULL;
 	int c;
 
-	char *short_opts = "";
+	char *short_opts = "QS";
 	struct option long_opts[] = {
 		{ "config"        , required_argument , NULL    , FLAG_CONFIG        } ,
 		{ "dbpath"        , required_argument , NULL    , FLAG_DBPATH        } ,
@@ -284,8 +284,8 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "help"          , no_argument       , NULL    , FLAG_HELP          } ,
 		{ "version"       , no_argument       , NULL    , FLAG_VERSION       } ,
 
-		{ "local"         , no_argument       , &srch_local, 1               } ,
-		{ "sync"          , no_argument       , &srch_sync , 1               } ,
+		{ "local"         , no_argument       , NULL    , 'Q'                } ,
+		{ "sync"          , no_argument       , NULL    , 'S'                } ,
 
 		{ "invert"        , no_argument       , &invert , 1                  } ,
 		{ "regex"         , no_argument       , &re     , 1                  } ,
@@ -341,6 +341,13 @@ pu_config_t *parse_opts(int argc, char **argv)
 			case FLAG_VERSION:
 				pu_print_version(myname, myver);
 				cleanup(0);
+				break;
+
+			case 'Q':
+				srch_local = 1;
+				break;
+			case 'S':
+				srch_sync = 1;
 				break;
 
 			case FLAG_REPO:
