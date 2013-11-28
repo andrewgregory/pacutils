@@ -411,7 +411,21 @@ alpm_db_t *find_db(const char *dbname) {
 void find_pkg(alpm_list_t **pkgs, char *pkgspec) {
 	char *pkgname, *dbname;
 	int found = 0;
+
 	parse_pkg_spec(pkgspec, &pkgname, &dbname);
+
+	if(dbname) {
+		if(strcmp(dbname, "local") == 0) {
+			if(!srch_local) {
+				dbname = NULL;
+			}
+		} else {
+			if(!srch_sync) {
+				dbname = NULL;
+			}
+		}
+	}
+
 	if(dbname) {
 		alpm_db_t *db = find_db(dbname);
 		if(db) {
@@ -422,18 +436,22 @@ void find_pkg(alpm_list_t **pkgs, char *pkgspec) {
 			}
 		}
 	} else {
-		alpm_db_t *db = alpm_get_localdb(handle);
-		alpm_pkg_t *p = alpm_db_get_pkg(db, pkgname);
-		alpm_list_t *d;
-		if(p) {
-			found = 1;
-			*pkgs = alpm_list_add(*pkgs, p);
-		}
-		for(d = alpm_get_syncdbs(handle); d; d = d->next) {
-			alpm_pkg_t *p = alpm_db_get_pkg(d->data, pkgname);
+		if(srch_local) {
+			alpm_db_t *db = alpm_get_localdb(handle);
+			alpm_pkg_t *p = alpm_db_get_pkg(db, pkgname);
 			if(p) {
 				found = 1;
 				*pkgs = alpm_list_add(*pkgs, p);
+			}
+		}
+		if(srch_sync) {
+			alpm_list_t *d;
+			for(d = alpm_get_syncdbs(handle); d; d = d->next) {
+				alpm_pkg_t *p = alpm_db_get_pkg(d->data, pkgname);
+				if(p) {
+					found = 1;
+					*pkgs = alpm_list_add(*pkgs, p);
+				}
 			}
 		}
 	}
