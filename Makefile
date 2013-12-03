@@ -9,15 +9,16 @@ LIBDIR      = ${EXEC_PREFIX}/lib
 
 all: libpacutils.so src
 
-libpacutils.so: pacutils.c
+libpacutils.so: pacutils.c pacutils/log.c
 	$(CC) $(CFLAGS) -o $@ $^
 
 src: libpacutils.so
 	$(MAKE) -C $@ all
 
 install: libpacutils.so
-	install -d ${DESTDIR}${INCLUDEDIR}
+	install -d ${DESTDIR}${INCLUDEDIR}/pacutils
 	install -m 644 pacutils.h ${DESTDIR}${INCLUDEDIR}/pacutils.h
+	install -m 644 pacutils/log.h ${DESTDIR}${INCLUDEDIR}/pacutils/log.h
 	install -d ${DESTDIR}${LIBDIR}
 	install -m 644 libpacutils.so ${DESTDIR}${LIBDIR}/libpacutils.so
 
