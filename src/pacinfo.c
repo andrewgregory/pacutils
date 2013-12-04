@@ -8,7 +8,7 @@ const char *myname = "pacinfo", *myver = "0.1";
 pu_config_t *config = NULL;
 alpm_handle_t *handle = NULL;
 
-int removable_size = 0;
+int level = 2, removable_size = 0;
 
 enum longopt_flags {
 	FLAG_CONFIG = 1000,
@@ -146,6 +146,8 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "debug"         , no_argument       , NULL       , FLAG_DEBUG        } ,
 		{ "root"          , required_argument , NULL       , FLAG_ROOT         } ,
 
+		{ "short"         , no_argument       , &level     , 1                 } ,
+
 		{ "removable-size", no_argument       , NULL       , FLAG_REMOVABLE    } ,
 		{ 0, 0, 0, 0 },
 	};
@@ -206,6 +208,81 @@ pu_config_t *parse_opts(int argc, char **argv)
 	return config;
 }
 
+void print_pkg_info(const char *pkgspec) {
+		alpm_pkg_t *pkg = pu_find_pkgspec(handle, pkgspec);
+		if(!pkg) {
+			fprintf(stderr, "Unable to load package '%s'\n", pkgspec);
+			return;
+		}
+		alpm_db_t *db = alpm_pkg_get_db(pkg);
+		alpm_db_t *localdb = alpm_get_localdb(handle);
+
+		switch(level) {
+			case 1:
+				printf("%s/%s %s", alpm_db_get_name(db), alpm_pkg_get_name(pkg),
+						alpm_pkg_get_version(pkg));
+				if(db != localdb) {
+					alpm_pkg_t *lpkg = alpm_db_get_pkg(localdb, alpm_pkg_get_name(pkg));
+					if(lpkg) {
+						const char *lver = alpm_pkg_get_version(lpkg);
+						if(strcmp(lver, alpm_pkg_get_version(pkg)) == 0) {
+							fputs(" [installed]", stdout);
+						} else {
+							printf(" [installed: %s]", lver);
+						}
+					}
+				}
+				{
+					alpm_list_t *g = alpm_pkg_get_groups(pkg);
+					if(g) {
+						fputs(" (", stdout);
+						for(; g; g = g->next) {
+							fputs(g->data, stdout);
+							if(g->next) {
+								fputc(' ', stdout);
+							}
+						}
+						fputc(')', stdout);
+					}
+				}
+				fputc('\n', stdout);
+				fputs("    ", stdout);
+				fputs(alpm_pkg_get_desc(pkg), stdout);
+				break;
+			case 2:
+				printf("Name:           %s\n", alpm_pkg_get_name(pkg));
+				printf("Repository:     %s\n", alpm_db_get_name(db));
+				printf("File:           %s\n", alpm_pkg_get_filename(pkg));
+				printf("Version:        %s\n", alpm_pkg_get_version(pkg));
+				printf("Description:    %s\n", alpm_pkg_get_desc(pkg));
+				printf("Architecture:   %s\n", alpm_pkg_get_arch(pkg));
+				printf("URL:            %s\n", alpm_pkg_get_url(pkg));
+				printl("Licenses:       %s\n", alpm_pkg_get_licenses(pkg));
+				printl("Groups:         %s\n", alpm_pkg_get_groups(pkg));
+				printd("Provides:       %s\n", alpm_pkg_get_provides(pkg));
+				printd("Requires:       %s\n", alpm_pkg_get_depends(pkg));
+				printd("Conflicts:      %s\n", alpm_pkg_get_conflicts(pkg));
+				printd("Replaces:       %s\n", alpm_pkg_get_replaces(pkg));
+				printo("Download Size:  %s\n", alpm_pkg_get_size(pkg));
+				printo("Installed Size: %s\n",
+						removable_size
+						? pkg_removable_size(handle, pkg)
+						: alpm_pkg_get_isize(pkg));
+				printf("Packager:       %s\n", alpm_pkg_get_packager(pkg));
+				printt("Build Date:     %s\n", alpm_pkg_get_builddate(pkg));
+				printt("Install Date:   %s\n", alpm_pkg_get_installdate(pkg));
+
+				/*printd("Required For:   ",      alpm_pkg_get_provides(pkg));*/
+				/*printd("Optional For:   ",      alpm_pkg_get_provides(pkg));*/
+				/* install reason */
+				/* install script */
+				/* validated by */
+				break;
+		}
+
+		putchar('\n');
+}
+
 int main(int argc, char **argv) {
 	int ret = 0;
 
@@ -222,43 +299,7 @@ int main(int argc, char **argv) {
 	alpm_list_t *syncdbs = pu_register_syncdbs(handle, config->repos);
 
 	for(argv += optind; *argv; ++argv) {
-		alpm_pkg_t *pkg = pu_find_pkgspec(handle, *argv);
-		if(!pkg) {
-			fprintf(stderr, "Unable to load package '%s'\n", *argv);
-			continue;
-		}
-
-		printf("Name:           %s\n", alpm_pkg_get_name(pkg));
-		printf("Repository:     %s\n", alpm_db_get_name(alpm_pkg_get_db(pkg)));
-		printf("File:           %s\n", alpm_pkg_get_filename(pkg));
-		printf("Version:        %s\n", alpm_pkg_get_version(pkg));
-		printf("Description:    %s\n", alpm_pkg_get_desc(pkg));
-		printf("Architecture:   %s\n", alpm_pkg_get_arch(pkg));
-		printf("URL:            %s\n", alpm_pkg_get_url(pkg));
-		printl("Licenses:       %s\n", alpm_pkg_get_licenses(pkg));
-		printl("Groups:         %s\n", alpm_pkg_get_groups(pkg));
-		printd("Provides:       %s\n", alpm_pkg_get_provides(pkg));
-		printd("Requires:       %s\n", alpm_pkg_get_depends(pkg));
-		printd("Conflicts:      %s\n", alpm_pkg_get_conflicts(pkg));
-		printd("Replaces:       %s\n", alpm_pkg_get_replaces(pkg));
-		printo("Download Size:  %s\n", alpm_pkg_get_size(pkg));
-		printo("Installed Size: %s\n",
-				removable_size
-				? pkg_removable_size(handle, pkg)
-				: alpm_pkg_get_isize(pkg));
-		printf("Packager:       %s\n", alpm_pkg_get_packager(pkg));
-		printt("Build Date:     %s\n", alpm_pkg_get_builddate(pkg));
-		printt("Install Date:   %s\n", alpm_pkg_get_installdate(pkg));
-
-		/*printd("Required For:   ",      alpm_pkg_get_provides(pkg));*/
-		/*printd("Optional For:   ",      alpm_pkg_get_provides(pkg));*/
-		/* install reason */
-		/* install script */
-		/* validated by */
-
-		if(*(argv+1)) {
-			putchar('\n');
-		}
+		print_pkg_info(*argv);
 	}
 
 cleanup:
