@@ -14,6 +14,7 @@ char *logfile = NULL;
 
 time_t after = 0, before = 0;
 alpm_list_t *pkgs = NULL;
+int color = 1;
 
 enum longopt_flags {
 	FLAG_CONFIG = 1000,
@@ -25,6 +26,28 @@ enum longopt_flags {
 	FLAG_VERSION,
 };
 
+struct {
+	const char *timestamp;
+	const char *caller;
+
+	const char *message;
+	const char *warning;
+	const char *install;
+	const char *uninstall;
+	const char *action;
+
+	const char *reset;
+} palette = {
+	.timestamp = "\e[33m",       // yellow
+	.caller    = "\e[34m",       // blue
+	.message   = "\e[0m",        // normal
+	.warning   = "\e[37;41m",    // white on red
+	.install   = "\e[32m",       // green
+	.uninstall = "\e[31m",       // red
+	.action    = "\e[36m",       // cyan
+	.reset     = "\e[0m",
+};
+
 void usage(int ret)
 {
 	FILE *stream = (ret ? stderr : stdout);
@@ -33,9 +56,10 @@ void usage(int ret)
 	hputs("usage: paclog [options] [filters]");
 	hputs("");
 	hputs("options:");
-	hputs("   --config=<path>    set an alternate configuration file");
-	hputs("   --debug            enable extra debugging messages");
-	hputs("   --logfile=<path>   set an alternate log file");
+	hputs("   --config=<path>     set an alternate configuration file");
+	hputs("   --debug             enable extra debugging messages");
+	hputs("   --logfile=<path>    set an alternate log file");
+	hputs("   --[no]-color        color output");
 	hputs("");
 	hputs("filters:");
 	hputs("   --package=<pkg>     show entries affecting <pkg>");
@@ -77,6 +101,8 @@ void parse_opts(int argc, char **argv)
 
 	const char *short_opts = "";
 	struct option long_opts[] = {
+		{ "color",      no_argument,       &color, 2            },
+		{ "no-color",   no_argument,       &color, 0            },
 		{ "config",     required_argument, NULL, FLAG_CONFIG    } ,
 		{ "logfile",    required_argument, NULL, FLAG_LOGFILE   } ,
 		{ "help",       no_argument,       NULL, FLAG_HELP      } ,
@@ -132,6 +158,63 @@ void parse_opts(int argc, char **argv)
 	}
 }
 
+int fprint_entry_color(FILE *stream, pu_log_entry_t *entry)
+{
+	int ret = 0;
+	char timestamp[50];
+	char *c, *message = strdup(entry->message);
+	const char *message_color;
+	pu_log_action_t *a = pu_log_action_parse(entry->message);
+
+	if(a) {
+		switch(a->operation) {
+			case PU_LOG_OPERATION_INSTALL:
+				message_color = palette.install;
+				break;
+			case PU_LOG_OPERATION_REMOVE:
+				message_color = palette.uninstall;
+				break;
+			default:
+				message_color = palette.action;
+				break;
+		}
+		pu_log_action_free(a);
+	} else if(strncmp(entry->message, "warning: ", strlen("warning: ")) == 0) {
+		message_color = palette.warning;
+	} else {
+		message_color = palette.message;
+	}
+
+	strftime(timestamp, 50, "%F %R", entry->timestamp);
+
+	/* strip trailing newline so colors don't span line breaks */
+	if(*(c = message + strlen(message) - 1) == '\n') {
+		*c = '\0';
+	}
+
+	if(entry->caller) {
+		ret = printf("[%s%s%s] [%s%s%s] %s%s%s\n",
+				palette.timestamp, timestamp,     palette.reset,
+				palette.caller,    entry->caller, palette.reset,
+				message_color,     message,       palette.reset);
+	} else {
+		ret = printf("[%s%s%s] %s%s%s\n",
+				palette.timestamp, timestamp, palette.reset,
+				message_color,     message,   palette.reset);
+	}
+
+	free(message);
+	return ret;
+}
+
+void print_entry(FILE *stream, pu_log_entry_t *entry) {
+	if(color) {
+		fprint_entry_color(stream, entry);
+	} else {
+		pu_log_fprint_entry(stream, entry);
+	}
+}
+
 int main(int argc, char **argv)
 {
 	alpm_list_t *i, *entries = NULL;
@@ -139,6 +222,9 @@ int main(int argc, char **argv)
 	int ret = 0;
 
 	parse_opts(argc, argv);
+	if(color == 1 && !isatty(fileno(stdout))) {
+		color = 0;
+	}
 
 	if(!isatty(fileno(stdin)) && !feof(stdin)) {
 		free(logfile);
