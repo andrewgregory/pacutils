@@ -33,14 +33,14 @@ void usage(int ret)
 	hputs("usage: paclog [options] [filters]");
 	hputs("");
 	hputs("options:");
-	hputs("   --config=<path>	 set an alternate configuration file");
-	hputs("   --debug			 enable extra debugging messages");
-	hputs("   --logfile=<path>	 set an alternate log file");
+	hputs("   --config=<path>    set an alternate configuration file");
+	hputs("   --debug            enable extra debugging messages");
+	hputs("   --logfile=<path>   set an alternate log file");
 	hputs("");
 	hputs("filters:");
-	hputs("   --package=<pkg>	 show entries affecting <pkg>");
-	hputs("   --before=<date>  show entries before <date>");
-	hputs("   --after=<date>   show entries after <date>");
+	hputs("   --package=<pkg>     show entries affecting <pkg>");
+	hputs("   --before=<date>     show entries before <date>");
+	hputs("   --after=<date>      show entries after <date>");
 #undef hputs
 	exit(ret);
 }
@@ -77,14 +77,14 @@ void parse_opts(int argc, char **argv)
 
 	const char *short_opts = "";
 	struct option long_opts[] = {
-		{ "config"		, required_argument , NULL , FLAG_CONFIG	   } ,
-		{ "logfile"		, required_argument , NULL , FLAG_LOGFILE	   } ,
-		{ "help"		, no_argument		, NULL , FLAG_HELP		   } ,
-		{ "version"		, no_argument		, NULL , FLAG_VERSION	   } ,
+		{ "config",     required_argument, NULL, FLAG_CONFIG    } ,
+		{ "logfile",    required_argument, NULL, FLAG_LOGFILE   } ,
+		{ "help",       no_argument,       NULL, FLAG_HELP      } ,
+		{ "version",    no_argument,       NULL, FLAG_VERSION   } ,
 
-		{ "after"     , required_argument , NULL , FLAG_AFTER      } ,
-		{ "before"    , required_argument , NULL , FLAG_BEFORE     } ,
-		{ "package"		, required_argument , NULL , FLAG_PACKAGE	   } ,
+		{ "after",      required_argument, NULL, FLAG_AFTER     } ,
+		{ "before",     required_argument, NULL, FLAG_BEFORE    } ,
+		{ "package",    required_argument, NULL, FLAG_PACKAGE   } ,
 	};
 
 	while((c = getopt_long(argc, argv, short_opts, long_opts, NULL)) != -1) {
