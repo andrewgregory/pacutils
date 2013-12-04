@@ -823,21 +823,36 @@ void pu_display_transaction(alpm_handle_t *handle)
 	alpm_list_t *i;
 
 	for(i = alpm_trans_get_remove(handle); i; i = i->next) {
-		fputs("removing ", stdout);
-		pu_print_pkgspec(i->data);
+		alpm_pkg_t *p = i->data;
+		printf("removing %s/%s (%s)",
+				alpm_db_get_name(alpm_pkg_get_db(p)),
+				alpm_pkg_get_name(p),
+				alpm_pkg_get_version(p));
 
 		install -= alpm_pkg_get_isize(i->data);
 		delta -= alpm_pkg_get_isize(i->data);
 	}
 
 	for(i = alpm_trans_get_add(handle); i; i = i->next) {
-		fputs("installing ", stdout);
-		pu_print_pkgspec(i->data);
+		alpm_pkg_t *p = i->data;
+		alpm_pkg_t *lpkg = alpm_db_get_pkg(ldb, alpm_pkg_get_name(p));
 
-		alpm_pkg_t *lpkg = alpm_db_get_pkg(ldb, alpm_pkg_get_name(i->data));
-		install  += alpm_pkg_get_isize(i->data);
-		download += alpm_pkg_download_size(i->data);
-		delta    += alpm_pkg_get_isize(i->data);
+		switch(alpm_pkg_get_origin(p)) {
+			case ALPM_PKG_FROM_FILE:
+				printf("installing %s (%s %s)",
+						alpm_pkg_get_filename(p),
+						alpm_pkg_get_name(p),
+						alpm_pkg_get_version(p));
+			case ALPM_PKG_FROM_SYNCDB:
+				printf("installing %s/%s (%s)",
+						alpm_db_get_name(alpm_pkg_get_db(p)),
+						alpm_pkg_get_name(p),
+						alpm_pkg_get_version(p));
+		}
+
+		install  += alpm_pkg_get_isize(p);
+		download += alpm_pkg_download_size(p);
+		delta    += alpm_pkg_get_isize(p);
 		if(lpkg) {
 			delta  -= alpm_pkg_get_isize(lpkg);
 		}
