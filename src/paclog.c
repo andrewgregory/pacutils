@@ -1,5 +1,9 @@
+#define _XOPEN_SOURCE
+#define _XOPEN_SOURCE_EXTENDED
+
 #include <errno.h>
 #include <getopt.h>
+#include <time.h>
 
 #include <pacutils.h>
 #include <pacutils/log.h>
@@ -8,10 +12,13 @@ const char *myname = "paclog", *myver = "0.1";
 
 char *logfile = NULL;
 
+time_t after = 0, before = 0;
 alpm_list_t *pkgs = NULL;
 
 enum longopt_flags {
 	FLAG_CONFIG = 1000,
+	FLAG_AFTER,
+	FLAG_BEFORE,
 	FLAG_HELP,
 	FLAG_LOGFILE,
 	FLAG_PACKAGE,
@@ -36,6 +43,31 @@ void usage(int ret)
 	exit(ret);
 }
 
+int parse_time(char *string, time_t *dest)
+{
+	char *c = string;
+	struct tm stm;
+	memset(&stm, 0, sizeof(struct tm));
+
+#define parse_bit(s, f, t) \
+	do { \
+		if(!(s = strptime(s, f, t))) { \
+			return 0; \
+		} \
+		if(!*s) { \
+			*dest = mktime(t); \
+			return 1; \
+		} \
+	} while(0)
+	parse_bit(c, "%Y", &stm);
+	parse_bit(c, "-%m", &stm);
+	parse_bit(c, "-%d", &stm);
+	parse_bit(c, " %H:%M", &stm);
+#undef parse_bit
+
+	return 0;
+}
+
 void parse_opts(int argc, char **argv)
 {
 	char *config_file = "/etc/pacman.conf";
@@ -48,6 +80,8 @@ void parse_opts(int argc, char **argv)
 		{ "help"		, no_argument		, NULL , FLAG_HELP		   } ,
 		{ "version"		, no_argument		, NULL , FLAG_VERSION	   } ,
 
+		{ "after"     , required_argument , NULL , FLAG_AFTER      } ,
+		{ "before"    , required_argument , NULL , FLAG_BEFORE     } ,
 		{ "package"		, required_argument , NULL , FLAG_PACKAGE	   } ,
 	};
 
@@ -67,6 +101,18 @@ void parse_opts(int argc, char **argv)
 				exit(0);
 				break;
 
+			case FLAG_AFTER:
+				if(!parse_time(optarg, &after)) {
+					fprintf(stderr, "Unable to parse date '%s'\n", optarg);
+					exit(1);
+				}
+				break;
+			case FLAG_BEFORE:
+				if(!parse_time(optarg, &before)) {
+					fprintf(stderr, "Unable to parse date '%s'\n", optarg);
+					exit(1);
+				}
+				break;
 			case FLAG_PACKAGE:
 				pkgs = alpm_list_add(pkgs, strdup(optarg));
 				break;
@@ -111,14 +157,27 @@ int main(int argc, char **argv)
 	for(i = entries; i; i = i->next) {
 		pu_log_entry_t *e = i->data;
 
+		if(after) {
+			if(mktime(e->timestamp) >= after) {
+				pu_log_fprint_entry(stdout, e);
+			}
+		}
+
+		if(before) {
+			if(mktime(e->timestamp) <= before) {
+				pu_log_fprint_entry(stdout, e);
+			}
+		}
+
 		if(pkgs) {
 			pu_log_action_t *a = pu_log_action_parse(e->message);
 			int found = (a && alpm_list_find_str(pkgs, a->target));
 			pu_log_action_free(a);
-			if(!found) continue;
+			if(found) {
+				pu_log_fprint_entry(stdout, e);
+				continue;
+			}
 		}
-
-		pu_log_fprint_entry(stdout, e);
 	}
 
 cleanup:
