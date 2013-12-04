@@ -39,6 +39,8 @@ void usage(int ret)
 	hputs("");
 	hputs("filters:");
 	hputs("   --package=<pkg>	 show entries affecting <pkg>");
+	hputs("   --before=<date>  show entries before <date>");
+	hputs("   --after=<date>   show entries after <date>");
 #undef hputs
 	exit(ret);
 }
