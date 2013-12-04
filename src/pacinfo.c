@@ -302,6 +302,15 @@ int main(int argc, char **argv) {
 		print_pkg_info(*argv);
 	}
 
+	if(!isatty(fileno(stdin)) && !feof(stdin)) {
+		char buf[256];
+		while(fgets(buf, 256, stdin)) {
+			char *c = strchr(buf, '\n');
+			if(c) *c = '\0';
+			print_pkg_info(buf);
+		}
+	}
+
 cleanup:
 	alpm_list_free(syncdbs);
 	alpm_release(handle);
