@@ -138,7 +138,11 @@ int main(int argc, char **argv)
 
 	parse_opts(argc, argv);
 
-	if(!(f = fopen(logfile, "r"))) {
+	if(!isatty(fileno(stdin)) && !feof(stdin)) {
+		free(logfile);
+		logfile = strdup("<stdin>");
+		f = stdin;
+	} else if(!(f = fopen(logfile, "r"))) {
 		fprintf(stderr, "error: could not open '%s' for reading (%s)\n",
 				logfile, strerror(errno));
 		ret = 1;
