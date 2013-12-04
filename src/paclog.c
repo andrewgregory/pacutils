@@ -160,28 +160,37 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
-	for(i = entries; i; i = i->next) {
-		pu_log_entry_t *e = i->data;
-
-		if(after) {
-			if(mktime(e->timestamp) >= after) {
-				pu_log_fprint_entry(stdout, e);
-			}
+	if(!after && !before && !pkgs) {
+		for(i = entries; i; i = i->next) {
+			pu_log_entry_t *e = i->data;
+			print_entry(stdout, e);
 		}
+	} else {
+		for(i = entries; i; i = i->next) {
+			pu_log_entry_t *e = i->data;
 
-		if(before) {
-			if(mktime(e->timestamp) <= before) {
-				pu_log_fprint_entry(stdout, e);
+			if(after) {
+				if(mktime(e->timestamp) >= after) {
+					print_entry(stdout, e);
+					continue;
+				}
 			}
-		}
 
-		if(pkgs) {
-			pu_log_action_t *a = pu_log_action_parse(e->message);
-			int found = (a && alpm_list_find_str(pkgs, a->target));
-			pu_log_action_free(a);
-			if(found) {
-				pu_log_fprint_entry(stdout, e);
-				continue;
+			if(before) {
+				if(mktime(e->timestamp) <= before) {
+					print_entry(stdout, e);
+					continue;
+				}
+			}
+
+			if(pkgs) {
+				pu_log_action_t *a = pu_log_action_parse(e->message);
+				int found = (a && alpm_list_find_str(pkgs, a->target));
+				pu_log_action_free(a);
+				if(found) {
+					print_entry(stdout, e);
+					continue;
+				}
 			}
 		}
 	}
