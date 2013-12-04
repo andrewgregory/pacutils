@@ -116,6 +116,10 @@ Install/remove packages in a single transaction.
 B<NOTE:> I<alpm> support for installation and removal in a single transaction
 is flaky; some options may be ignored.
 
+=item paclog
+
+Filter pacman log entries.
+
 =back
 
 =head1 BUGS
