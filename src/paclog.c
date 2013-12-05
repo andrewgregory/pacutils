@@ -13,11 +13,12 @@ const char *myname = "paclog", *myver = "0.1";
 char *logfile = NULL;
 
 time_t after = 0, before = 0;
-alpm_list_t *pkgs = NULL, *caller = NULL;
+alpm_list_t *pkgs = NULL, *caller = NULL, *actions = NULL;
 int color = 1;
 
 enum longopt_flags {
 	FLAG_CONFIG = 1000,
+	FLAG_ACTION,
 	FLAG_AFTER,
 	FLAG_BEFORE,
 	FLAG_CALLER,
@@ -69,10 +70,11 @@ void usage(int ret)
 	hputs("   --[no]-color        color output");
 	hputs("");
 	hputs("filters:");
+	hputs("   --action=<date>     show entries after <date>");
+	hputs("   --after=<date>      show entries after <date>");
+	hputs("   --before=<date>     show entries before <date>");
 	hputs("   --caller=<name>     show entries from program <name>");
 	hputs("   --package=<pkg>     show entries affecting <pkg>");
-	hputs("   --before=<date>     show entries before <date>");
-	hputs("   --after=<date>      show entries after <date>");
 #undef hputs
 	exit(ret);
 }
@@ -116,6 +118,7 @@ void parse_opts(int argc, char **argv)
 		{ "help",       no_argument,       NULL, FLAG_HELP      } ,
 		{ "version",    no_argument,       NULL, FLAG_VERSION   } ,
 
+		{ "action",     required_argument, NULL, FLAG_ACTION    } ,
 		{ "after",      required_argument, NULL, FLAG_AFTER     } ,
 		{ "before",     required_argument, NULL, FLAG_BEFORE    } ,
 		{ "caller",     required_argument, NULL, FLAG_CALLER    } ,
@@ -138,6 +141,9 @@ void parse_opts(int argc, char **argv)
 				exit(0);
 				break;
 
+			case FLAG_ACTION:
+				actions = alpm_list_add(actions, strdup(optarg));
+				break;
 			case FLAG_AFTER:
 				if(!parse_time(optarg, &after)) {
 					fprintf(stderr, "Unable to parse date '%s'\n", optarg);
@@ -262,7 +268,7 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
-	if(!after && !before && !pkgs && !caller) {
+	if(!after && !before && !pkgs && !caller && !actions) {
 		for(i = entries; i; i = i->next) {
 			pu_log_entry_t *e = i->data;
 			print_entry(stdout, e);
@@ -293,6 +299,35 @@ int main(int argc, char **argv)
 				}
 			}
 
+			if(actions) {
+				pu_log_action_t *a = pu_log_action_parse(e->message);
+				if(a) {
+					const char *op;
+					switch(a->operation) {
+						case PU_LOG_OPERATION_INSTALL:
+							op = "install";
+							break;
+						case PU_LOG_OPERATION_REINSTALL:
+							op = "reinstall";
+							break;
+						case PU_LOG_OPERATION_UPGRADE:
+							op = "upgrade";
+							break;
+						case PU_LOG_OPERATION_DOWNGRADE:
+							op = "downgrade";
+							break;
+						case PU_LOG_OPERATION_REMOVE:
+							op = "remove";
+							break;
+					}
+					if(alpm_list_find_str(actions, "all")
+							|| alpm_list_find_str(actions, op)) {
+						print_entry(stdout, e);
+						continue;
+					}
+				}
+			}
+
 			if(pkgs) {
 				pu_log_action_t *a = pu_log_action_parse(e->message);
 				int found = (a && alpm_list_find_str(pkgs, a->target));
@@ -307,6 +342,7 @@ int main(int argc, char **argv)
 
 cleanup:
 	FREELIST(pkgs);
+	FREELIST(actions);
 	FREELIST(caller);
 	alpm_list_free_inner(entries, (alpm_list_fn_free) pu_log_entry_free);
 	alpm_list_free(entries);
