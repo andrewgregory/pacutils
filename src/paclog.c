@@ -126,6 +126,8 @@ void parse_opts(int argc, char **argv)
 		{ "caller",     required_argument, NULL, FLAG_CALLER    } ,
 		{ "package",    required_argument, NULL, FLAG_PACKAGE   } ,
 		{ "warnings",   no_argument,       NULL, FLAG_WARNINGS  } ,
+
+		{ 0, 0, 0, 0 },
 	};
 
 	while((c = getopt_long(argc, argv, short_opts, long_opts, NULL)) != -1) {
