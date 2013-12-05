@@ -120,6 +120,11 @@ is flaky; some options may be ignored.
 
 Filter pacman log entries.
 
+To safely reduce the size of B<pacman>'s log while retaining important entries
+use:
+
+ paclog --warnings --action=all --after="$(date -Idate --date='6 months ago')" > newlog
+
 =back
 
 =head1 BUGS
