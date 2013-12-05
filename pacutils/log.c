@@ -82,6 +82,7 @@ alpm_list_t *pu_log_parse_file(FILE *stream)
 	while(fgets(buf, 256, stream)) {
 		char *p, *caller;
 		struct tm *timestamp = calloc(sizeof(struct tm), 1);
+		timestamp->tm_isdst = -1;
 
 		if(!(p = strptime(buf, "[%Y-%m-%d %H:%M]", timestamp))) {
 			/* line is a continuation of the previous line */
