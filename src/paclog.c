@@ -13,13 +13,14 @@ const char *myname = "paclog", *myver = "0.1";
 char *logfile = NULL;
 
 time_t after = 0, before = 0;
-alpm_list_t *pkgs = NULL;
+alpm_list_t *pkgs = NULL, *caller = NULL;
 int color = 1;
 
 enum longopt_flags {
 	FLAG_CONFIG = 1000,
 	FLAG_AFTER,
 	FLAG_BEFORE,
+	FLAG_CALLER,
 	FLAG_HELP,
 	FLAG_LOGFILE,
 	FLAG_PACKAGE,
@@ -68,6 +69,7 @@ void usage(int ret)
 	hputs("   --[no]-color        color output");
 	hputs("");
 	hputs("filters:");
+	hputs("   --caller=<name>     show entries from program <name>");
 	hputs("   --package=<pkg>     show entries affecting <pkg>");
 	hputs("   --before=<date>     show entries before <date>");
 	hputs("   --after=<date>      show entries after <date>");
@@ -116,6 +118,7 @@ void parse_opts(int argc, char **argv)
 
 		{ "after",      required_argument, NULL, FLAG_AFTER     } ,
 		{ "before",     required_argument, NULL, FLAG_BEFORE    } ,
+		{ "caller",     required_argument, NULL, FLAG_CALLER    } ,
 		{ "package",    required_argument, NULL, FLAG_PACKAGE   } ,
 	};
 
@@ -146,6 +149,9 @@ void parse_opts(int argc, char **argv)
 					fprintf(stderr, "Unable to parse date '%s'\n", optarg);
 					exit(1);
 				}
+				break;
+			case FLAG_CALLER:
+				caller = alpm_list_add(caller, strdup(optarg));
 				break;
 			case FLAG_PACKAGE:
 				pkgs = alpm_list_add(pkgs, strdup(optarg));
@@ -256,7 +262,7 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
-	if(!after && !before && !pkgs) {
+	if(!after && !before && !pkgs && !caller) {
 		for(i = entries; i; i = i->next) {
 			pu_log_entry_t *e = i->data;
 			print_entry(stdout, e);
@@ -279,6 +285,14 @@ int main(int argc, char **argv)
 				}
 			}
 
+			if(caller) {
+				const char *c = e->caller ? e->caller : "";
+				if(alpm_list_find_str(caller, c)) {
+					print_entry(stdout, e);
+					continue;
+				}
+			}
+
 			if(pkgs) {
 				pu_log_action_t *a = pu_log_action_parse(e->message);
 				int found = (a && alpm_list_find_str(pkgs, a->target));
@@ -293,6 +307,7 @@ int main(int argc, char **argv)
 
 cleanup:
 	FREELIST(pkgs);
+	FREELIST(caller);
 	alpm_list_free_inner(entries, (alpm_list_fn_free) pu_log_entry_free);
 	alpm_list_free(entries);
 	return ret;
