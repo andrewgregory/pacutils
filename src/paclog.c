@@ -32,19 +32,25 @@ struct {
 
 	const char *message;
 	const char *warning;
+	const char *error;
+	const char *note;
+	const char *action;
 	const char *install;
 	const char *uninstall;
-	const char *action;
 
 	const char *reset;
 } palette = {
 	.timestamp = "\e[33m",       // yellow
 	.caller    = "\e[34m",       // blue
+
 	.message   = "\e[0m",        // normal
 	.warning   = "\e[37;41m",    // white on red
+	.error     = "\e[37;41m",    // white on red
+	.note      = "\e[34m",       // blue
+
+	.action    = "\e[36m",       // cyan
 	.install   = "\e[32m",       // green
 	.uninstall = "\e[31m",       // red
-	.action    = "\e[36m",       // cyan
 	.reset     = "\e[0m",
 };
 
@@ -179,8 +185,12 @@ int fprint_entry_color(FILE *stream, pu_log_entry_t *entry)
 				break;
 		}
 		pu_log_action_free(a);
-	} else if(strncmp(entry->message, "warning: ", strlen("warning: ")) == 0) {
+	} else if(strncmp(entry->message, "warning: ", 9) == 0) {
 		message_color = palette.warning;
+	} else if(strncmp(entry->message, "error: ", 7) == 0) {
+		message_color = palette.error;
+	} else if(strncmp(entry->message, "note: ", 6) == 0) {
+		message_color = palette.note;
 	} else {
 		message_color = palette.message;
 	}
