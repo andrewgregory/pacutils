@@ -14,7 +14,7 @@ char *logfile = NULL;
 
 time_t after = 0, before = 0;
 alpm_list_t *pkgs = NULL, *caller = NULL, *actions = NULL;
-int color = 1;
+int color = 1, warnings = 0;
 
 enum longopt_flags {
 	FLAG_CONFIG = 1000,
@@ -26,6 +26,7 @@ enum longopt_flags {
 	FLAG_LOGFILE,
 	FLAG_PACKAGE,
 	FLAG_VERSION,
+	FLAG_WARNINGS,
 };
 
 struct {
@@ -75,6 +76,7 @@ void usage(int ret)
 	hputs("   --before=<date>     show entries before <date>");
 	hputs("   --caller=<name>     show entries from program <name>");
 	hputs("   --package=<pkg>     show entries affecting <pkg>");
+	hputs("   --warnings          show notes/warnings/errors");
 #undef hputs
 	exit(ret);
 }
@@ -123,6 +125,7 @@ void parse_opts(int argc, char **argv)
 		{ "before",     required_argument, NULL, FLAG_BEFORE    } ,
 		{ "caller",     required_argument, NULL, FLAG_CALLER    } ,
 		{ "package",    required_argument, NULL, FLAG_PACKAGE   } ,
+		{ "warnings",   no_argument,       NULL, FLAG_WARNINGS  } ,
 	};
 
 	while((c = getopt_long(argc, argv, short_opts, long_opts, NULL)) != -1) {
@@ -161,6 +164,9 @@ void parse_opts(int argc, char **argv)
 				break;
 			case FLAG_PACKAGE:
 				pkgs = alpm_list_add(pkgs, strdup(optarg));
+				break;
+			case FLAG_WARNINGS:
+				warnings = 1;
 				break;
 		}
 	}
@@ -268,7 +274,7 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
-	if(!after && !before && !pkgs && !caller && !actions) {
+	if(!after && !before && !pkgs && !caller && !actions && !warnings) {
 		for(i = entries; i; i = i->next) {
 			pu_log_entry_t *e = i->data;
 			print_entry(stdout, e);
@@ -325,6 +331,15 @@ int main(int argc, char **argv)
 						print_entry(stdout, e);
 						continue;
 					}
+				}
+			}
+
+			if(warnings) {
+				if(strncmp(e->message, "error: ", 7) == 0
+						|| strncmp(e->message, "warning: ", 9) == 0
+						|| strncmp(e->message, "note: ", 6) == 0) {
+					print_entry(stdout, e);
+					continue;
 				}
 			}
 
