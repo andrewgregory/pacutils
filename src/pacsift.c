@@ -22,7 +22,7 @@ alpm_list_t *requiredby = NULL;
 alpm_list_t *provides = NULL, *dependson = NULL, *conflicts = NULL, *replaces = NULL;
 
 typedef const char* (str_accessor) (alpm_pkg_t* pkg);
-typedef alpm_list_t* (str_list_accessor) (alpm_pkg_t* pkg);
+typedef alpm_list_t* (strlist_accessor) (alpm_pkg_t* pkg);
 
 enum longopt_flags {
 	FLAG_CONFIG = 1000,
@@ -34,6 +34,7 @@ enum longopt_flags {
 
 	FLAG_NAME,
 	FLAG_DESCRIPTION,
+	FLAG_GROUP,
 	FLAG_OWNSFILE,
 	FLAG_PACKAGER,
 	FLAG_REPO,
@@ -153,6 +154,45 @@ alpm_list_t *filter_str(alpm_list_t **pkgs, const char *str, str_accessor *func)
 	return matches;
 }
 
+alpm_list_t *filter_strlist(alpm_list_t **pkgs, const char *str, strlist_accessor *func)
+{
+	alpm_list_t *p, *matches = NULL;
+	if(re) {
+		regex_t preg;
+		_regcomp(&preg, str, REG_EXTENDED | REG_ICASE | REG_NOSUB);
+		for(p = *pkgs; p; p = p->next) {
+			alpm_list_t *h = func(p->data);
+			for(; h; h = h->next ) {
+				if(regexec(&preg, h->data, 0, NULL, 0) == 0) {
+					matches = alpm_list_add(matches, p->data);
+					break;
+				}
+			}
+		}
+		regfree(&preg);
+	} else if (exact) {
+		for(p = *pkgs; p; p = p->next) {
+			if(alpm_list_find_str(func(p->data), str)) {
+				matches = alpm_list_add(matches, p->data);
+			}
+		}
+	} else {
+		for(p = *pkgs; p; p = p->next) {
+			alpm_list_t *h = func(p->data);
+			for(; h; h = h->next) {
+				if(strcasestr(h->data, str)) {
+					matches = alpm_list_add(matches, p->data);
+					break;
+				}
+			}
+		}
+	}
+	for(p = matches; p; p = p->next) {
+		*pkgs = alpm_list_remove(*pkgs, p->data, ptr_cmp, NULL);
+	}
+	return matches;
+}
+
 alpm_list_t *filter_pkgs(alpm_list_t *pkgs)
 {
 	alpm_list_t *i, *matches = NULL, *haystack = alpm_list_copy(pkgs);
@@ -193,6 +233,17 @@ alpm_list_t *filter_pkgs(alpm_list_t *pkgs)
 	if(repo) {
 		for(i = repo; i; i = i->next) {
 			matches = alpm_list_join(matches, filter_str(&haystack, i->data, get_dbname));
+		}
+		if(!or) {
+			alpm_list_free(haystack);
+			haystack = matches;
+			matches = NULL;
+		}
+	}
+
+	if(group) {
+		for(i = group; i; i = i->next) {
+			matches = alpm_list_join(matches, filter_strlist(&haystack, i->data, alpm_pkg_get_groups));
 		}
 		if(!or) {
 			alpm_list_free(haystack);
@@ -296,6 +347,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "name"          , required_argument , NULL    , FLAG_NAME          } ,
 		{ "description"   , required_argument , NULL    , FLAG_DESCRIPTION   } ,
 		{ "owns-file"     , required_argument , NULL    , FLAG_OWNSFILE      } ,
+		{ "group"         , required_argument , NULL    , FLAG_GROUP         } ,
 
 		{ 0, 0, 0, 0 },
 	};
@@ -364,6 +416,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 				break;
 			case FLAG_OWNSFILE:
 				ownsfile = alpm_list_add(ownsfile, strdup(optarg));
+				break;
+			case FLAG_GROUP:
+				group = alpm_list_add(group, strdup(optarg));
 				break;
 
 			case '?':
