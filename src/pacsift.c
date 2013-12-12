@@ -539,8 +539,7 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
-	sync_dbs = pu_register_syncdbs(handle, config->repos);
-	if(!sync_dbs) {
+	if(!pu_register_syncdbs(handle, config->repos)) {
 		fprintf(stderr, "error: no valid sync dbs configured.\n");
 		ret = 1;
 		goto cleanup;
@@ -607,6 +606,7 @@ int main(int argc, char **argv)
 		fputc('\n', stdout);
 	}
 	alpm_list_free(matches);
+	alpm_list_free(haystack);
 	alpm_list_free_inner(pkgfiles, (alpm_list_fn_free) alpm_pkg_free);
 	alpm_list_free(pkgfiles);
 

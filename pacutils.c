@@ -530,6 +530,7 @@ void _pu_subst_server_vars(pu_config_t *config)
 		alpm_list_t *s;
 		for(s = repo->servers; s; s = s->next) {
 			char *url = pu_strreplace(s->data, "$repo", repo->name);
+			free(s->data);
 			s->data = pu_strreplace(url, "$arch", config->architecture);
 			free(url);
 		}
@@ -566,6 +567,7 @@ pu_config_t *pu_config_new_from_file(const char *filename)
 	if(!config->architecture || strcmp(config->architecture, "auto") == 0) {
 		struct utsname un;
 		uname(&un);
+		free(config->architecture);
 		config->architecture = strdup(un.machine);
 	}
 
@@ -589,7 +591,7 @@ alpm_handle_t *pu_initialize_handle_from_config(struct pu_config_t *config)
 		return NULL;
 	}
 
-	alpm_option_set_cachedirs(handle, alpm_list_strdup(config->cachedirs));
+	alpm_option_set_cachedirs(handle, config->cachedirs);
 	alpm_option_set_noupgrades(handle, alpm_list_strdup(config->noupgrade));
 	alpm_option_set_noextracts(handle, alpm_list_strdup(config->noextract));
 	alpm_option_set_ignorepkgs(handle, alpm_list_strdup(config->ignorepkgs));
@@ -619,11 +621,11 @@ alpm_db_t *pu_register_syncdb(alpm_handle_t *handle, struct pu_repo_t *repo)
 
 alpm_list_t *pu_register_syncdbs(alpm_handle_t *handle, alpm_list_t *repos)
 {
-	alpm_list_t *r, *registered = NULL;
+	alpm_list_t *r;
 	for(r = repos; r; r = r->next) {
-		registered = alpm_list_add(registered, pu_register_syncdb(handle, r->data));
+		pu_register_syncdb(handle, r->data);
 	}
-	return registered;
+	return alpm_get_syncdbs(handle);
 }
 
 const char *pu_alpm_strerror(alpm_handle_t *handle)

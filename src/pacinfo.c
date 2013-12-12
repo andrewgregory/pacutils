@@ -296,7 +296,7 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	alpm_list_t *syncdbs = pu_register_syncdbs(handle, config->repos);
+	pu_register_syncdbs(handle, config->repos);
 
 	for(argv += optind; *argv; ++argv) {
 		print_pkg_info(*argv);
@@ -312,7 +312,6 @@ int main(int argc, char **argv) {
 	}
 
 cleanup:
-	alpm_list_free(syncdbs);
 	alpm_release(handle);
 	pu_config_free(config);
 

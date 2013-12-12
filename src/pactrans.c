@@ -455,8 +455,7 @@ int main(int argc, char **argv)
 		alpm_option_add_ignoregroup(handle, i->data);
 	}
 
-	sync_dbs = pu_register_syncdbs(handle, config->repos);
-	if(!sync_dbs) {
+	if(!pu_register_syncdbs(handle, config->repos)) {
 		fprintf(stderr, "error: no valid sync dbs configured.\n");
 		ret = 1;
 		goto cleanup;
@@ -599,7 +598,6 @@ transcleanup:
 	}
 
 cleanup:
-	alpm_list_free(sync_dbs);
 	alpm_list_free(err_data);
 	alpm_list_free(add);
 	alpm_list_free(rem);

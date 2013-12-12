@@ -189,7 +189,6 @@ cleanup:
 	if(targets != sync_dbs) {
 		alpm_list_free(targets);
 	}
-	alpm_list_free(sync_dbs);
 	alpm_release(handle);
 	pu_config_free(config);
 
