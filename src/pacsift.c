@@ -1,5 +1,7 @@
 #define _GNU_SOURCE /* strcasestr */
 
+#include <dirent.h>
+#include <errno.h>
 #include <getopt.h>
 #include <regex.h>
 
@@ -11,7 +13,7 @@ pu_config_t *config = NULL;
 alpm_handle_t *handle = NULL;
 alpm_loglevel_t log_level = ALPM_LOG_ERROR | ALPM_LOG_WARNING;
 
-int srch_local = 0, srch_sync = 0;
+int srch_cache = 0, srch_local = 0, srch_sync = 0;
 int invert = 0, re = 0, exact = 0, or = 0;
 char sep = '\n';
 alpm_list_t *search_dbs = NULL;
@@ -32,6 +34,7 @@ enum longopt_flags {
 	FLAG_ROOT,
 	FLAG_VERSION,
 
+	FLAG_CACHE,
 	FLAG_NAME,
 	FLAG_DESCRIPTION,
 	FLAG_GROUP,
@@ -293,6 +296,7 @@ void usage(int ret)
 
 	hputs(" Filters:");
 	hputs("   Note: filters are unaffected by --invert and --or");
+	hputs("   --cache             search packages in cache (EXPERIMENTAL)");
 	hputs("   --local             search installed packages");
 	hputs("   --sync              search packages in all sync repositories");
 	/*hputs("   --depends           limit to packages installed as dependencies");*/
@@ -335,6 +339,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "help"          , no_argument       , NULL    , FLAG_HELP          } ,
 		{ "version"       , no_argument       , NULL    , FLAG_VERSION       } ,
 
+		{ "cache"         , no_argument       , NULL    , FLAG_CACHE         } ,
 		{ "local"         , no_argument       , NULL    , 'Q'                } ,
 		{ "sync"          , no_argument       , NULL    , 'S'                } ,
 
@@ -401,6 +406,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 			case 'S':
 				srch_sync = 1;
 				break;
+			case FLAG_CACHE:
+				srch_cache = 1;
+				break;
 
 			case FLAG_REPO:
 				repo = alpm_list_add(repo, strdup(optarg));
@@ -429,7 +437,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		c = getopt_long(argc, argv, short_opts, long_opts, NULL);
 	}
 
-	if(!srch_local && !srch_sync) {
+	if(!srch_local && !srch_sync && !srch_cache) {
 		srch_local = 1;
 		srch_sync = 1;
 	}
@@ -518,7 +526,7 @@ void find_pkg(alpm_list_t **pkgs, char *pkgspec) {
 
 int main(int argc, char **argv)
 {
-	alpm_list_t *sync_dbs = NULL, *i;
+	alpm_list_t *pkgfiles = NULL, *i;
 	int ret = 0;
 
 	if(!(config = parse_opts(argc, argv))) {
@@ -560,13 +568,47 @@ int main(int argc, char **argv)
 				}
 			}
 		}
+		if(srch_cache) {
+			for(i = alpm_option_get_cachedirs(handle); i; i = i->next) {
+				const char *path = i->data;
+				DIR *dir = opendir(path);
+				struct dirent entry, *result;
+				if(!dir) {
+					fprintf(stderr, "warning: could not open cache dir '%s' (%s)\n",
+							path, strerror(errno));
+					continue;
+				}
+				while(readdir_r(dir, &entry, &result) == 0 && result != NULL) {
+					if(strcmp(".", entry.d_name) == 0 || strcmp("..", entry.d_name) == 0) {
+						continue;
+					}
+					size_t path_len = strlen(path) + strlen(entry.d_name);
+					char *filename = malloc(path_len + 1);
+					int needfiles = ownsfile ? 1 : 0;
+					alpm_pkg_t *pkg = NULL;
+					sprintf(filename, "%s%s", path, entry.d_name);
+					if(alpm_pkg_load(handle, filename, needfiles, 0, &pkg) == 0) {
+						haystack = alpm_list_add(haystack, pkg);
+						pkgfiles = alpm_list_add(pkgfiles, pkg);
+					} else {
+						fprintf(stderr, "warning: could not load package '%s' (%s)\n",
+								filename, alpm_strerror(alpm_errno(handle)));
+					}
+					free(filename);
+				}
+				closedir(dir);
+			}
+		}
 	}
 
 	alpm_list_t *matches = filter_pkgs(haystack);
 	for(i = matches; i; i = i->next) {
-		printf("%s/%s\n", get_dbname(i->data), alpm_pkg_get_name(i->data));
+		pu_fprint_pkgspec(stdout, i->data);
+		fputc('\n', stdout);
 	}
 	alpm_list_free(matches);
+	alpm_list_free_inner(pkgfiles, (alpm_list_fn_free) alpm_pkg_free);
+	alpm_list_free(pkgfiles);
 
 cleanup:
 	cleanup(ret);
