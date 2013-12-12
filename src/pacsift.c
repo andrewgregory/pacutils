@@ -15,11 +15,11 @@ int srch_local = 0, srch_sync = 0;
 int invert = 0, re = 0, exact = 0, or = 0;
 char sep = '\n';
 alpm_list_t *search_dbs = NULL;
-alpm_list_t *repo, *name, *description, *packager;
-alpm_list_t *group, *license;
-alpm_list_t *ownsfile;
-alpm_list_t *requiredby;
-alpm_list_t *provides, *dependson, *conflicts, *replaces;
+alpm_list_t *repo = NULL, *name = NULL, *description = NULL, *packager = NULL;
+alpm_list_t *group = NULL, *license = NULL;
+alpm_list_t *ownsfile = NULL;
+alpm_list_t *requiredby = NULL;
+alpm_list_t *provides = NULL, *dependson = NULL, *conflicts = NULL, *replaces = NULL;
 
 typedef const char* (str_accessor) (alpm_pkg_t* pkg);
 typedef alpm_list_t* (str_list_accessor) (alpm_pkg_t* pkg);
