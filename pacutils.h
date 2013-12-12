@@ -79,7 +79,7 @@ void pu_cb_progress(alpm_progress_t event, const char *pkgname, int percent,
 		size_t total, size_t current);
 
 alpm_pkg_t *pu_find_pkgspec(alpm_handle_t *handle, const char *pkgspec);
-void pu_print_pkgspec(alpm_pkg_t *pkg);
+void pu_fprint_pkgspec(FILE *stream, alpm_pkg_t *pkg);
 void pu_display_transaction(alpm_handle_t *handle);
 
 int pu_confirm(int def, const char *prompt);
