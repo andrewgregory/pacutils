@@ -418,7 +418,7 @@ void print_fileconflict(alpm_fileconflict_t *conflict) {
 
 int main(int argc, char **argv)
 {
-	alpm_list_t *i, *sync_dbs = NULL, *err_data = NULL;
+	alpm_list_t *i, *err_data = NULL;
 	int ret = 0;
 
 	myname = pu_basename(argv[0]);
