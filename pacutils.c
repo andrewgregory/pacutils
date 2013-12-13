@@ -841,15 +841,20 @@ void pu_display_transaction(alpm_handle_t *handle)
 
 		switch(alpm_pkg_get_origin(p)) {
 			case ALPM_PKG_FROM_FILE:
-				printf("installing %s (%s %s)\n",
+				printf("installing %s (%s)",
 						alpm_pkg_get_filename(p),
-						alpm_pkg_get_name(p),
-						alpm_pkg_get_version(p));
+						alpm_pkg_get_name(p));
 			case ALPM_PKG_FROM_SYNCDB:
-				printf("installing %s/%s (%s)\n",
+				printf("installing %s/%s",
 						alpm_db_get_name(alpm_pkg_get_db(p)),
-						alpm_pkg_get_name(p),
-						alpm_pkg_get_version(p));
+						alpm_pkg_get_name(p));
+		}
+
+		if(lpkg) {
+			printf(" (%s -> %s)\n",
+					alpm_pkg_get_version(lpkg), alpm_pkg_get_version(p));
+		} else {
+			printf(" (%s)\n", alpm_pkg_get_version(p));
 		}
 
 		install  += alpm_pkg_get_isize(p);
