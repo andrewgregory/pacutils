@@ -437,11 +437,6 @@ pu_config_t *parse_opts(int argc, char **argv)
 		c = getopt_long(argc, argv, short_opts, long_opts, NULL);
 	}
 
-	if(!srch_local && !srch_sync && !srch_cache) {
-		srch_local = 1;
-		srch_sync = 1;
-	}
-
 	return config;
 }
 
@@ -471,62 +466,9 @@ alpm_db_t *find_db(const char *dbname) {
 	return NULL;
 }
 
-void find_pkg(alpm_list_t **pkgs, char *pkgspec) {
-	char *pkgname, *dbname;
-	int found = 0;
-
-	parse_pkg_spec(pkgspec, &pkgname, &dbname);
-
-	if(dbname) {
-		if(strcmp(dbname, "local") == 0) {
-			if(!srch_local) {
-				dbname = NULL;
-			}
-		} else {
-			if(!srch_sync) {
-				dbname = NULL;
-			}
-		}
-	}
-
-	if(dbname) {
-		alpm_db_t *db = find_db(dbname);
-		if(db) {
-			alpm_pkg_t *pkg = alpm_db_get_pkg(db, pkgname);
-			if(pkg) {
-				*pkgs = alpm_list_add(*pkgs, pkg);
-				found = 1;
-			}
-		}
-	} else {
-		if(srch_local) {
-			alpm_db_t *db = alpm_get_localdb(handle);
-			alpm_pkg_t *p = alpm_db_get_pkg(db, pkgname);
-			if(p) {
-				found = 1;
-				*pkgs = alpm_list_add(*pkgs, p);
-			}
-		}
-		if(srch_sync) {
-			alpm_list_t *d;
-			for(d = alpm_get_syncdbs(handle); d; d = d->next) {
-				alpm_pkg_t *p = alpm_db_get_pkg(d->data, pkgname);
-				if(p) {
-					found = 1;
-					*pkgs = alpm_list_add(*pkgs, p);
-				}
-			}
-		}
-	}
-
-	if(!found) {
-		printf("warning: could not locate pkg '%s'\n", pkgname);
-	}
-}
-
 int main(int argc, char **argv)
 {
-	alpm_list_t *pkgfiles = NULL, *i;
+	alpm_list_t *haystack = NULL, *matches = NULL, *i;
 	int ret = 0;
 
 	if(!(config = parse_opts(argc, argv))) {
@@ -545,16 +487,32 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
-	alpm_list_t *haystack = NULL;
 	if(!isatty(fileno(stdin)) && !feof(stdin)) {
+		if(srch_local || srch_sync || srch_cache) {
+			fprintf(stderr, "error: --local, --sync, and --cache cannot be used as filters\n");
+			ret = 1;
+			goto cleanup;
+		}
+
 		char buf[256];
 		while(fgets(buf, 256, stdin)) {
+			alpm_pkg_t *pkg;
 			char *c = strchr(buf, '\n');
 			if(c) *c = '\0';
-			find_pkg(&haystack, buf);
+			if((pkg = pu_find_pkgspec(handle, buf))) {
+				haystack = alpm_list_add(haystack, pkg);
+			} else {
+				fprintf(stderr, "warning: could not locate pkg '%s'\n", buf);
+			}
 		}
 	} else {
 		alpm_list_t *p, *s;
+
+		if(!srch_local && !srch_sync && !srch_cache) {
+			srch_local = 1;
+			srch_sync = 1;
+		}
+
 		if(srch_local) {
 			for(p = alpm_db_get_pkgcache(alpm_get_localdb(handle)); p; p = p->next) {
 				haystack = alpm_list_add(haystack, p->data);
@@ -588,7 +546,6 @@ int main(int argc, char **argv)
 					sprintf(filename, "%s%s", path, entry.d_name);
 					if(alpm_pkg_load(handle, filename, needfiles, 0, &pkg) == 0) {
 						haystack = alpm_list_add(haystack, pkg);
-						pkgfiles = alpm_list_add(pkgfiles, pkg);
 					} else {
 						fprintf(stderr, "warning: could not load package '%s' (%s)\n",
 								filename, alpm_strerror(alpm_errno(handle)));
@@ -600,17 +557,17 @@ int main(int argc, char **argv)
 		}
 	}
 
-	alpm_list_t *matches = filter_pkgs(haystack);
+	matches = filter_pkgs(haystack);
 	for(i = matches; i; i = i->next) {
 		pu_fprint_pkgspec(stdout, i->data);
 		fputc('\n', stdout);
 	}
-	alpm_list_free(matches);
-	alpm_list_free(haystack);
-	alpm_list_free_inner(pkgfiles, (alpm_list_fn_free) alpm_pkg_free);
-	alpm_list_free(pkgfiles);
 
 cleanup:
+	alpm_list_free(matches);
+	alpm_list_free_inner(haystack, (alpm_list_fn_free) alpm_pkg_free);
+	alpm_list_free(haystack);
+
 	cleanup(ret);
 
 	return 0;
