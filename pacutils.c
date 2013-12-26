@@ -733,11 +733,10 @@ alpm_pkg_t *pu_find_pkgspec(alpm_handle_t *handle, const char *pkgspec)
 			? alpm_option_get_local_file_siglevel(handle)
 			: alpm_option_get_remote_file_siglevel(handle);
 		char *path = alpm_fetch_pkgurl(handle, pkgspec);
-
-		if(path &&  alpm_pkg_load(handle, path, 1, sl, &pkg) == 0) {
+		int err = alpm_pkg_load(handle, path ? path : pkgspec, 1, sl, &pkg);
+		free(path);
+		if(!err) {
 			return pkg;
-		} else {
-			return NULL;
 		}
 	} else if((c = strchr(pkgspec, '/')))  {
 		alpm_db_t *db = NULL;
