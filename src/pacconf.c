@@ -7,8 +7,6 @@ alpm_list_t *directives = NULL;
 char sep = '\n', *repo_name = NULL, *config_file = NULL;
 int repo_list = 0, verbose = 0;
 
-// TODO exit codes
-
 void cleanup(void)
 {
 	free(repo_name);
@@ -69,6 +67,7 @@ void parse_opts(int argc, char **argv)
 				repo_list = 1;
 				break;
 			case 'r':
+				free(repo_name);
 				repo_name = strdup(optarg);
 				break;
 			case 'v':
