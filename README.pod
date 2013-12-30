@@ -88,8 +88,7 @@ C<auto>.
 
 =item pacsync
 
-Synchronize the system with registered sync repositories.  Updates the
-repository databases and performs a sysupgrade.  Equivalent to C<pacman -Syu>.
+Updates repository databases.  Equivalent to C<pacman -Sy>.
 
 =item pacinstall
 
@@ -143,7 +142,6 @@ Not implemented yet:
 
 =over
 
-=item add callback context to alpm and add event callback with logging
 
 =item fix alpm support for "universal transactions"
 
