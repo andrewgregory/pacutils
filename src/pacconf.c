@@ -38,7 +38,7 @@ void usage(int ret)
 
 void version(void)
 {
-	printf("pacconf v0.1\n");
+	pu_print_version("pacconf", "0.1");
 	cleanup();
 	exit(0);
 }
