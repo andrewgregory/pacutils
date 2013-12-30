@@ -369,6 +369,7 @@ int main(int argc, char **argv)
 
 	parse_opts(argc, argv);
 	if(!config) {
+		ret = 1;
 		goto cleanup;
 	}
 
@@ -383,6 +384,7 @@ int main(int argc, char **argv)
 	if(repo_list) {
 		if(directives) {
 			fputs("error: directives may not be specified with --repo-list\n", stderr);
+			ret = 1;
 			goto cleanup;
 		}
 		list_repos();
