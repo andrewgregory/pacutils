@@ -59,9 +59,7 @@ void parse_opts(int argc, char **argv)
 		{ 0, 0, 0, 0 },
 	};
 
-	/* process remaining command-line options */
-	c = getopt_long(argc, argv, short_opts, long_opts, NULL);
-	while(c != -1) {
+	while((c = getopt_long(argc, argv, short_opts, long_opts, NULL)) != -1) {
 		switch(c) {
 			case 'c':
 				free(config_file);
@@ -87,7 +85,6 @@ void parse_opts(int argc, char **argv)
 				usage(1);
 				break;
 		}
-		c = getopt_long(argc, argv, short_opts, long_opts, NULL);
 	}
 
 	config = pu_config_new_from_file(config_file);
