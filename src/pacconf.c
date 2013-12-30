@@ -17,16 +17,19 @@ void cleanup(void)
 void usage(int ret)
 {
 	FILE *stream = (ret ? stderr : stdout);
-	fputs("pacconf - query pacman's configuration file\n", stream);
-	fputs("usage:  pacconf [options] <directive>...\n", stream);
-	fputs("        pacconf (--repo-list|--help|--version)\n", stream);
-	fputs("options:\n", stream);
-	fputs("  --config=<path>  set an alternate configuration file\n", stream);
-	fputs("  --repo=<remote>  query options for a specific repo\n", stream);
-	fputs("  --verbose        always show directive names\n", stream);
-	fputs("  --repo-list      list configured repositories\n", stream);
-	fputs("  --help           display this help information\n", stream);
-	fputs("  --version        display version information\n", stream);
+#define hputs(x) fputs(x"\n", stream)
+	hputs("pacconf - query pacman's configuration file");
+	hputs("usage:  pacconf [options] <directive>...");
+	hputs("        pacconf (--repo-list|--help|--version)");
+	hputs("options:");
+	hputs("  --config=<path>  set an alternate configuration file");
+	hputs("  --repo=<remote>  query options for a specific repo");
+	hputs("  --verbose        always show directive names");
+	hputs("  --repo-list      list configured repositories");
+	hputs("  --help           display this help information");
+	hputs("  --version        display version information");
+#undef hputs
+	cleanup();
 	exit(ret);
 }
 
