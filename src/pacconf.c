@@ -3,7 +3,8 @@
 #include <pacutils.h>
 
 pu_config_t *config = NULL;
-char sep = '\n', *repo_name = NULL;
+alpm_list_t *directives = NULL;
+char sep = '\n', *repo_name = NULL, *config_file = NULL;
 int repo_list = 0, verbose = 0;
 
 // TODO exit codes
@@ -11,6 +12,8 @@ int repo_list = 0, verbose = 0;
 void cleanup(void)
 {
 	free(repo_name);
+	free(config_file);
+	alpm_list_free(directives);
 	pu_config_free(config);
 }
 
@@ -36,14 +39,14 @@ void usage(int ret)
 void version(void)
 {
 	printf("pacconf v0.1\n");
+	cleanup();
 	exit(0);
 }
 
-pu_config_t *parse_opts(int argc, char **argv)
+void parse_opts(int argc, char **argv)
 {
-	char *config_file = strdup("/etc/pacman.conf");
-	pu_config_t *config = NULL;
 	int c;
+	config_file = strdup("/etc/pacman.conf");
 
 	char *short_opts = "";
 	struct option long_opts[] = {
@@ -91,9 +94,6 @@ pu_config_t *parse_opts(int argc, char **argv)
 	if(!config) {
 		fprintf(stderr, "error parsing '%s'\n", config_file);
 	}
-	free(config_file);
-
-	return config;
 }
 
 void list_repos(void)
@@ -365,10 +365,9 @@ void list_directives(alpm_list_t *directives)
 
 int main(int argc, char **argv)
 {
-	alpm_list_t *directives = NULL;
 	int ret = 0;
 
-	config = parse_opts(argc, argv);
+	parse_opts(argc, argv);
 	if(!config) {
 		goto cleanup;
 	}
@@ -395,7 +394,6 @@ int main(int argc, char **argv)
 
 cleanup:
 	cleanup();
-	alpm_list_free(directives);
 
 	return ret;
 }
