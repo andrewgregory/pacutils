@@ -551,6 +551,11 @@ int main(int argc, char **argv)
 		goto transcleanup;
 	}
 
+	if(!alpm_trans_get_add(handle) && !alpm_trans_get_remove(handle)) {
+		fputs("nothing to do\n", stdout);
+		goto transcleanup;
+	}
+
 	pu_display_transaction(handle);
 
 	if(printonly || (!noconfirm && !pu_confirm(1, "Proceed with transaction")) ) {
