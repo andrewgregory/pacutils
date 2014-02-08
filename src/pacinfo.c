@@ -221,17 +221,6 @@ void print_pkg_info(const char *pkgspec) {
 			case 1:
 				printf("%s/%s %s", alpm_db_get_name(db), alpm_pkg_get_name(pkg),
 						alpm_pkg_get_version(pkg));
-				if(db != localdb) {
-					alpm_pkg_t *lpkg = alpm_db_get_pkg(localdb, alpm_pkg_get_name(pkg));
-					if(lpkg) {
-						const char *lver = alpm_pkg_get_version(lpkg);
-						if(strcmp(lver, alpm_pkg_get_version(pkg)) == 0) {
-							fputs(" [installed]", stdout);
-						} else {
-							printf(" [installed: %s]", lver);
-						}
-					}
-				}
 				{
 					alpm_list_t *g = alpm_pkg_get_groups(pkg);
 					if(g) {
@@ -245,8 +234,18 @@ void print_pkg_info(const char *pkgspec) {
 						fputc(')', stdout);
 					}
 				}
-				fputc('\n', stdout);
-				fputs("    ", stdout);
+				if(db != localdb) {
+					alpm_pkg_t *lpkg = alpm_db_get_pkg(localdb, alpm_pkg_get_name(pkg));
+					if(lpkg) {
+						const char *lver = alpm_pkg_get_version(lpkg);
+						if(strcmp(lver, alpm_pkg_get_version(pkg)) == 0) {
+							fputs(" [installed]", stdout);
+						} else {
+							printf(" [installed: %s]", lver);
+						}
+					}
+				}
+				fputs("\n    ", stdout);
 				fputs(alpm_pkg_get_desc(pkg), stdout);
 				break;
 			case 2:
