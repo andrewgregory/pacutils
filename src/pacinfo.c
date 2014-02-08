@@ -270,6 +270,8 @@ void print_pkg_info(const char *pkgspec) {
 				printf("Packager:       %s\n", alpm_pkg_get_packager(pkg));
 				printt("Build Date:     %s\n", alpm_pkg_get_builddate(pkg));
 				printt("Install Date:   %s\n", alpm_pkg_get_installdate(pkg));
+				printf("MD5 Sum:        %s\n", alpm_pkg_get_md5sum(pkg));
+				printf("SHA-256 Sum:    %s\n", alpm_pkg_get_sha256sum(pkg));
 
 				/*printd("Required For:   ",      alpm_pkg_get_provides(pkg));*/
 				/*printd("Optional For:   ",      alpm_pkg_get_provides(pkg));*/
