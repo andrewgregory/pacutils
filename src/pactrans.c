@@ -444,6 +444,7 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
+	alpm_option_set_questioncb(handle, pu_cb_question);
 	alpm_option_set_progresscb(handle, pu_cb_progress);
 	alpm_option_set_dlcb(handle, pu_cb_download);
 	alpm_option_set_logcb(handle, cb_log);

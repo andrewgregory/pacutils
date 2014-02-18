@@ -77,6 +77,8 @@ void pu_cb_download(const char *filename, off_t xfered, off_t total);
 const char *pu_msg_progress(alpm_progress_t event);
 void pu_cb_progress(alpm_progress_t event, const char *pkgname, int percent,
 		size_t total, size_t current);
+void pu_cb_question(alpm_question_t question, void *data1, void *data2,
+		void *data3, int *response);
 
 alpm_pkg_t *pu_find_pkgspec(alpm_handle_t *handle, const char *pkgspec);
 void pu_fprint_pkgspec(FILE *stream, alpm_pkg_t *pkg);

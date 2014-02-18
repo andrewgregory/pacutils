@@ -641,6 +641,22 @@ static long _pu_time_diff(struct timeval *t1, struct timeval *t2)
 	return (t1->tv_sec - t2->tv_sec) * 1000 + (t1->tv_usec - t2->tv_usec) / 1000;
 }
 
+void pu_cb_question(alpm_question_t question, void *data1, void *data2,
+		void *data3, int *response)
+{
+	switch(question) {
+		case ALPM_QUESTION_REPLACE_PKG:
+			printf("replacing %s with %s/%s\n", alpm_pkg_get_name(data1),
+					(char*) data3, alpm_pkg_get_name(data2));
+			break;
+		case ALPM_QUESTION_CONFLICT_PKG:
+			printf("%s and %s are in conflict", (char*) data1, (char*) data2);
+			break;
+		default:
+			break;
+	}
+}
+
 void pu_cb_download(const char *filename, off_t xfered, off_t total)
 {
 	static struct timeval last_update = {0, 0};
