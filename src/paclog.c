@@ -70,7 +70,7 @@ void usage(int ret)
 	hputs("   --debug             enable extra debugging messages");
 	hputs("   --logfile=<path>    set an alternate log file");
 	hputs("   --[no-]color        color output");
-	hputs("   --installed         list installed packages (EXPERIMENTAL)");
+	hputs("   --pkglist           list installed packages (EXPERIMENTAL)");
 	hputs("");
 	hputs("filters:");
 	hputs("   --action=<date>     show entries after <date>");
@@ -122,7 +122,7 @@ void parse_opts(int argc, char **argv)
 		{ "help",       no_argument,       NULL, FLAG_HELP      } ,
 		{ "version",    no_argument,       NULL, FLAG_VERSION   } ,
 
-		{ "installed",  no_argument,       NULL, FLAG_INSTALLED } ,
+		{ "pkglist",    no_argument,       NULL, FLAG_INSTALLED } ,
 
 		{ "action",     required_argument, NULL, FLAG_ACTION    } ,
 		{ "after",      required_argument, NULL, FLAG_AFTER     } ,
