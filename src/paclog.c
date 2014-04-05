@@ -292,18 +292,14 @@ int main(int argc, char **argv)
 		for(i = entries; i; i = i->next) {
 			pu_log_entry_t *e = i->data;
 
-			if(after) {
-				if(mktime(e->timestamp) >= after) {
-					print_entry(stdout, e);
-					continue;
-				}
+			if(after && mktime(e->timestamp) >= after) {
+				print_entry(stdout, e);
+				continue;
 			}
 
-			if(before) {
-				if(mktime(e->timestamp) <= before) {
-					print_entry(stdout, e);
-					continue;
-				}
+			if(before && mktime(e->timestamp) <= before) {
+				print_entry(stdout, e);
+				continue;
 			}
 
 			if(caller) {
@@ -314,41 +310,32 @@ int main(int argc, char **argv)
 				}
 			}
 
-			if(actions) {
-				pu_log_action_t *a = pu_log_action_parse(e->message);
-				if(a) {
-					const char *op;
-					switch(a->operation) {
-						case PU_LOG_OPERATION_INSTALL:
-							op = "install";
-							break;
-						case PU_LOG_OPERATION_REINSTALL:
-							op = "reinstall";
-							break;
-						case PU_LOG_OPERATION_UPGRADE:
-							op = "upgrade";
-							break;
-						case PU_LOG_OPERATION_DOWNGRADE:
-							op = "downgrade";
-							break;
-						case PU_LOG_OPERATION_REMOVE:
-							op = "remove";
-							break;
-					}
-					if(alpm_list_find_str(actions, "all")
-							|| alpm_list_find_str(actions, op)) {
-						print_entry(stdout, e);
-						continue;
-					}
-				}
-			}
-
 			if(warnings) {
 				if(strncmp(e->message, "error: ", 7) == 0
 						|| strncmp(e->message, "warning: ", 9) == 0
 						|| strncmp(e->message, "note: ", 6) == 0) {
 					print_entry(stdout, e);
 					continue;
+				}
+			}
+
+			if(actions) {
+				pu_log_action_t *a = pu_log_action_parse(e->message);
+				if(a) {
+					const char *op = NULL;
+					switch(a->operation) {
+						case PU_LOG_OPERATION_INSTALL:   op = "install";   break;
+						case PU_LOG_OPERATION_REINSTALL: op = "reinstall"; break;
+						case PU_LOG_OPERATION_UPGRADE:   op = "upgrade";   break;
+						case PU_LOG_OPERATION_DOWNGRADE: op = "downgrade"; break;
+						case PU_LOG_OPERATION_REMOVE:    op = "remove";    break;
+					}
+					pu_log_action_free(a);
+					if(alpm_list_find_str(actions, "all")
+							|| alpm_list_find_str(actions, op)) {
+						print_entry(stdout, e);
+						continue;
+					}
 				}
 			}
 
