@@ -1,5 +1,5 @@
-CFLAGS += -Wall -I..
-LDFLAGS += -L..
+CFLAGS += -Wall -I../lib
+LDFLAGS += -L../lib
 LDLIBS += -lpacutils -lalpm -larchive
 
 PREFIX      ?= /usr/local
