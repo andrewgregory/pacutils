@@ -310,10 +310,9 @@ int main(int argc, char **argv)
 						seen = alpm_list_add(seen, strdup(a->target));
 						break;
 				}
-				pu_log_action_free(a);
 			}
+			pu_log_action_free(a);
 		}
-
 		FREELIST(seen);
 	} else if(!after && !before && !pkgs && !caller && !actions && !warnings) {
 		for(i = entries; i; i = i->next) {
