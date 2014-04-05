@@ -8,13 +8,13 @@
 #include <pacutils.h>
 #include <pacutils/log.h>
 
-const char *myname = "paclog", *myver = "0.1";
+const char *myname = "paclog", *myver = "0.2";
 
 char *logfile = NULL;
 
 time_t after = 0, before = 0;
 alpm_list_t *pkgs = NULL, *caller = NULL, *actions = NULL;
-int color = 1, warnings = 0;
+int color = 1, warnings = 0, list_installed = 0;
 
 enum longopt_flags {
 	FLAG_CONFIG = 1000,
@@ -23,6 +23,7 @@ enum longopt_flags {
 	FLAG_BEFORE,
 	FLAG_CALLER,
 	FLAG_HELP,
+	FLAG_INSTALLED,
 	FLAG_LOGFILE,
 	FLAG_PACKAGE,
 	FLAG_VERSION,
@@ -69,6 +70,7 @@ void usage(int ret)
 	hputs("   --debug             enable extra debugging messages");
 	hputs("   --logfile=<path>    set an alternate log file");
 	hputs("   --[no-]color        color output");
+	hputs("   --installed         list installed packages (EXPERIMENTAL)");
 	hputs("");
 	hputs("filters:");
 	hputs("   --action=<date>     show entries after <date>");
@@ -120,6 +122,8 @@ void parse_opts(int argc, char **argv)
 		{ "help",       no_argument,       NULL, FLAG_HELP      } ,
 		{ "version",    no_argument,       NULL, FLAG_VERSION   } ,
 
+		{ "installed",  no_argument,       NULL, FLAG_INSTALLED } ,
+
 		{ "action",     required_argument, NULL, FLAG_ACTION    } ,
 		{ "after",      required_argument, NULL, FLAG_AFTER     } ,
 		{ "before",     required_argument, NULL, FLAG_BEFORE    } ,
@@ -147,6 +151,10 @@ void parse_opts(int argc, char **argv)
 			case FLAG_VERSION:
 				pu_print_version(myname, myver);
 				exit(0);
+				break;
+
+			case FLAG_INSTALLED:
+				list_installed = 1;
 				break;
 
 			case FLAG_ACTION:
@@ -283,7 +291,31 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
-	if(!after && !before && !pkgs && !caller && !actions && !warnings) {
+	if(list_installed) {
+		alpm_list_t *seen = NULL;
+
+		for(i = alpm_list_last(entries); i; i = alpm_list_previous(i)) {
+			pu_log_entry_t *e = i->data;
+			pu_log_action_t *a = pu_log_action_parse(e->message);
+
+			if(a && !alpm_list_find_str(seen, a->target)) {
+				switch(a->operation) {
+					case PU_LOG_OPERATION_INSTALL:
+					case PU_LOG_OPERATION_REINSTALL:
+					case PU_LOG_OPERATION_UPGRADE:
+					case PU_LOG_OPERATION_DOWNGRADE:
+						printf("%s %s\n", a->target, a->new_version);
+						/* fall through */
+					case PU_LOG_OPERATION_REMOVE:
+						seen = alpm_list_add(seen, strdup(a->target));
+						break;
+				}
+				pu_log_action_free(a);
+			}
+		}
+
+		FREELIST(seen);
+	} else if(!after && !before && !pkgs && !caller && !actions && !warnings) {
 		for(i = entries; i; i = i->next) {
 			pu_log_entry_t *e = i->data;
 			print_entry(stdout, e);
