@@ -132,6 +132,9 @@ void parse_opts(int argc, char **argv)
 
 	while((c = getopt_long(argc, argv, short_opts, long_opts, NULL)) != -1) {
 		switch(c) {
+			case 1:
+				break;
+
 			case FLAG_CONFIG:
 				config_file = optarg;
 				break;
@@ -169,6 +172,10 @@ void parse_opts(int argc, char **argv)
 				break;
 			case FLAG_WARNINGS:
 				warnings = 1;
+				break;
+
+			case '?':
+				exit(2);
 				break;
 		}
 	}
