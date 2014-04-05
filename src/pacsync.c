@@ -113,10 +113,20 @@ pu_config_t *parse_opts(int argc, char **argv)
 	return config;
 }
 
-void cb_log(alpm_loglevel_t level, const char *fmt, va_list args)
+void cb_event(alpm_event_t *event)
 {
-	if(level & log_level) {
-		vprintf(fmt, args);
+	switch(event->type) {
+		case ALPM_EVENT_LOG:
+			{
+					alpm_event_log_t *e = (alpm_event_log_t*) event;
+				if(e->level & log_level) {
+					vprintf(e->fmt, e->args);
+				}
+			}
+			break;
+		default:
+			/* do nothing */
+			break;
 	}
 }
 
@@ -137,7 +147,7 @@ int main(int argc, char **argv)
 
 	alpm_option_set_progresscb(handle, pu_cb_progress);
 	alpm_option_set_dlcb(handle, pu_cb_download);
-	alpm_option_set_logcb(handle, cb_log);
+	alpm_option_set_eventcb(handle, cb_event);
 
 	sync_dbs = pu_register_syncdbs(handle, config->repos);
 	if(!sync_dbs) {
