@@ -68,7 +68,7 @@ void usage(int ret)
 	hputs("   --config=<path>     set an alternate configuration file");
 	hputs("   --debug             enable extra debugging messages");
 	hputs("   --logfile=<path>    set an alternate log file");
-	hputs("   --[no]-color        color output");
+	hputs("   --[no-]color        color output");
 	hputs("");
 	hputs("filters:");
 	hputs("   --action=<date>     show entries after <date>");
