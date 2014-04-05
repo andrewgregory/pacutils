@@ -208,12 +208,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 	return config;
 }
 
-void print_pkg_info(const char *pkgspec) {
-		alpm_pkg_t *pkg = pu_find_pkgspec(handle, pkgspec);
-		if(!pkg) {
-			fprintf(stderr, "Unable to load package '%s'\n", pkgspec);
-			return;
-		}
+void print_pkg_info(alpm_pkg_t *pkg) {
 		alpm_db_t *db = alpm_pkg_get_db(pkg);
 		alpm_db_t *localdb = alpm_get_localdb(handle);
 
@@ -284,6 +279,39 @@ void print_pkg_info(const char *pkgspec) {
 		putchar('\n');
 }
 
+alpm_list_t *find_pkg(const char *pkgspec) {
+	alpm_list_t *i, *pkgs = NULL;
+	alpm_pkg_t *pkg = pu_find_pkgspec(handle, pkgspec);
+
+	if(pkg) {
+		return alpm_list_add(NULL, pkg);
+	}
+
+	if((pkg = alpm_db_get_pkg(alpm_get_localdb(handle), pkgspec))) {
+		pkgs = alpm_list_add(pkgs, pkg);
+	}
+
+	for(i = alpm_get_syncdbs(handle); i; i = alpm_list_next(i)) {
+		if((pkg = alpm_db_get_pkg(i->data, pkgspec))) {
+			pkgs = alpm_list_add(pkgs, pkg);
+		}
+	}
+
+	return pkgs;
+}
+
+void print_pkgspec_info(const char *pkgspec) {
+	alpm_list_t *i, *pkgs = find_pkg(pkgspec);
+	if(!pkgs) {
+		fprintf(stderr, "Unable to find package '%s'\n", pkgspec);
+		return;
+	}
+	for(i = pkgs; i; i = alpm_list_next(i)) {
+		print_pkg_info(i->data);
+	}
+	alpm_list_free(pkgs);
+}
+
 int main(int argc, char **argv) {
 	int ret = 0;
 
@@ -300,7 +328,7 @@ int main(int argc, char **argv) {
 	pu_register_syncdbs(handle, config->repos);
 
 	for(argv += optind; *argv; ++argv) {
-		print_pkg_info(*argv);
+		print_pkgspec_info(*argv);
 	}
 
 	if(!isatty(fileno(stdin)) && !feof(stdin)) {
@@ -308,7 +336,7 @@ int main(int argc, char **argv) {
 		while(fgets(buf, 256, stdin)) {
 			char *c = strchr(buf, '\n');
 			if(c) *c = '\0';
-			print_pkg_info(buf);
+			print_pkgspec_info(buf);
 		}
 	}
 
