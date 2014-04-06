@@ -20,7 +20,7 @@ pacutils - utility library for libalpm front-ends
 B<pacutils> encapsulates several of the common tasks that most users of
 I<libalpm> need to perform, such as parsing F<pacman.conf> and providing
 standard output functions for callbacks.  The included programs can also be
-used as guides for how to accomplish particular actions using I<libalpm>.
+used as guides for how to accomplish particular tasks using I<libalpm>.
 
 =head1 DESCRIPTION
 
@@ -66,6 +66,25 @@ C<Server> directives and C<Architecture> will be replaced if set to C<auto>.
 
 =back
 
+=head2 Pkgspec
+
+A C<pkgspec> is a string consisting of sufficient information to uniquely
+identify an individual package.  Currently recognized formats are:
+
+=over
+
+=item <dbname>/<pkgname>
+
+ local/pacman
+ core/pacman
+
+=item <protocol>://<path>
+
+ ftp://ftp.archlinux.org/core/os/x86_64/pacman-4.1.2-5-x86_64.pkg.tar.xz
+ file:///var/cache/pacman/pkg/pacman-4.1.2-5-x86_64.pkg.tar.xz
+
+=back
+
 =head1 PROGRAMS
 
 There are several programs located in F<src/>.  Refer to each program's
@@ -90,39 +109,44 @@ C<auto>.
 
 Updates repository databases.  Equivalent to C<pacman -Sy>.
 
-=item pacinstall
-
-Install packages from sync repositories, similar to C<< pacman -S <pkgs> >>.
-
-=item pacinfo
-
-Display basic information for installed packages, similar to
-C<< pacman -Qi <pkg> >>.
-
-=item pacsift
-
-Package search/filter tool.
-
-=item pacfile
-
-Display information about a file.  Includes information from C<pacman -Qo>,
-C<pacman -Qkk>, and C<pacman -Qii>.
-
-=item pactrans
+=item pactrans/pacinstall/pacremove
 
 Install/remove packages in a single transaction.
 
 B<NOTE:> I<alpm> support for installation and removal in a single transaction
 is flaky; some options may be ignored.
 
+=item pacinfo
+
+Display information for packages, similar to C<pacman -Qi> and C<pacman -Si>.
+Input should be a list of pkgspecs.
+
+B<EXPERIMENTAL:> If a package name is given instead of a pkgspec, all packages
+in all databases with the given name will be displayed.
+
+=item pacsift
+
+Package search/filter tool.  Combine with B<pacinfo> to display brief package
+information similar to C<pacman -Qs> and C<pacman -Ss>:
+
+ pacsift --name pacman | pacinfo --short
+
+=item pacfile
+
+Display information about a file.  Includes information from C<pacman -Qo>,
+C<pacman -Qkk>, and C<pacman -Qii>.  Expects input to match the path stored in
+B<pacman>'s database with or without the root prepended.  I<realpath> can be
+used to call with relative paths or paths containing symbolic links:
+
+ pacfile "$(realpath ./foo)"
+
 =item paclog
 
-Filter pacman log entries.
+Filter pacman log entries.  If multiple filters are provided, the entries
+returned are the union of all filters.  Output can be piped to a second
+instance to find the intersection of filters instead:
 
-To safely reduce the size of B<pacman>'s log while retaining important entries
-use:
-
- paclog --warnings --action=all --after="$(date -Idate --date='6 months ago')" > newlog
+ paclog --caller ALPM | paclog --after 2014-04-06
 
 =back
 
@@ -136,20 +160,15 @@ Not implemented yet:
 
 =item error reporting
 
-=back
+=item siglevel inheritance for repos and local/remote values
 
-=head1 TODO
-
-=over
-
-
-=item fix alpm support for "universal transactions"
+=item proper handling of transaction flags with combined transactions
 
 =back
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2012-2013 Andrew Gregory
+Copyright (c) 2012-2014 Andrew Gregory
 
 pacutils is distributed under the terms of the MIT license.  See F<COPYING> for
 details.
