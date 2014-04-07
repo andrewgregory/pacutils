@@ -148,6 +148,28 @@ instance to find the intersection of filters instead:
 
  paclog --caller ALPM | paclog --after 2014-04-06
 
+=item pacreport
+
+Generate a report of installed packages including:
+
+=over
+
+=item unneeded packages installed explicitly
+
+=item unneeded packages installed as dependencies
+
+=item installed packages not in a repository
+
+=item packages missing from specified groups
+
+=item missing package files
+
+=item cache directory sizes
+
+=item packages sizes include dependencies not needed by other packages
+
+=back
+
 =back
 
 =head1 BUGS

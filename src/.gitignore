@@ -3,6 +3,7 @@ pacinstall
 pacfile
 pacconf
 pacremove
+pacreport
 pacsift
 pacsync
 pactrans
