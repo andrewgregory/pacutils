@@ -54,12 +54,12 @@ struct pkg_file_t *pkg_file_new(alpm_pkg_t *pkg, alpm_file_t *file)
  *
  * @return size in bytes
  */
-unsigned int get_pkg_chain_size(alpm_handle_t *handle, alpm_pkg_t *pkg)
+off_t get_pkg_chain_size(alpm_handle_t *handle, alpm_pkg_t *pkg)
 {
 	alpm_db_t *localdb = alpm_get_localdb(handle);
 	alpm_list_t *localpkgs = alpm_db_get_pkgcache(localdb);
 	alpm_list_t *depchain = alpm_list_add(NULL, pkg);
-	unsigned int size = 0;
+	off_t size = 0;
 	alpm_list_t *d;
 
 
@@ -298,10 +298,10 @@ cleanup:
 	return ret;
 }
 
-size_t get_cache_size(alpm_handle_t *handle, const char *path,
-		size_t *uninstalled)
+off_t get_cache_size(alpm_handle_t *handle, const char *path,
+		off_t *uninstalled)
 {
-	unsigned int bytes = 0;
+	off_t bytes = 0;
 	DIR *d = opendir(path);
 	struct dirent *de;
 	char de_path[PATH_MAX];
@@ -348,7 +348,7 @@ void print_cache_sizes(alpm_handle_t *handle)
 
 	puts("Package Cache Size:");
 	for(c = cache_dirs; c; c = c->next) {
-		size_t uninstalled = 0;
+		off_t uninstalled = 0;
 		char size[10], usize[10];
 		pu_hr_size(get_cache_size(handle, c->data, &uninstalled), size);
 		pu_hr_size(uninstalled, usize);
