@@ -1,5 +1,6 @@
 #include "pacutils.h"
 
+#include <glob.h>
 #include <sys/time.h>
 #include <sys/utsname.h>
 
@@ -306,6 +307,34 @@ void pu_config_free(pu_config_t *config)
 	free(config);
 }
 
+int _pu_config_read_file(const char*, pu_config_t*, pu_repo_t*);
+
+int _pu_config_read_glob(const char *val, pu_config_t *config, pu_repo_t *repo)
+{
+	glob_t gbuf;
+	int gret;
+	size_t gindex;
+
+	if(!val || val[0] == '\0') {
+		return 0;
+	}
+
+	gret = glob(val, GLOB_NOCHECK, NULL, &gbuf);
+	switch(gret) {
+		case GLOB_NOSPACE:
+			fprintf(stderr, "include glob out of space\n");
+			break;
+		default:
+			for(gindex = 0; gindex < gbuf.gl_pathc; gindex++) {
+				_pu_config_read_file(gbuf.gl_pathv[gindex], config, repo);
+			}
+			break;
+	}
+	globfree(&gbuf);
+
+	return 0;
+}
+
 int _pu_config_read_file(const char *filename, pu_config_t *config,
 		pu_repo_t *repo)
 {
@@ -365,7 +394,7 @@ int _pu_config_read_file(const char *filename, pu_config_t *config,
 			if(repo) {
 				switch(s->type) {
 					case PU_CONFIG_OPTION_INCLUDE:
-						_pu_config_read_file(val, config, repo);
+						_pu_config_read_glob(val, config, repo);
 						break;
 					case PU_CONFIG_OPTION_SIGLEVEL:
 						_pu_parse_siglevel(val, &(repo->siglevel),

@@ -178,8 +178,6 @@ Not implemented yet:
 
 =over
 
-=item globs in Include directives
-
 =item error reporting
 
 =item proper handling of transaction flags with combined transactions
