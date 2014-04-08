@@ -286,6 +286,8 @@ void list_repo_directives(alpm_list_t *directives)
 			show_list_str("Server", repo->servers);
 		} else if(strcasecmp(i->data, "SigLevel") == 0) {
 			show_siglevel("SigLevel", repo->siglevel, 0);
+		} else if(strcasecmp(i->data, "Usage") == 0) {
+			show_usage("Usage", repo->usage);
 		} else {
 			fprintf(stderr, "warning: unknown directive '%s'\n", (char*) i->data);
 		}
