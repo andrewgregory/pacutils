@@ -358,7 +358,7 @@ int _pu_config_read_file(const char *filename, pu_config_t *config,
 			}
 
 			if(!(s = _pu_config_lookup_setting(key))) {
-				printf("unknown directive '%s'\n", key);
+				printf("unknown option '%s'\n", key);
 				continue;
 			}
 
