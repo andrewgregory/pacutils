@@ -19,9 +19,10 @@ alpm_file_t *pu_filelist_contains_path(alpm_filelist_t *files, const char *path)
 /* sync repos */
 typedef struct pu_repo_t {
 	char *name;
-	alpm_siglevel_t siglevel;
 	alpm_list_t *servers;
 	alpm_db_usage_t usage;
+	alpm_siglevel_t siglevel;
+	alpm_siglevel_t siglevel_mask;
 } pu_repo_t;
 
 struct pu_repo_t *pu_repo_new(void);
@@ -54,6 +55,10 @@ typedef struct pu_config_t {
 	alpm_siglevel_t siglevel;
 	alpm_siglevel_t localfilesiglevel;
 	alpm_siglevel_t remotefilesiglevel;
+
+	alpm_siglevel_t siglevel_mask;
+	alpm_siglevel_t localfilesiglevel_mask;
+	alpm_siglevel_t remotefilesiglevel_mask;
 
 	alpm_list_t *holdpkgs;
 	alpm_list_t *ignorepkgs;

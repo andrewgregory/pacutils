@@ -149,6 +149,10 @@ void show_cleanmethod(const char *directive, unsigned int method)
 
 void show_siglevel(const char *directive, alpm_siglevel_t level, int pkgonly)
 {
+	if(level == ALPM_SIG_USE_DEFAULT) {
+		return;
+	}
+
 	if(level & ALPM_SIG_PACKAGE) {
 		if(level & ALPM_SIG_PACKAGE_OPTIONAL) {
 			show_str(directive, "PackageOptional");

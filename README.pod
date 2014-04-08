@@ -182,8 +182,6 @@ Not implemented yet:
 
 =item error reporting
 
-=item siglevel inheritance for repos and local/remote values
-
 =item proper handling of transaction flags with combined transactions
 
 =back
