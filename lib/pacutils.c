@@ -346,12 +346,18 @@ int _pu_config_read_file(const char *filename, pu_config_t *config,
 				config->repos = alpm_list_add(config->repos, repo);
 			}
 		} else {
-			char *key = strtok_r(buf, " =", &ptr);
-			char *val = strtok_r(NULL, " =", &ptr);
+			char *key = buf;
+			char *val = strchr(key, '=');
 			char *v, *ctx;
-			struct _pu_config_setting *s = _pu_config_lookup_setting(key);
+			struct _pu_config_setting *s;
 
-			if(!s) {
+			if(val) {
+				*(val++) = '\0';
+				pu_strtrim(val);
+				pu_strtrim(key);
+			}
+
+			if(!(s = _pu_config_lookup_setting(key))) {
 				printf("unknown directive '%s'\n", key);
 				continue;
 			}
