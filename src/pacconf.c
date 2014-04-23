@@ -260,8 +260,9 @@ void dump_config(void)
 	}
 }
 
-void list_repo_directives(alpm_list_t *directives)
+int list_repo_directives(alpm_list_t *directives)
 {
+	int ret = 0;
 	alpm_list_t *i;
 	pu_repo_t *repo = NULL;
 
@@ -274,12 +275,12 @@ void list_repo_directives(alpm_list_t *directives)
 
 	if(!repo) {
 		fprintf(stderr, "error: repo '%s' not configured\n", repo_name);
-		return;
+		return 1;
 	}
 
 	if(!directives) {
 		dump_repo(repo);
-		return;
+		return 0;
 	}
 
 	for(i = directives; i; i = i->next) {
@@ -289,19 +290,26 @@ void list_repo_directives(alpm_list_t *directives)
 			show_siglevel("SigLevel", repo->siglevel, 0);
 		} else if(strcasecmp(i->data, "Usage") == 0) {
 			show_usage("Usage", repo->usage);
+		} else if(strcasecmp(i->data, "Include") == 0) {
+			fputs("warning: 'Include' directives cannot be queried\n", stderr);
+			ret = 1;
 		} else {
 			fprintf(stderr, "warning: unknown directive '%s'\n", (char*) i->data);
+			ret = 1;
 		}
 	}
+
+	return ret;
 }
 
-void list_directives(alpm_list_t *directives)
+int list_directives(alpm_list_t *directives)
 {
+	int ret = 0;
 	alpm_list_t *i;
 
 	if(!directives) {
 		dump_config();
-		return;
+		return 0;
 	}
 
 	for(i = directives; i; i = i->next) {
@@ -359,11 +367,14 @@ void list_directives(alpm_list_t *directives)
 
 		} else if(strcasecmp(i->data, "Include") == 0) {
 			fputs("warning: 'Include' directives cannot be queried\n", stderr);
-
+			ret = 1;
 		} else {
 			fprintf(stderr, "warning: unknown directive '%s'\n", (char*) i->data);
+			ret = 1;
 		}
 	}
+
+	return ret;
 }
 
 int main(int argc, char **argv)
@@ -392,9 +403,9 @@ int main(int argc, char **argv)
 		}
 		list_repos();
 	} else if(repo_name) {
-		list_repo_directives(directives);
+		ret = list_repo_directives(directives);
 	} else {
-		list_directives(directives);
+		ret = list_directives(directives);
 	}
 
 cleanup:
