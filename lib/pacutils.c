@@ -384,6 +384,8 @@ int _pu_config_read_file(const char *filename, pu_config_t *config,
 			char *v, *ctx;
 			struct _pu_config_setting *s;
 
+#define FOREACHVAL for(v = strtok_r(val, " ", &ctx); v; v = strtok_r(NULL, " ", &ctx))
+
 			if(val) {
 				*(val++) = '\0';
 				pu_strtrim(val);
@@ -408,7 +410,7 @@ int _pu_config_read_file(const char *filename, pu_config_t *config,
 						repo->servers = alpm_list_add(repo->servers, strdup(val));
 						break;
 					case PU_CONFIG_OPTION_USAGE:
-						for(v = strtok_r(val, " ", &ctx); v; v = strtok_r(NULL, " ", &ctx)) {
+						FOREACHVAL {
 							if(strcmp(v, "Sync") == 0) {
 								repo->usage |= ALPM_DB_USAGE_SYNC;
 							} else if(strcmp(v, "Search") == 0) {
@@ -501,39 +503,33 @@ int _pu_config_read_file(const char *filename, pu_config_t *config,
 								&(config->remotefilesiglevel_mask));
 						break;
 					case PU_CONFIG_OPTION_HOLDPKGS:
-						while(val) {
-							config->holdpkgs = alpm_list_add(config->holdpkgs, strdup(val));
-							val = strtok_r(NULL, " ", &ptr);
+						FOREACHVAL {
+							config->holdpkgs = alpm_list_add(config->holdpkgs, strdup(v));
 						}
 						break;
 					case PU_CONFIG_OPTION_IGNOREPKGS:
-						while(val) {
-							config->ignorepkgs = alpm_list_add(config->ignorepkgs, strdup(val));
-							val = strtok_r(NULL, " ", &ptr);
+						FOREACHVAL {
+							config->ignorepkgs = alpm_list_add(config->ignorepkgs, strdup(v));
 						}
 						break;
 					case PU_CONFIG_OPTION_IGNOREGROUPS:
-						while(val) {
-							config->ignorepkgs = alpm_list_add(config->ignorepkgs, strdup(val));
-							val = strtok_r(NULL, " ", &ptr);
+						FOREACHVAL {
+							config->ignoregroups = alpm_list_add(config->ignoregroups, strdup(v));
 						}
 						break;
 					case PU_CONFIG_OPTION_NOUPGRADE:
-						while(val) {
-							config->noupgrade = alpm_list_add(config->noupgrade, strdup(val));
-							val = strtok_r(NULL, " ", &ptr);
+						FOREACHVAL {
+							config->noupgrade = alpm_list_add(config->noupgrade, strdup(v));
 						}
 						break;
 					case PU_CONFIG_OPTION_NOEXTRACT:
-						while(val) {
-							config->noextract = alpm_list_add(config->noextract, strdup(val));
-							val = strtok_r(NULL, " ", &ptr);
+						FOREACHVAL {
+							config->noextract = alpm_list_add(config->noextract, strdup(v));
 						}
 						break;
 					case PU_CONFIG_OPTION_CACHEDIRS:
-						while(val) {
-							config->cachedirs = alpm_list_add(config->cachedirs, strdup(val));
-							val = strtok_r(NULL, " ", &ptr);
+						FOREACHVAL {
+							config->cachedirs = alpm_list_add(config->cachedirs, strdup(v));
 						}
 						break;
 					case PU_CONFIG_OPTION_INCLUDE:
