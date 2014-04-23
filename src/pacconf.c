@@ -2,6 +2,8 @@
 
 #include <pacutils.h>
 
+const char *myname = "pacconf", *myver = "0.2";
+
 pu_config_t *config = NULL;
 alpm_list_t *directives = NULL;
 char sep = '\n', *repo_name = NULL, *config_file = NULL;
@@ -32,13 +34,6 @@ void usage(int ret)
 #undef hputs
 	cleanup();
 	exit(ret);
-}
-
-void version(void)
-{
-	pu_print_version("pacconf", "0.1");
-	cleanup();
-	exit(0);
 }
 
 void parse_opts(int argc, char **argv)
@@ -77,7 +72,9 @@ void parse_opts(int argc, char **argv)
 				usage(0);
 				break;
 			case 'V':
-				version();
+				pu_print_version(myname, myver);
+				cleanup();
+				exit(0);
 				break;
 			case '?':
 			default:
