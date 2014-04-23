@@ -73,6 +73,7 @@ enum _pu_setting_name {
 	PU_CONFIG_OPTION_XFERCOMMAND,
 
 	PU_CONFIG_OPTION_CLEANMETHOD,
+	PU_CONFIG_OPTION_COLOR,
 	PU_CONFIG_OPTION_USESYSLOG,
 	PU_CONFIG_OPTION_USEDELTA,
 	PU_CONFIG_OPTION_TOTALDOWNLOAD,
@@ -110,6 +111,7 @@ struct _pu_config_setting {
 	{"XferCommand",     PU_CONFIG_OPTION_XFERCOMMAND},
 
 	{"CleanMethod",     PU_CONFIG_OPTION_CLEANMETHOD},
+	{"Color",           PU_CONFIG_OPTION_COLOR},
 	{"UseSyslog",       PU_CONFIG_OPTION_USESYSLOG},
 	{"UseDelta",        PU_CONFIG_OPTION_USEDELTA},
 	{"TotalDownload",   PU_CONFIG_OPTION_TOTALDOWNLOAD},
@@ -452,6 +454,9 @@ int _pu_config_read_file(const char *filename, pu_config_t *config,
 						break;
 					case PU_CONFIG_OPTION_CLEANMETHOD:
 						_pu_parse_cleanmethod(config, val);
+						break;
+					case PU_CONFIG_OPTION_COLOR:
+						config->color = 1;
 						break;
 					case PU_CONFIG_OPTION_USESYSLOG:
 						config->usesyslog = 1;
