@@ -49,6 +49,7 @@ typedef struct pu_config_t {
 	unsigned short checkspace;
 	unsigned short verbosepkglists;
 	unsigned short color;
+	unsigned short ilovecandy;
 
 	float usedelta;
 

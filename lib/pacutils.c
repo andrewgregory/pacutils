@@ -79,6 +79,7 @@ enum _pu_setting_name {
 	PU_CONFIG_OPTION_TOTALDOWNLOAD,
 	PU_CONFIG_OPTION_CHECKSPACE,
 	PU_CONFIG_OPTION_VERBOSEPKGLISTS,
+	PU_CONFIG_OPTION_ILOVECANDY,
 
 	PU_CONFIG_OPTION_SIGLEVEL,
 	PU_CONFIG_OPTION_LOCAL_SIGLEVEL,
@@ -117,6 +118,7 @@ struct _pu_config_setting {
 	{"TotalDownload",   PU_CONFIG_OPTION_TOTALDOWNLOAD},
 	{"CheckSpace",      PU_CONFIG_OPTION_CHECKSPACE},
 	{"VerbosePkgLists", PU_CONFIG_OPTION_VERBOSEPKGLISTS},
+	{"ILoveCandy",      PU_CONFIG_OPTION_ILOVECANDY},
 
 	{"SigLevel",        PU_CONFIG_OPTION_SIGLEVEL},
 	{"LocalFileSigLevel",  PU_CONFIG_OPTION_LOCAL_SIGLEVEL},
@@ -482,6 +484,9 @@ int _pu_config_read_file(const char *filename, pu_config_t *config,
 						break;
 					case PU_CONFIG_OPTION_VERBOSEPKGLISTS:
 						config->verbosepkglists = 1;
+						break;
+					case PU_CONFIG_OPTION_ILOVECANDY:
+						config->ilovecandy = 1;
 						break;
 					case PU_CONFIG_OPTION_SIGLEVEL:
 						_pu_parse_siglevel(val, &(config->siglevel),

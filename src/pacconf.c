@@ -243,6 +243,7 @@ void dump_config(void)
 	show_bool("TotalDownload", config->totaldownload);
 	show_bool("CheckSpace", config->checkspace);
 	show_bool("VerbosePkgLists", config->verbosepkglists);
+	show_bool("ILoveCandy", config->ilovecandy);
 
 	show_float("UseDelta", config->usedelta);
 
