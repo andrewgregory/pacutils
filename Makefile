@@ -6,6 +6,9 @@ lib:
 src: lib
 	$(MAKE) -C $@ all
 
+check: lib src
+	$(MAKE) -C t/ check
+
 install: lib
 	$(MAKE) -C lib/ $@
 	$(MAKE) -C src/ $@
@@ -13,5 +16,6 @@ install: lib
 clean:
 	$(MAKE) -C lib/ $@
 	$(MAKE) -C src/ $@
+	$(MAKE) -C t/ $@
 
-.PHONY: lib src
+.PHONY: lib src check
