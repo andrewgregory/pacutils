@@ -252,12 +252,11 @@ size_t pu_strtrim(char *str)
 		return 0;
 	}
 
-	end = str + strlen(str);
+	for(; *start && isspace((int) *start); start++);
+	end = start + strlen(start) - 1;
+	for(; end > start && isspace((int) *end); end--);
 
-	for(; isspace((int) *start) && start < end; start++);
-	for(; end > start && isspace((int) *(end - 1)); end--);
-
-	*(end) = '\0';
+	*(++end) = '\0';
 	memmove(str, start, end - start + 1);
 
 	return end - start;
