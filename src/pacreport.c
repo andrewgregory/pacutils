@@ -108,7 +108,7 @@ void print_pkg_info(alpm_handle_t *handle, alpm_pkg_t *pkg, size_t pkgname_len)
 	char size[20];
 	alpm_list_t *group;
 
-	printf("  %-*s	%8s", pkgname_len, alpm_pkg_get_name(pkg),
+	printf("  %-*s	%8s", (int) pkgname_len, alpm_pkg_get_name(pkg),
 			pu_hr_size( get_pkg_chain_size(handle, pkg), size));
 
 	if(alpm_pkg_get_groups(pkg)) {
@@ -241,7 +241,7 @@ void print_filelist(alpm_handle_t *handle, alpm_list_t *files)
 	}
 	for(f = files; f; f = f->next) {
 		struct pkg_file_t *mf = f->data;
-		printf("  %-*s	%s%s\n", pkgname_len, alpm_pkg_get_name(mf->pkg),
+		printf("  %-*s	%s%s\n", (int) pkgname_len, alpm_pkg_get_name(mf->pkg),
 				root, mf->file->name);
 	}
 }
@@ -352,7 +352,8 @@ void print_cache_sizes(alpm_handle_t *handle)
 		char size[10], usize[10];
 		pu_hr_size(get_cache_size(handle, c->data, &uninstalled), size);
 		pu_hr_size(uninstalled, usize);
-		printf("  %*s %s (%s not installed)\n", pathlen, c->data, size, usize);
+		printf("  %*s %s (%s not installed)\n",
+				(int) pathlen, (char*) c->data, size, usize);
 	}
 }
 
@@ -470,7 +471,7 @@ void scan_filesystem(alpm_handle_t *handle, int backups, int orphans)
 			orphans_found = alpm_list_msort(orphans_found,
 					alpm_list_count(orphans_found), (alpm_list_fn_cmp) strcmp);
 			for(i = orphans_found; i; i = i->next) {
-				printf("  %s\n", i->data);
+				printf("  %s\n", (char*) i->data);
 			}
 			FREELIST(orphans_found);
 		}
@@ -485,7 +486,7 @@ void scan_filesystem(alpm_handle_t *handle, int backups, int orphans)
 			backups_found = alpm_list_msort(backups_found,
 					alpm_list_count(backups_found), (alpm_list_fn_cmp) strcmp);
 			for(i = backups_found; i; i = i->next) {
-				printf("  %s\n", i->data);
+				printf("  %s\n", (char*) i->data);
 			}
 			FREELIST(backups_found);
 		}
