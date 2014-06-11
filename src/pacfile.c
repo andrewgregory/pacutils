@@ -21,17 +21,19 @@ enum longopt_flags {
 void usage(int ret)
 {
 	FILE *stream = (ret ? stderr : stdout);
-	fputs("pacfile - display information about pacman-managed files\n", stream);
-	fputs("usage:  pacfile [options] <file>...\n", stream);
-	fputs("        pacfile (--help|--version)\n", stream);
-	fputs("options:\n", stream);
-	fputs("   --config=<path>    set an alternate configuration file\n", stream);
-	fputs("   --dbpath=<path>    set an alternate database location\n", stream);
-	fputs("   --root=<path>      set an alternate installation root\n", stream);
-	fputs("   --help             display this help information\n", stream);
-	fputs("   --version          display version information\n", stream);
-	fputs("   --package=<pkg>    limit information to specified package(s)\n", stream);
-	fputs("   --no-check         do not compare pkg values to filesystem\n", stream);
+#define hputs(s) fputs(s"\n", stream)
+	hputs("pacfile - display information about pacman-managed files");
+	hputs("usage:  pacfile [options] <file>...");
+	hputs("        pacfile (--help|--version)");
+	hputs("options:");
+	hputs("   --config=<path>    set an alternate configuration file");
+	hputs("   --dbpath=<path>    set an alternate database location");
+	hputs("   --root=<path>      set an alternate installation root");
+	hputs("   --help             display this help information");
+	hputs("   --version          display version information");
+	hputs("   --package=<pkg>    limit information to specified package(s)");
+	hputs("   --no-check         do not compare pkg values to filesystem");
+#undef hputs
 	exit(ret);
 }
 
