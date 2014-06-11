@@ -7,11 +7,13 @@
 #include <pacutils.h>
 
 int checkfs = 1;
+alpm_list_t *pkgnames = NULL;
 
 enum longopt_flags {
 	FLAG_CONFIG = 1000,
 	FLAG_DBPATH,
 	FLAG_HELP,
+	FLAG_PACKAGE,
 	FLAG_ROOT,
 	FLAG_VERSION,
 };
@@ -28,7 +30,8 @@ void usage(int ret)
 	fputs("   --root=<path>      set an alternate installation root\n", stream);
 	fputs("   --help             display this help information\n", stream);
 	fputs("   --version          display version information\n", stream);
-	fputs("   --no-check         do not compare pkg values to fs\n", stream);
+	fputs("   --package=<pkg>    limit information to specified package(s)\n", stream);
+	fputs("   --no-check         do not compare pkg values to filesystem\n", stream);
 	exit(ret);
 }
 
@@ -46,6 +49,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "root"         , required_argument , NULL       , FLAG_ROOT         } ,
 		{ "version"      , no_argument       , NULL       , FLAG_VERSION      } ,
 		{ "no-check"     , no_argument       , &checkfs   , 0                 } ,
+		{ "package"      , required_argument , NULL       , FLAG_PACKAGE      } ,
 		{ 0, 0, 0, 0 },
 	};
 
@@ -90,6 +94,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 			case FLAG_VERSION:
 				pu_print_version("pacfile", "0.1");
 				exit(0);
+				break;
+			case FLAG_PACKAGE:
+				pkgnames = alpm_list_add(pkgnames, strdup(optarg));
 				break;
 			case '?':
 			default:
@@ -193,7 +200,7 @@ void cmp_uid(struct archive_entry *entry, struct stat *st)
 	if(st && puid != st->st_uid) {
 		pw = getpwuid(st->st_uid);
 		printf(" (%d/%s on filesystem)",
-				st->st_uid, pw ? pw->pw_name : "unknown_user");
+				st->st_uid, pw ? pw->pw_name : "unknown user");
 	}
 
 	putchar('\n');
@@ -209,7 +216,7 @@ void cmp_gid(struct archive_entry *entry, struct stat *st)
 	if(st && pgid != st->st_gid) {
 		gr = getgrgid(st->st_gid);
 		printf(" (%d/%s on filesystem)",
-				st->st_gid, gr ? gr->gr_name : "unknown_group");
+				st->st_gid, gr ? gr->gr_name : "unknown group");
 	}
 
 	putchar('\n');
@@ -234,6 +241,7 @@ int main(int argc, char **argv)
 {
 	pu_config_t *config = NULL;
 	alpm_handle_t *handle = NULL;
+	alpm_list_t *pkgs = NULL;
 	int ret = 0;
 	size_t rootlen;
 	const char *root;
@@ -251,6 +259,23 @@ int main(int argc, char **argv)
 	root = alpm_option_get_root(handle);
 	rootlen = strlen(root);
 
+	if(pkgnames) {
+		alpm_list_t *p;
+		alpm_db_t *db = alpm_get_localdb(handle);
+		for(p = pkgnames; p; p = alpm_list_next(p)) {
+			alpm_pkg_t *pkg = alpm_db_get_pkg(db, p->data);
+			if(pkg) {
+				pkgs = alpm_list_add(pkgs, pkg);
+			} else {
+				fprintf(stderr, "error: could not locate package '%s'\n",
+						(char*) p->data);
+				ret = 1;
+			}
+		}
+	} else {
+		pkgs = alpm_db_get_pkgcache(alpm_get_localdb(handle));
+	}
+
 	while(optind < argc) {
 		const char *relfname, *filename = argv[optind];
 
@@ -263,7 +288,7 @@ int main(int argc, char **argv)
 			relfname = filename;
 		}
 
-		for(p = alpm_db_get_pkgcache(alpm_get_localdb(handle)); p; p = p->next) {
+		for(p = pkgs; p; p = alpm_list_next(p)) {
 			alpm_file_t *pfile = pu_filelist_contains_path(
 					alpm_pkg_get_files(p->data), relfname);
 			if(pfile) {
@@ -357,6 +382,8 @@ int main(int argc, char **argv)
 cleanup:
 	alpm_release(handle);
 	pu_config_free(config);
+	alpm_list_free(pkgs);
+	FREELIST(pkgnames);
 
 	return ret;
 }
