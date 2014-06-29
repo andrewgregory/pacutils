@@ -1,0 +1,3 @@
+[submodule "ext/mini.c"]
+	path = ext/mini.c
+	url = git@github.com:andrewgregory/mINI.c.git

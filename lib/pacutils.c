@@ -4,6 +4,8 @@
 #include <sys/time.h>
 #include <sys/utsname.h>
 
+#include "../ext/mini.c/mini.c"
+
 char *pu_version(void)
 {
 	return "0.1";
@@ -341,72 +343,43 @@ int _pu_config_read_glob(const char *val, pu_config_t *config, pu_repo_t *repo)
 int _pu_config_read_file(const char *filename, pu_config_t *config,
 		pu_repo_t *repo)
 {
-	char buf[BUFSIZ];
-	FILE *infile = fopen(filename, "r");
-
-	if(!infile) {
+	mini_t *mini = mini_init(filename);
+	if(!mini) {
 		return -1;
 	}
 
-	while(fgets(buf, BUFSIZ, infile)) {
-		char *ptr;
-		size_t linelen;
-
-		/* remove comments */
-		if((ptr = strchr(buf, '#'))) {
-			*ptr = '\0';
-		}
-
-		/* strip surrounding whitespace */
-		linelen = pu_strtrim(buf);
-
-		/* skip empty lines */
-		if(buf[0] == '\0') {
-			continue;
-		}
-
-		if(buf[0] == '[' && buf[linelen - 1] == ']') {
-			buf[linelen - 1] = '\0';
-			ptr = buf + 1;
-
-			if(strcmp(ptr, "options") == 0) {
+	while(mini_next(mini)) {
+		if(!mini->key) {
+			if(strcmp(mini->section, "options") == 0) {
 				repo = NULL;
 			} else {
 				repo = pu_repo_new();
-				repo->name = strdup(ptr);
+				repo->name = strdup(mini->section);
 				repo->siglevel = ALPM_SIG_USE_DEFAULT;
 				config->repos = alpm_list_add(config->repos, repo);
 			}
 		} else {
-			char *key = buf;
-			char *val = strchr(key, '=');
 			char *v, *ctx;
 			struct _pu_config_setting *s;
 
-#define FOREACHVAL for(v = strtok_r(val, " ", &ctx); v; v = strtok_r(NULL, " ", &ctx))
+#define FOREACHVAL for(v = strtok_r(mini->value, " ", &ctx); v; v = strtok_r(NULL, " ", &ctx))
 
-			if(val) {
-				*(val++) = '\0';
-				pu_strtrim(val);
-				pu_strtrim(key);
-			}
-
-			if(!(s = _pu_config_lookup_setting(key))) {
-				printf("unknown option '%s'\n", key);
+			if(!(s = _pu_config_lookup_setting(mini->key))) {
+				printf("unknown option '%s'\n", mini->key);
 				continue;
 			}
 
 			if(repo) {
 				switch(s->type) {
 					case PU_CONFIG_OPTION_INCLUDE:
-						_pu_config_read_glob(val, config, repo);
+						_pu_config_read_glob(mini->value, config, repo);
 						break;
 					case PU_CONFIG_OPTION_SIGLEVEL:
-						_pu_parse_siglevel(val, &(repo->siglevel),
+						_pu_parse_siglevel(mini->value, &(repo->siglevel),
 								&(config->siglevel_mask));
 						break;
 					case PU_CONFIG_OPTION_SERVER:
-						repo->servers = alpm_list_add(repo->servers, strdup(val));
+						repo->servers = alpm_list_add(repo->servers, strdup(mini->value));
 						break;
 					case PU_CONFIG_OPTION_USAGE:
 						FOREACHVAL {
@@ -433,30 +406,30 @@ int _pu_config_read_file(const char *filename, pu_config_t *config,
 				switch(s->type) {
 					case PU_CONFIG_OPTION_ROOTDIR:
 						free(config->rootdir);
-						config->rootdir = strdup(val);
+						config->rootdir = strdup(mini->value);
 						break;
 					case PU_CONFIG_OPTION_DBPATH:
 						free(config->dbpath);
-						config->dbpath = strdup(val);
+						config->dbpath = strdup(mini->value);
 						break;
 					case PU_CONFIG_OPTION_GPGDIR:
 						free(config->gpgdir);
-						config->gpgdir = strdup(val);
+						config->gpgdir = strdup(mini->value);
 						break;
 					case PU_CONFIG_OPTION_LOGFILE:
 						free(config->logfile);
-						config->logfile = strdup(val);
+						config->logfile = strdup(mini->value);
 						break;
 					case PU_CONFIG_OPTION_ARCHITECTURE:
 						free(config->architecture);
-						config->architecture = strdup(val);
+						config->architecture = strdup(mini->value);
 						break;
 					case PU_CONFIG_OPTION_XFERCOMMAND:
 						free(config->xfercommand);
-						config->xfercommand = strdup(val);
+						config->xfercommand = strdup(mini->value);
 						break;
 					case PU_CONFIG_OPTION_CLEANMETHOD:
-						_pu_parse_cleanmethod(config, val);
+						_pu_parse_cleanmethod(config, mini->value);
 						break;
 					case PU_CONFIG_OPTION_COLOR:
 						config->color = 1;
@@ -465,9 +438,9 @@ int _pu_config_read_file(const char *filename, pu_config_t *config,
 						config->usesyslog = 1;
 						break;
 					case PU_CONFIG_OPTION_USEDELTA:
-						if(val) {
+						if(mini->value) {
 							char *end;
-							float d = strtof(val, &end);
+							float d = strtof(mini->value, &end);
 							if(*end != '\0' || d < 0.0 || d > 2.0) {
 								/* TODO invalid delta ratio */
 							} else {
@@ -490,15 +463,15 @@ int _pu_config_read_file(const char *filename, pu_config_t *config,
 						config->ilovecandy = 1;
 						break;
 					case PU_CONFIG_OPTION_SIGLEVEL:
-						_pu_parse_siglevel(val, &(config->siglevel),
+						_pu_parse_siglevel(mini->value, &(config->siglevel),
 								&(config->siglevel_mask));
 						break;
 					case PU_CONFIG_OPTION_LOCAL_SIGLEVEL:
-						_pu_parse_siglevel(val, &(config->localfilesiglevel),
+						_pu_parse_siglevel(mini->value, &(config->localfilesiglevel),
 								&(config->localfilesiglevel_mask));
 						break;
 					case PU_CONFIG_OPTION_REMOTE_SIGLEVEL:
-						_pu_parse_siglevel(val, &(config->remotefilesiglevel),
+						_pu_parse_siglevel(mini->value, &(config->remotefilesiglevel),
 								&(config->remotefilesiglevel_mask));
 						break;
 					case PU_CONFIG_OPTION_HOLDPKGS:
@@ -532,7 +505,7 @@ int _pu_config_read_file(const char *filename, pu_config_t *config,
 						}
 						break;
 					case PU_CONFIG_OPTION_INCLUDE:
-						_pu_config_read_file(val, config, repo);
+						_pu_config_read_file(mini->value, config, repo);
 						break;
 					default:
 						/* TODO */
@@ -541,9 +514,8 @@ int _pu_config_read_file(const char *filename, pu_config_t *config,
 			}
 		}
 	}
-	fclose(infile);
 
-	return 0;
+	return mini->eof ? 0 : -1;
 }
 
 void _pu_subst_server_vars(pu_config_t *config)
