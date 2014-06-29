@@ -312,9 +312,9 @@ void pu_config_free(pu_config_t *config)
 	free(config);
 }
 
-int _pu_config_read_file(const char*, pu_config_t*, pu_repo_t*);
+int _pu_config_read_file(const char*, pu_config_t*, pu_repo_t**);
 
-int _pu_config_read_glob(const char *val, pu_config_t *config, pu_repo_t *repo)
+int _pu_config_read_glob(const char *val, pu_config_t *config, pu_repo_t **repo)
 {
 	glob_t gbuf;
 	int gret;
@@ -341,7 +341,7 @@ int _pu_config_read_glob(const char *val, pu_config_t *config, pu_repo_t *repo)
 }
 
 int _pu_config_read_file(const char *filename, pu_config_t *config,
-		pu_repo_t *repo)
+		pu_repo_t **repo)
 {
 	mini_t *mini = mini_init(filename);
 	if(!mini) {
@@ -351,12 +351,13 @@ int _pu_config_read_file(const char *filename, pu_config_t *config,
 	while(mini_next(mini)) {
 		if(!mini->key) {
 			if(strcmp(mini->section, "options") == 0) {
-				repo = NULL;
+				*repo = NULL;
 			} else {
-				repo = pu_repo_new();
-				repo->name = strdup(mini->section);
-				repo->siglevel = ALPM_SIG_USE_DEFAULT;
-				config->repos = alpm_list_add(config->repos, repo);
+				pu_repo_t *r = pu_repo_new();
+				r->name = strdup(mini->section);
+				r->siglevel = ALPM_SIG_USE_DEFAULT;
+				config->repos = alpm_list_add(config->repos, r);
+				*repo = r;
 			}
 		} else {
 			char *v, *ctx;
@@ -369,30 +370,31 @@ int _pu_config_read_file(const char *filename, pu_config_t *config,
 				continue;
 			}
 
-			if(repo) {
+			if(*repo) {
+				pu_repo_t *r = *repo;
 				switch(s->type) {
 					case PU_CONFIG_OPTION_INCLUDE:
 						_pu_config_read_glob(mini->value, config, repo);
 						break;
 					case PU_CONFIG_OPTION_SIGLEVEL:
-						_pu_parse_siglevel(mini->value, &(repo->siglevel),
-								&(config->siglevel_mask));
+						_pu_parse_siglevel(mini->value, &(r->siglevel),
+								&(r->siglevel_mask));
 						break;
 					case PU_CONFIG_OPTION_SERVER:
-						repo->servers = alpm_list_add(repo->servers, strdup(mini->value));
+						r->servers = alpm_list_add(r->servers, strdup(mini->value));
 						break;
 					case PU_CONFIG_OPTION_USAGE:
 						FOREACHVAL {
 							if(strcmp(v, "Sync") == 0) {
-								repo->usage |= ALPM_DB_USAGE_SYNC;
+								r->usage |= ALPM_DB_USAGE_SYNC;
 							} else if(strcmp(v, "Search") == 0) {
-								repo->usage |= ALPM_DB_USAGE_SEARCH;
+								r->usage |= ALPM_DB_USAGE_SEARCH;
 							} else if(strcmp(v, "Install") == 0) {
-								repo->usage |= ALPM_DB_USAGE_INSTALL;
+								r->usage |= ALPM_DB_USAGE_INSTALL;
 							} else if(strcmp(v, "Upgrade") == 0) {
-								repo->usage |= ALPM_DB_USAGE_UPGRADE;
+								r->usage |= ALPM_DB_USAGE_UPGRADE;
 							} else if(strcmp(v, "All") == 0) {
-								repo->usage |= ALPM_DB_USAGE_ALL;
+								r->usage |= ALPM_DB_USAGE_ALL;
 							} else {
 								printf("unknown db usage level '%s'\n", v);
 							}
@@ -539,6 +541,7 @@ pu_config_t *pu_config_new_from_file(const char *filename)
 {
 	pu_config_t *config = pu_config_new();
 	alpm_list_t *i;
+	pu_repo_t *repo;
 
 	/* 0 is a valid siglevel value, so these must be set before parsing */
 	config->siglevel = (
@@ -547,7 +550,7 @@ pu_config_t *pu_config_new_from_file(const char *filename)
 	config->localfilesiglevel = ALPM_SIG_USE_DEFAULT;
 	config->remotefilesiglevel = ALPM_SIG_USE_DEFAULT;
 
-	if(_pu_config_read_file(filename, config, NULL) != 0) {
+	if(_pu_config_read_file(filename, config, &repo) != 0) {
 		 pu_config_free(config);
 		return NULL;
 	}
