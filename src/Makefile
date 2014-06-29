@@ -8,7 +8,18 @@ BINDIR      ?= ${EXEC_PREFIX}/bin
 INCLUDEDIR  ?= ${PREFIX}/include
 LIBDIR      ?= ${EXEC_PREFIX}/lib
 
-OBJECTS = pacinfo pacinstall pacremove pacfile pacconf pacsync pactrans pacsift paclog pacreport
+OBJECTS = \
+		pacconf \
+		pacfile \
+		pacinfo \
+		pacini \
+		pacinstall \
+		paclog \
+		pacremove \
+		pacreport \
+		pacsift \
+		pacsync \
+		pactrans
 
 all: $(OBJECTS)
 

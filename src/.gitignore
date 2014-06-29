@@ -1,10 +1,11 @@
-pacinfo
-pacinstall
-pacfile
 pacconf
+pacfile
+pacinfo
+pacini
+pacinstall
+paclog
 pacremove
 pacreport
 pacsift
 pacsync
 pactrans
-paclog
