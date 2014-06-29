@@ -105,11 +105,15 @@ directives will be processed, defaults are set, C<$repo> and C<$arch> will be
 replaced in C<Server> directives and C<Architecture> will be replaced if set to
 C<auto>.
 
+=item pacini
+
+Query a I<pacman>-style INI configuration file.
+
 =item pacsync
 
 Updates repository databases.  Equivalent to C<pacman -Sy>.
 
-=item pactrans/pacinstall/pacremove
+=item pactrans, pacinstall, pacremove
 
 Install/remove packages in a single transaction.
 
@@ -169,6 +173,10 @@ Generate a report of installed packages including:
 =item packages sizes include dependencies not needed by other packages
 
 =back
+
+=item paccheck
+
+Verify installed packages against I<pacman>'s database.
 
 =back
 
