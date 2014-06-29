@@ -515,6 +515,8 @@ int _pu_config_read_file(const char *filename, pu_config_t *config,
 		}
 	}
 
+#undef FOREACHVAL
+
 	return mini->eof ? 0 : -1;
 }
 
