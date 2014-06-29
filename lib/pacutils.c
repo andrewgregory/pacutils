@@ -505,7 +505,7 @@ int _pu_config_read_file(const char *filename, pu_config_t *config,
 						}
 						break;
 					case PU_CONFIG_OPTION_INCLUDE:
-						_pu_config_read_file(mini->value, config, repo);
+						_pu_config_read_glob(mini->value, config, repo);
 						break;
 					default:
 						/* TODO */
