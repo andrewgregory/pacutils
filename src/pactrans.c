@@ -557,7 +557,37 @@ int main(int argc, char **argv)
 	}
 
 	if(alpm_trans_prepare(handle, &err_data) != 0) {
-		fprintf(stderr, "%s\n", alpm_strerror(alpm_errno(handle)));
+		alpm_errno_t err = alpm_errno(handle);
+		switch(err) {
+			case ALPM_ERR_PKG_INVALID_ARCH:
+				for(i = err_data; i; i = alpm_list_next(i)) {
+					char *pkgname = i->data;
+					fprintf(stderr, "error: invalid architecture (%s)\n", pkgname);
+					free(pkgname);
+				}
+				break;
+			case ALPM_ERR_UNSATISFIED_DEPS:
+				for(i = err_data; i; i = alpm_list_next(i)) {
+					alpm_depmissing_t *dep = i->data;
+					char *depstr = alpm_dep_compute_string(dep->depend);
+					fprintf(stderr, "error: missing dependency '%s' (%s)\n",
+							dep->target, depstr);
+					free(depstr);
+					alpm_depmissing_free(dep);
+				}
+				break;
+			case ALPM_ERR_CONFLICTING_DEPS:
+				for(i = err_data; i; i = alpm_list_next(i)) {
+					alpm_conflict_t *conflict = i->data;
+					fprintf(stderr, "error: package conflict (%s %s)\n",
+							conflict->package1, conflict->package2);
+					alpm_conflict_free(conflict);
+				}
+				break;
+			default:
+				fprintf(stderr, "error: %s\n", alpm_strerror(alpm_errno(handle)));
+				break;
+		}
 		ret = 1;
 		goto transcleanup;
 	}
