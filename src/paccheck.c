@@ -347,7 +347,6 @@ int cmp_uid(alpm_pkg_t *pkg, const char *path,
 		struct archive_entry *entry, struct stat *st)
 {
 	uid_t puid = archive_entry_uid(entry);
-	const char *uname = archive_entry_uname(entry);
 
 	if(puid != st->st_uid) {
 		struct passwd *pw = getpwuid(puid);
