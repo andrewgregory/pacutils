@@ -646,16 +646,22 @@ static long _pu_time_diff(struct timeval *t1, struct timeval *t2)
 	return (t1->tv_sec - t2->tv_sec) * 1000 + (t1->tv_usec - t2->tv_usec) / 1000;
 }
 
-void pu_cb_question(alpm_question_t question, void *data1, void *data2,
-		void *data3, int *response)
+void pu_cb_question(alpm_question_t *question)
 {
-	switch(question) {
+	switch(question->type) {
 		case ALPM_QUESTION_REPLACE_PKG:
-			printf("replacing %s with %s/%s\n", alpm_pkg_get_name(data1),
-					(char*) data3, alpm_pkg_get_name(data2));
+			{
+				alpm_question_replace_t *q = &question->replace;
+				printf("replacing %s with %s/%s\n", alpm_pkg_get_name(q->oldpkg),
+						alpm_db_get_name(q->newdb), alpm_pkg_get_name(q->newpkg));
+			}
 			break;
 		case ALPM_QUESTION_CONFLICT_PKG:
-			printf("%s and %s are in conflict", (char*) data1, (char*) data2);
+			{
+				alpm_question_conflict_t *q = (alpm_question_conflict_t*) question;
+				printf("%s and %s are in conflict",
+						q->conflict->package1, q->conflict->package2);
+			}
 			break;
 		default:
 			break;
