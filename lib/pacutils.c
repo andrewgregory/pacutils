@@ -659,7 +659,7 @@ void pu_cb_question(alpm_question_t *question)
 		case ALPM_QUESTION_CONFLICT_PKG:
 			{
 				alpm_question_conflict_t *q = (alpm_question_conflict_t*) question;
-				printf("%s and %s are in conflict",
+				printf("%s and %s are in conflict\n",
 						q->conflict->package1, q->conflict->package2);
 			}
 			break;
