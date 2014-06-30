@@ -12,6 +12,8 @@ int main(int argc, char **argv) {
 		{ "   leading whitespace", "leading whitespace" },
 		{ "trailing whitespace  ", "trailing whitespace" },
 		{ "    both whitespace  ", "both whitespace" },
+		{ "                     ", ""},
+		{ "", ""},
 	};
 
 	tap_plan(sizeof(tests) / sizeof(struct test) * 2);
