@@ -870,10 +870,15 @@ void pu_display_transaction(alpm_handle_t *handle)
 				printf("installing %s (%s)",
 						alpm_pkg_get_filename(p),
 						alpm_pkg_get_name(p));
+				break;
 			case ALPM_PKG_FROM_SYNCDB:
 				printf("installing %s/%s",
 						alpm_db_get_name(alpm_pkg_get_db(p)),
 						alpm_pkg_get_name(p));
+				break;
+			case ALPM_PKG_FROM_LOCALDB:
+				/* impossible */
+				break;
 		}
 
 		if(lpkg) {
