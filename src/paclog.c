@@ -3,6 +3,8 @@
 
 #include <errno.h>
 #include <getopt.h>
+#include <regex.h>
+#include <strings.h>
 #include <time.h>
 
 #include <pacutils.h>
@@ -13,8 +15,8 @@ const char *myname = "paclog", *myver = "0.2";
 char *logfile = NULL;
 
 time_t after = 0, before = 0;
-alpm_list_t *pkgs = NULL, *caller = NULL, *actions = NULL;
-int color = 1, warnings = 0, list_installed = 0;
+alpm_list_t *pkgs = NULL, *caller = NULL, *actions = NULL, *grep = NULL;
+int color = 1, warnings = 0, list_installed = 0, commandline = 0;
 
 enum longopt_flags {
 	FLAG_CONFIG = 1000,
@@ -22,6 +24,8 @@ enum longopt_flags {
 	FLAG_AFTER,
 	FLAG_BEFORE,
 	FLAG_CALLER,
+	FLAG_COMMAND,
+	FLAG_GREP,
 	FLAG_HELP,
 	FLAG_INSTALLED,
 	FLAG_LOGFILE,
@@ -73,10 +77,12 @@ void usage(int ret)
 	hputs("   --pkglist           list installed packages (EXPERIMENTAL)");
 	hputs("");
 	hputs("filters:");
-	hputs("   --action=<date>     show entries after <date>");
+	hputs("   --action=<action>   show <action> entries");
 	hputs("   --after=<date>      show entries after <date>");
 	hputs("   --before=<date>     show entries before <date>");
 	hputs("   --caller=<name>     show entries from program <name>");
+	hputs("   --commandline       show command line entries");
+	hputs("   --grep=<regex>      show entries matching <regex>");
 	hputs("   --package=<pkg>     show entries affecting <pkg>");
 	hputs("   --warnings          show notes/warnings/errors");
 #undef hputs
@@ -128,6 +134,8 @@ void parse_opts(int argc, char **argv)
 		{ "after",      required_argument, NULL, FLAG_AFTER     } ,
 		{ "before",     required_argument, NULL, FLAG_BEFORE    } ,
 		{ "caller",     required_argument, NULL, FLAG_CALLER    } ,
+		{ "commandline",no_argument,       NULL, FLAG_COMMAND   } ,
+		{ "grep",       required_argument, NULL, FLAG_GREP      } ,
 		{ "package",    required_argument, NULL, FLAG_PACKAGE   } ,
 		{ "warnings",   no_argument,       NULL, FLAG_WARNINGS  } ,
 
@@ -174,6 +182,19 @@ void parse_opts(int argc, char **argv)
 				break;
 			case FLAG_CALLER:
 				caller = alpm_list_add(caller, strdup(optarg));
+				break;
+			case FLAG_COMMAND:
+				commandline = 1;
+				break;
+			case FLAG_GREP:
+				{
+					regex_t *preg = calloc(sizeof(regex_t), 1);
+					if(regcomp(preg, optarg, REG_EXTENDED | REG_NOSUB) != 0) {
+						fprintf(stderr, "Unable to compile regex '%s'\n", optarg);
+						exit(1);
+					}
+					grep = alpm_list_add(grep, preg);
+				}
 				break;
 			case FLAG_PACKAGE:
 				pkgs = alpm_list_add(pkgs, strdup(optarg));
@@ -314,7 +335,7 @@ int main(int argc, char **argv)
 			pu_log_action_free(a);
 		}
 		FREELIST(seen);
-	} else if(!after && !before && !pkgs && !caller && !actions && !warnings) {
+	} else if(!after && !before && !pkgs && !caller && !actions && !warnings && !commandline && !grep) {
 		for(i = entries; i; i = i->next) {
 			pu_log_entry_t *e = i->data;
 			print_entry(stdout, e);
@@ -339,6 +360,11 @@ int main(int argc, char **argv)
 					print_entry(stdout, e);
 					continue;
 				}
+			}
+
+			if(commandline && strncasecmp(e->message, "running ", 8) == 0) {
+				print_entry(stdout, e);
+				continue;
 			}
 
 			if(warnings) {
@@ -370,6 +396,19 @@ int main(int argc, char **argv)
 				}
 			}
 
+			if(grep) {
+				alpm_list_t *j;
+				for(j = grep; j; j = alpm_list_next(j)) {
+					if(regexec(j->data, e->message, 0, NULL, 0) == 0) {
+						print_entry(stdout, e);
+						break;
+					}
+				}
+				if(j) {
+					continue;
+				}
+			}
+
 			if(pkgs) {
 				pu_log_action_t *a = pu_log_action_parse(e->message);
 				int found = (a && alpm_list_find_str(pkgs, a->target));
@@ -388,6 +427,8 @@ cleanup:
 	FREELIST(caller);
 	alpm_list_free_inner(entries, (alpm_list_fn_free) pu_log_entry_free);
 	alpm_list_free(entries);
+	alpm_list_free_inner(grep, (alpm_list_fn_free) regfree);
+	alpm_list_free(grep);
 	return ret;
 }
 
