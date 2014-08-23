@@ -307,7 +307,8 @@ int main(int argc, char **argv)
 				for(b = alpm_pkg_get_backup(p->data); b; b = b->next) {
 					alpm_backup_t *bak = b->data;
 					if(pu_pathcmp(relfname, bak->name) == 0) {
-						fputs("backup: yes", stdout);
+						fputs("backup: yes\n", stdout);
+						fprintf(stdout, "md5sum: %s", bak->hash);
 
 						if(checkfs) {
 							char *md5sum = alpm_compute_md5sum(full_path);
@@ -316,10 +317,8 @@ int main(int argc, char **argv)
 										full_path);
 								ret = 1;
 							} else {
-								if(strcmp(md5sum, bak->hash) == 0) {
-									fputs(" (unmodified)", stdout);
-								} else {
-									fputs(" (modified)", stdout);
+								if(strcmp(md5sum, bak->hash) != 0) {
+									fprintf(stdout, " (%s on filesystem)", md5sum);
 								}
 								free(md5sum);
 							}
