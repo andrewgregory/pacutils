@@ -37,8 +37,7 @@ int pu_pathcmp(const char *p1, const char *p2)
 	/* skip trailing '/' */
 	if(*p1 == '\0') {
 		while(*p2 == '/') p2++;
-	}
-	if(*p2 == '\0') {
+	} else if(*p2 == '\0') {
 		while(*p1 == '/') p1++;
 	}
 
