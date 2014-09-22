@@ -6,14 +6,17 @@
 #include <limits.h>
 #include <ctype.h>
 #include <math.h>
+#include <fnmatch.h>
 
 #include <pacutils.h>
+
+#include "../ext/mini.c/mini.c"
 
 const char *myname = "pacreport", *myver = "1.0";
 
 pu_config_t *config;
 alpm_handle_t *handle;
-alpm_list_t *groups = NULL;
+alpm_list_t *groups = NULL, *ignore = NULL, *pkg_ignore = NULL;
 int missing_files = 0, backup_files = 0, orphan_files = 0;
 
 enum longopt_flags {
@@ -29,10 +32,60 @@ enum longopt_flags {
 	FLAG_VERSION,
 };
 
+struct pkg_ignore_t {
+	char *pkgname;
+	char *ignore;
+};
+
 struct pkg_file_t {
 	alpm_pkg_t *pkg;
 	alpm_file_t *file;
 };
+
+static int streq(const char *s1, const char *s2)
+{
+	return (s1 == s2 || (s1 && s2 && strcmp(s1, s2) == 0));
+}
+
+static void warn(const char *fmt, ...)
+{
+	if(fmt) {
+		va_list ap;
+		va_start(ap, fmt);
+		fputs("warning: ", stderr);
+		vfprintf(stderr, fmt, ap);
+		va_end(ap);
+	}
+}
+
+static void die(const char *fmt, ...)
+{
+	if(fmt) {
+		va_list ap;
+		va_start(ap, fmt);
+		fputs("error: ", stderr);
+		vfprintf(stderr, fmt, ap);
+		va_end(ap);
+	}
+	exit(1);
+}
+
+struct pkg_ignore_t *pkg_ignore_new(const char *pkgname, const char *ignore)
+{
+	struct pkg_ignore_t *pi = malloc(sizeof(struct pkg_ignore_t));
+	pi->pkgname = strdup(pkgname);
+	pi->ignore = strdup(ignore);
+	return pi;
+}
+
+void pkg_ignore_free(struct pkg_ignore_t *pi)
+{
+	if(pi) {
+		free(pi->pkgname);
+		free(pi->ignore);
+		free(pi);
+	}
+}
 
 struct pkg_file_t *pkg_file_new(alpm_pkg_t *pkg, alpm_file_t *file)
 {
@@ -357,9 +410,32 @@ void print_cache_sizes(alpm_handle_t *handle)
 	}
 }
 
+int should_ignore_file(alpm_handle_t *handle, const char *path)
+{
+	const char *root = alpm_option_get_root(handle);
+	size_t rootlen = strlen(root);
+	alpm_db_t *ldb = alpm_get_localdb(handle);
+	alpm_list_t *p;
+
+	for(p = ignore; p; p = p->next) {
+		if(fnmatch(p->data, path + rootlen, 0) == 0) {
+			return 1;
+		}
+	}
+	for(p = pkg_ignore; p; p = p->next) {
+		struct pkg_ignore_t *pi = p->data;
+		alpm_pkg_t *pkg = alpm_db_get_pkg(ldb, pi->pkgname);
+		if(pkg && fnmatch(pi->ignore, path + rootlen, 0) == 0) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
 int file_is_unowned(alpm_handle_t *handle, const char *path)
 {
-	alpm_list_t *p, *pkgs = alpm_db_get_pkgcache(alpm_get_localdb(handle));
+	alpm_db_t *ldb = alpm_get_localdb(handle);
+	alpm_list_t *p, *pkgs = alpm_db_get_pkgcache(ldb);
 	for(p = pkgs; p; p = p->next) {
 		if(alpm_filelist_contains(alpm_pkg_get_files(p->data), path + 1)) {
 			return 0;
@@ -417,7 +493,7 @@ void _scan_filesystem(alpm_handle_t *handle, const char *dir, int backups,
 				need_skip = 1;
 			}
 		}
-		if(need_skip) {
+		if(need_skip || should_ignore_file(handle, path)) {
 			continue;
 		}
 
@@ -595,6 +671,37 @@ pu_config_t *parse_opts(int argc, char **argv)
 	return config;
 }
 
+void parse_config(const char *path)
+{
+	mini_t *mini = mini_init(path);
+	if(mini == NULL) {
+		die("failed to initialize ini parser (%s)\n", strerror(errno));
+	}
+	while(mini_next(mini)) {
+		if(mini->key) {
+			if(!mini->value) {
+				die("option '%s' require a value\n", mini->key);
+			}
+			if(streq(mini->section, "PkgIgnoreUnowned")) {
+				struct pkg_ignore_t *pi = pkg_ignore_new(mini->key, mini->value);
+				pkg_ignore = alpm_list_add(pkg_ignore, pi);
+			} else if(streq(mini->section, "Options")) {
+				if(streq(mini->key, "IgnoreUnowned")) {
+					ignore = alpm_list_add(ignore, strdup(mini->value));
+				} else {
+					warn("unknown option '%s' in section '%s'\n", mini->key, mini->section);
+				}
+			} else {
+				warn("unknown option '%s' in section '%s'\n", mini->key, mini->section);
+			}
+		}
+	}
+	if(!mini->eof) {
+		die("reading '%s' failed (%s)\n", path, strerror(errno));
+	}
+	mini_free(mini);
+}
+
 int main(int argc, char **argv)
 {
 	int ret = 0;
@@ -609,6 +716,8 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 	pu_register_syncdbs(handle, config->repos);
+
+	parse_config("/etc/pacreport.conf");
 
 	if(backup_files || orphan_files) {
 		scan_filesystem(handle, backup_files, orphan_files);
@@ -631,6 +740,9 @@ int main(int argc, char **argv)
 
 cleanup:
 	FREELIST(groups);
+	FREELIST(ignore);
+	alpm_list_free_inner(pkg_ignore, (alpm_list_fn_free) pkg_ignore_free);
+	alpm_list_free(pkg_ignore);
 	alpm_release(handle);
 	pu_config_free(config);
 
