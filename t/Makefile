@@ -4,6 +4,7 @@ LDLIBS += -lpacutils -lalpm -larchive
 
 TESTS += \
 		 10-config-basic.t \
+		 10-pathcmp.t \
 		 10-strtrim.t
 
 %.t: %.c

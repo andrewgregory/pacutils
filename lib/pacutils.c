@@ -19,10 +19,6 @@ void pu_print_version(const char *progname, const char *progver)
 
 int pu_pathcmp(const char *p1, const char *p2)
 {
-	/* ignore leading '/' */
-	while(*p1 == '/') p1++;
-	while(*p2 == '/') p2++;
-
 	while(*p1 && *p1 == *p2) {
 		/* skip repeated '/' */
 		if(*p1 == '/') {
