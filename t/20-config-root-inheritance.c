@@ -8,7 +8,7 @@ FILE *fopen(const char *path, const char *mode) {
     if(strcmp(path, "mockfile.ini") == 0) {
         return fmemopen(mockfile, strlen(mockfile), mode);
     } else {
-        tap_diag("attempted to open non-mocked file '%s'\n", path);
+        tap_diag("attempted to open non-mocked file '%s'", path);
         return NULL;
     }
 }
