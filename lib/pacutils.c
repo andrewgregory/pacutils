@@ -512,7 +512,14 @@ int _pu_config_read_file(const char *filename, pu_config_t *config,
 
 #undef FOREACHVAL
 
-	return mini->eof ? 0 : -1;
+	if(!mini->eof) {
+		/* TODO */
+		mini_free(mini);
+		return -1;
+	}
+
+	mini_free(mini);
+	return  0;
 }
 
 void _pu_subst_server_vars(pu_config_t *config)
