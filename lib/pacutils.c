@@ -26,8 +26,8 @@ int pu_pathcmp(const char *p1, const char *p2)
 	while(*p1 && *p1 == *p2) {
 		/* skip repeated '/' */
 		if(*p1 == '/') {
-			while(*++p1 == '/');
-			while(*++p2 == '/');
+			while(*(++p1) == '/');
+			while(*(++p2) == '/');
 		} else {
 			p1++;
 			p2++;
