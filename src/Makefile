@@ -1,4 +1,4 @@
-CFLAGS += -Wall -I../lib
+CFLAGS += -Wall -I../lib -g
 LDFLAGS += -L../lib
 LDLIBS += -lpacutils -lalpm -larchive
 
