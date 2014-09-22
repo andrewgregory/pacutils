@@ -21,3 +21,5 @@ install: libpacutils.so
 
 clean:
 	$(RM) *.o *.so*
+
+.PHONY: all clean install

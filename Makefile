@@ -18,4 +18,4 @@ clean:
 	$(MAKE) -C src/ $@
 	$(MAKE) -C t/ $@
 
-.PHONY: lib src check
+.PHONY: all check clean install lib src

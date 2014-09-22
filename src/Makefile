@@ -47,3 +47,5 @@ install: all
 
 clean:
 	$(RM) $(OBJECTS)
+
+.PHONY: all clean install
