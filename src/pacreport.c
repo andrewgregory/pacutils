@@ -153,6 +153,7 @@ off_t get_pkg_chain_size(alpm_handle_t *handle, alpm_pkg_t *pkg)
 		}
 	}
 
+	alpm_list_free(depchain);
 	return size;
 }
 
@@ -384,6 +385,7 @@ off_t get_cache_size(alpm_handle_t *handle, const char *path,
 			}
 		}
 	}
+	closedir(d);
 	return bytes;
 }
 
