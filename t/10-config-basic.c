@@ -5,6 +5,46 @@
 
 #include "tap.h"
 
+char buf[] =
+    "\n"
+    "[options]\n"
+    "#RootDir = /root1\n"
+    "RootDir = /root2\n"
+    "DBPath = /dbpath1/ \n"
+    "DBPath = /dbpath2/ \n"
+    "CacheDir=/cachedir\n"
+    "GPGDir =gpgdir\n"
+    "LogFile= /logfile #ignore me\n"
+    " HoldPkg = holdpkga holdpkgb \n"
+    "IgnorePkg = ignorepkga\n"
+    "IgnorePkg = ignorepkgb\n"
+    " IgnoreGroup = ignoregroupa ignoregroupb \n"
+    "Architecture = i686\n"
+    "NoUpgrade = /tmp/noupgrade*\n"
+    "NoExtract = /tmp/noextract*\n"
+    "CleanMethod = KeepInstalled KeepCurrent\n"
+    "UseSyslog\n"
+    "Color\n"
+    "UseDelta\n"
+    "TotalDownload\n"
+    "CheckSpace\n"
+    "VerbosePkgLists\n"
+    "ILoveCandy\n"
+    "SigLevel = Never\n"
+    "\n"
+    "[core]\n"
+    "Server = $repo:$arch\n"
+    "";
+
+FILE *fopen(const char *path, const char *mode) {
+    if(strcmp(path, "mockfile.ini") == 0) {
+        return fmemopen(buf, strlen(buf), mode);
+    } else {
+        tap_diag("attempted to open non-mocked file '%s'\n", path);
+        return NULL;
+    }
+}
+
 #define is_list_exhausted(l, name) do { \
         tap_ok(l == NULL, name " exhausted"); \
         if(l) { \
@@ -26,65 +66,17 @@
         } \
     } while(0)
 
-int main(int argc, char **argv) {
+int main(void) {
     alpm_list_t *i;
     pu_config_t *config;
     pu_repo_t *repo;
-    char temp_path1[] = "pu_config_test_XXXXXX";
-    char temp_path2[] = "pu_config_test_XXXXXX";
-    int fd1 = mkstemp(temp_path1);
-    int fd2 = mkstemp(temp_path2);
-    FILE *stream1 = fdopen(fd1, "r+");
-    FILE *stream2 = fdopen(fd2, "r+");
-    fprintf(stream2,
-            "XferCommand = included_xfercommand\n"
-            "[included repo]\n"
-            "SigLevel = PackageOptional\n"
-            "");
-    fprintf(stream1,
-            "\n"
-            "[options]\n"
-            "#RootDir = /root1\n"
-            "RootDir = /root2\n"
-            "DBPath = /dbpath1/ \n"
-            "DBPath = /dbpath2/ \n"
-            "CacheDir=/cachedir\n"
-            "GPGDir =gpgdir\n"
-            "LogFile= /logfile #ignore me\n"
-            " HoldPkg = holdpkga holdpkgb \n"
-            "IgnorePkg = ignorepkga\n"
-            "IgnorePkg = ignorepkgb\n"
-            " IgnoreGroup = ignoregroupa ignoregroupb \n"
-            "Architecture = i686\n"
-            "NoUpgrade = /tmp/noupgrade*\n"
-            "NoExtract = /tmp/noextract*\n"
-            "CleanMethod = KeepInstalled KeepCurrent\n"
-            "UseSyslog\n"
-            "Color\n"
-            "UseDelta\n"
-            "TotalDownload\n"
-            "CheckSpace\n"
-            "VerbosePkgLists\n"
-            "ILoveCandy\n"
-            "SigLevel = Never\n"
-            "Include = %s\n"
-            "SigLevel = PackageRequired\n"
 
-            "[core]\n"
-            "Server = $repo:$arch\n"
-            "",
-            temp_path2);
+	tap_plan(33);
 
-    fclose(stream1);
-    fclose(stream2);
-
-	tap_plan(37);
-
-    config = pu_config_new_from_file(temp_path1);
-
-    tap_ok(config != NULL, "config != NULL");
-    if(!config) {
+    config = pu_config_new_from_file("mockfile.ini");
+    if(!tap_ok(config != NULL, "config != NULL")) {
         tap_bail("pu_config_new_from_file failed");
+        return 1;
     }
 
     tap_is_str(config->rootdir, "/root2", "RootDir");
@@ -136,22 +128,12 @@ int main(int argc, char **argv) {
 
     tap_is_float(config->usedelta, 0.7, 0.0001, "UseDelta (default)");
 
-    tap_is_str(config->xfercommand, "included_xfercommand", "Include XferCommand");
-
     tap_ok(config->repos != NULL, "repo list");
 
     repo = config->repos->data;
-    tap_ok(repo != NULL, "included repo");
-    tap_is_str(repo->name, "included repo", "repo->name == 'included repo'");
-    tap_is_int(repo->siglevel, ALPM_SIG_PACKAGE, "[included repo] SigLevel");
-
-    repo = config->repos->next->data;
     tap_ok(repo != NULL, "core");
     tap_is_str(repo->name, "core", "repo->name == 'core'");
     tap_is_str(repo->servers->data, "core:i686", "[core] server");
-
-    unlink(temp_path1);
-    unlink(temp_path2);
 
 	return 0;
 }

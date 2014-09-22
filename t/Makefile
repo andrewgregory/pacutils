@@ -1,15 +1,22 @@
-CFLAGS += -Wall -I../lib
+CFLAGS += -Wall -Wextra -I../lib
 LDFLAGS += -L../lib
 LDLIBS += -lpacutils -lalpm -larchive
 
-OBJECTS += pu_config pu_strtrim
+TESTS += \
+		 10-config-basic.t \
+		 10-strtrim.t
 
-all: $(OBJECTS)
+%.t: %.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $< $(LDLIBS) -o $@
 
-check: all
-	PATH=.:$$PATH LD_LIBRARY_PATH=../lib prove $(OBJECTS)
+check: tests
+	LD_LIBRARY_PATH=../lib prove .
+
+tests: $(TESTS)
+
+all: tests
 
 clean:
-	$(RM) $(OBJECTS)
+	$(RM) $(TESTS)
 
-.PHONY: all clean check
+.PHONY: all clean check tests
