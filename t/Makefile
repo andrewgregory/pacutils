@@ -5,7 +5,8 @@ LDLIBS += -lpacutils -lalpm -larchive
 TESTS += \
 		 10-config-basic.t \
 		 10-pathcmp.t \
-		 10-strtrim.t
+		 10-strtrim.t \
+		 20-config-root-inheritance.t
 
 %.t: %.c
 	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $< $(LDLIBS) -o $@

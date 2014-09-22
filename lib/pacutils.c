@@ -537,6 +537,43 @@ void _pu_subst_server_vars(pu_config_t *config)
 	}
 }
 
+static char *_pu_strjoin(const char *sep, ...)
+{
+	char *c, *next, *dest;
+	size_t tlen = 0, sep_len = (sep && *sep) ? strlen(sep) : 0;
+	int argc = 0;
+	va_list calc, args;
+
+	va_start(args, sep);
+
+	va_copy(calc, args);
+	for(tlen = 0; (c = va_arg(calc, char*)); argc++, tlen += strlen(c) + sep_len);
+	tlen -= sep_len;
+	va_end(calc);
+
+	if(argc == 0) {
+		va_end(args);
+		return strdup("");
+	} else if((dest = malloc(tlen + 1)) == NULL) {
+		va_end(args);
+		return NULL;
+	}
+
+	dest[0] = '\0';
+	next = va_arg(args, char*);
+	while(next) {
+		c = next;
+		next = va_arg(args, char*);
+		strcat(dest, c);
+		if(next && sep_len) {
+			strcat(dest, sep);
+		}
+	}
+	va_end(args);
+
+	return dest;
+}
+
 pu_config_t *pu_config_new_from_file(const char *filename)
 {
 	pu_config_t *config = pu_config_new();
@@ -556,10 +593,17 @@ pu_config_t *pu_config_new_from_file(const char *filename)
 	}
 
 #define SETDEFAULT(opt, val) if(!opt) { opt = val; }
-	SETDEFAULT(config->rootdir, strdup("/"));
-	SETDEFAULT(config->dbpath, strdup("/var/lib/pacman/"));
+	if(config->rootdir) {
+		SETDEFAULT(config->dbpath,
+				_pu_strjoin("/", config->rootdir, "var/lib/pacman/", NULL));
+		SETDEFAULT(config->logfile,
+				_pu_strjoin("/", config->rootdir, "var/log/pacman.log", NULL));
+	} else {
+		SETDEFAULT(config->rootdir, strdup("/"));
+		SETDEFAULT(config->dbpath, strdup("/var/lib/pacman/"));
+		SETDEFAULT(config->logfile, strdup("/var/log/pacman.log"));
+	}
 	SETDEFAULT(config->gpgdir, strdup("/etc/pacman.d/gnupg/"));
-	SETDEFAULT(config->logfile, strdup("/var/log/pacman.log"));
 	SETDEFAULT(config->cachedirs,
 			alpm_list_add(NULL, strdup("/var/cache/pacman/pkg")));
 	SETDEFAULT(config->cleanmethod, PU_CONFIG_CLEANMETHOD_KEEP_INSTALLED);
