@@ -6,6 +6,7 @@ TESTS += \
 		 10-config-basic.t \
 		 10-pathcmp.t \
 		 10-strtrim.t \
+		 20-config-includes.t \
 		 20-config-root-inheritance.t
 
 %.t: %.c
