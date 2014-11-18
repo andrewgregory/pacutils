@@ -20,10 +20,6 @@ enum longopt_flags {
 	FLAG_VERSION,
 };
 
-/*********************************************
- * Displays installed package info ala pacman -Qi
- *********************************************/
-
 void printt(const char *field, alpm_time_t t) {
 		char time_buf[26];
 		struct tm ltime;
