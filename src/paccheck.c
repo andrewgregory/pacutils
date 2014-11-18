@@ -284,24 +284,30 @@ const char *mode_str(mode_t mode)
 	}
 }
 
-int cmp_mode(alpm_pkg_t *pkg, const char *path,
+int cmp_type(alpm_pkg_t *pkg, const char *path,
 		struct archive_entry *entry, struct stat *st)
 {
-	mode_t mask = 07777;
-	mode_t pmode = archive_entry_mode(entry);
-	mode_t perm = pmode & mask;
-	const char *type = mode_str(pmode);
+	const char *type = mode_str(archive_entry_filetype(entry));
 	const char *ftype = mode_str(st->st_mode);
-
-	if(perm != (st->st_mode & mask)) {
-		printf("%s: '%s' permission mismatch (expected %o)\n",
-				alpm_pkg_get_name(pkg), path, perm);
-	}
 
 	if(type != ftype) {
 		printf("%s: '%s' type mismatch (expected %s)\n",
 				alpm_pkg_get_name(pkg), path, type);
 		return 1;
+	}
+
+	return 0;
+}
+
+int cmp_mode(alpm_pkg_t *pkg, const char *path,
+		struct archive_entry *entry, struct stat *st)
+{
+	mode_t mask = 07777;
+	mode_t perm = archive_entry_perm(entry);
+
+	if(perm != (st->st_mode & mask)) {
+		printf("%s: '%s' permission mismatch (expected %o)\n",
+				alpm_pkg_get_name(pkg), path, perm);
 	}
 
 	return 0;
@@ -447,6 +453,7 @@ static int check_file_properties(alpm_pkg_t *pkg)
 			}
 		}
 
+		if(cmp_type(pkg, path, entry, &buf) != 0) { ret = 1; }
 		if(cmp_mode(pkg, path, entry, &buf) != 0) { ret = 1; }
 		if(S_ISLNK(buf.st_mode) && S_ISLNK(archive_entry_mode(entry))) {
 			if(cmp_target(pkg, path, entry) != 0) { ret = 1; }
