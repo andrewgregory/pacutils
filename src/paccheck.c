@@ -442,6 +442,10 @@ static int check_file_properties(alpm_pkg_t *pkg)
 			continue;
 		}
 
+		if(cmp_type(pkg, path, entry, &buf) != 0) { ret = 1; }
+		if(cmp_mode(pkg, path, entry, &buf) != 0) { ret = 1; }
+		if(cmp_uid(pkg, path, entry, &buf) != 0) { ret = 1; }
+		if(cmp_gid(pkg, path, entry, &buf) != 0) { ret = 1; }
 
 		if(!include_backups) {
 			for(i = alpm_pkg_get_backup(pkg); i; i = alpm_list_next(i)) {
@@ -451,23 +455,19 @@ static int check_file_properties(alpm_pkg_t *pkg)
 					break;
 				}
 			}
+			if(isbackup) { continue; }
 		}
 
-		if(cmp_type(pkg, path, entry, &buf) != 0) { ret = 1; }
-		if(cmp_mode(pkg, path, entry, &buf) != 0) { ret = 1; }
 		if(S_ISLNK(buf.st_mode) && S_ISLNK(archive_entry_mode(entry))) {
 			if(cmp_target(pkg, path, entry) != 0) { ret = 1; }
 		}
-		if(!isbackup && !S_ISDIR(buf.st_mode)) {
-			/* these are expected to vary for backup files */
+		if(!S_ISDIR(buf.st_mode)) {
 			if(cmp_mtime(pkg, path, entry, &buf) != 0) { ret = 1; }
 			if(!S_ISLNK(buf.st_mode)) {
 				/* always fails for directories and symlinks */
 				if(cmp_size(pkg, path, entry, &buf) != 0) { ret = 1; }
 			}
 		}
-		if(cmp_uid(pkg, path, entry, &buf) != 0) { ret = 1; }
-		if(cmp_gid(pkg, path, entry, &buf) != 0) { ret = 1; }
 	}
 
 	if(!quiet && !ret) {
