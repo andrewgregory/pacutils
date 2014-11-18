@@ -525,7 +525,7 @@ void add_deps(alpm_pkg_t *pkg)
 		free(depstring);
 	}
 	if(checks & CHECK_OPT_DEPENDS) {
-		for(i = alpm_pkg_get_depends(pkg); i; i = alpm_list_next(i)) {
+		for(i = alpm_pkg_get_optdepends(pkg); i; i = alpm_list_next(i)) {
 			char *depstring = alpm_dep_compute_string(i->data);
 			alpm_pkg_t *p = alpm_find_satisfier(pkgcache, depstring);
 			if(p && !list_find(packages, p)) {
