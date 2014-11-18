@@ -15,7 +15,6 @@ enum longopt_flags {
 	FLAG_BACKUP,
 	FLAG_CONFIG,
 	FLAG_DBPATH,
-	FLAG_DEBUG,
 	FLAG_DEPENDS,
 	FLAG_FILES,
 	FLAG_FILE_PROPERTIES,
@@ -38,7 +37,7 @@ pu_config_t *config = NULL;
 alpm_handle_t *handle = NULL;
 alpm_db_t *localdb = NULL;
 alpm_list_t *pkgcache = NULL, *packages = NULL;
-int checks = 0, recursive = 0, debug = 0, include_backups = 0, verbose = 0;
+int checks = 0, recursive = 0, include_backups = 0, verbose = 0;
 
 void usage(int ret)
 {
@@ -52,7 +51,6 @@ void usage(int ret)
 	hputs("   --dbpath=<path>    set an alternate database location");
 	hputs("   --root=<path>      set an alternate installation root");
 	hputs("   --verbose          display additional information");
-	hputs("   --debug            display additional debugging information");
 	hputs("   --help             display this help information");
 	hputs("   --version          display version information");
 	hputs("");
@@ -77,7 +75,6 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "config"        , required_argument , NULL       , FLAG_CONFIG       } ,
 		{ "dbpath"        , required_argument , NULL       , FLAG_DBPATH       } ,
 		{ "root"          , required_argument , NULL       , FLAG_ROOT         } ,
-		{ "debug"         , no_argument       , NULL       , FLAG_DEBUG        } ,
 		{ "verbose"       , no_argument       , NULL       , FLAG_VERBOSE      } ,
 
 		{ "help"          , no_argument       , NULL       , FLAG_HELP         } ,
@@ -133,9 +130,6 @@ pu_config_t *parse_opts(int argc, char **argv)
 			case FLAG_DBPATH:
 				free(config->dbpath);
 				config->dbpath = strdup(optarg);
-				break;
-			case FLAG_DEBUG:
-				debug = 1;
 				break;
 			case FLAG_VERBOSE:
 				verbose = 1;
@@ -586,8 +580,6 @@ int main(int argc, char **argv)
 	}
 
 	for(i = packages; i; i = alpm_list_next(i)) {
-		if(debug) { printf("debug: checking '%s'\n", alpm_pkg_get_name(i->data)); }
-
 #define RUNCHECK(t, b) if((checks & t) && b != 0) { ret = 1; }
 		RUNCHECK(CHECK_DEPENDS, check_depends(i->data));
 		RUNCHECK(CHECK_OPT_DEPENDS, check_opt_depends(i->data));
