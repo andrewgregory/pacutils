@@ -244,8 +244,12 @@ static int check_files(alpm_pkg_t *pkg)
 		}
 
 		if(lstat(path, &buf) != 0) {
-			printf("%s: could not locate '%s' (%s)\n",
-					alpm_pkg_get_name(pkg), path, strerror(errno));
+			if(errno == ENOENT) {
+				printf("%s: '%s' missing file\n", alpm_pkg_get_name(pkg), path);
+			} else {
+				printf("%s: '%s' read error (%s)\n",
+						alpm_pkg_get_name(pkg), path, strerror(errno));
+			}
 			ret = 1;
 		} else if(isdir && !S_ISDIR(buf.st_mode)) {
 			printf("%s: '%s' type mismatch (expected directory)\n",
@@ -428,8 +432,12 @@ static int check_file_properties(alpm_pkg_t *pkg)
 		}
 
 		if(lstat(path, &buf) != 0) {
-			printf("%s: could not locate '%s' (%s)\n",
-					alpm_pkg_get_name(pkg), path, strerror(errno));
+			if(errno == ENOENT) {
+				printf("%s: '%s' missing file\n", alpm_pkg_get_name(pkg), path);
+			} else {
+				printf("%s: '%s' read error (%s)\n",
+						alpm_pkg_get_name(pkg), path, strerror(errno));
+			}
 			ret = 1;
 			continue;
 		}
