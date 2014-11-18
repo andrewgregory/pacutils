@@ -310,20 +310,10 @@ pu_config_t *parse_opts(int argc, char **argv)
 	return config;
 }
 
-void cb_event(alpm_event_t *event)
+void cb_log(alpm_loglevel_t level, const char *fmt, va_list args)
 {
-	switch(event->type) {
-		case ALPM_EVENT_LOG:
-			{
-					alpm_event_log_t *e = (alpm_event_log_t*) event;
-				if(e->level & log_level) {
-					vprintf(e->fmt, e->args);
-				}
-			}
-			break;
-		default:
-			/* do nothing */
-			break;
+	if(level & log_level) {
+		vprintf(fmt, args);
 	}
 }
 
@@ -457,7 +447,7 @@ int main(int argc, char **argv)
 	alpm_option_set_questioncb(handle, pu_cb_question);
 	alpm_option_set_progresscb(handle, pu_cb_progress);
 	alpm_option_set_dlcb(handle, pu_cb_download);
-	alpm_option_set_eventcb(handle, cb_event);
+	alpm_option_set_logcb(handle, cb_log);
 
 	for(i = ignore_pkg; i; i = i->next) {
 		alpm_option_add_ignorepkg(handle, i->data);
