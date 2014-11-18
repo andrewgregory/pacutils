@@ -19,6 +19,8 @@ enum longopt_flags {
 	FLAG_FILES,
 	FLAG_FILE_PROPERTIES,
 	FLAG_HELP,
+	FLAG_NOEXTRACT,
+	FLAG_NOUPGRADE,
 	FLAG_OPT_DEPENDS,
 	FLAG_QUIET,
 	FLAG_RECURSIVE,
@@ -37,7 +39,8 @@ pu_config_t *config = NULL;
 alpm_handle_t *handle = NULL;
 alpm_db_t *localdb = NULL;
 alpm_list_t *pkgcache = NULL, *packages = NULL;
-int checks = 0, recursive = 0, include_backups = 0, quiet = 0;
+int checks = 0, recursive = 0, quiet = 0;
+int skip_backups = 1, skip_noextract = 1, skip_noupgrade = 1;
 
 void usage(int ret)
 {
@@ -60,6 +63,8 @@ void usage(int ret)
 	hputs("   --files            check installed files against package database");
 	hputs("   --file-properties  check installed files against MTREE data");
 	hputs("   --backup           include backup files in modification checks");
+	hputs("   --noextract        include NoExtract files in modification checks");
+	hputs("   --noupgrade        include NoUpgrade files in modification checks");
 #undef hputs
 	exit(ret);
 }
@@ -81,7 +86,10 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "version"       , no_argument       , NULL       , FLAG_VERSION      } ,
 
 		{ "recursive"     , no_argument       , NULL       , FLAG_RECURSIVE    } ,
+
 		{ "backup"        , no_argument       , NULL       , FLAG_BACKUP       } ,
+		{ "noextract"     , no_argument       , NULL       , FLAG_NOEXTRACT    } ,
+		{ "noupgrade"     , no_argument       , NULL       , FLAG_NOUPGRADE    } ,
 
 		{ "depends"       , no_argument       , NULL       , FLAG_DEPENDS      } ,
 		{ "opt-depends"   , no_argument       , NULL       , FLAG_OPT_DEPENDS  } ,
@@ -158,7 +166,13 @@ pu_config_t *parse_opts(int argc, char **argv)
 				recursive = 1;
 				break;
 			case FLAG_BACKUP:
-				include_backups = 1;
+				skip_backups = 0;
+				break;
+			case FLAG_NOEXTRACT:
+				skip_noextract = 0;
+				break;
+			case FLAG_NOUPGRADE:
+				skip_noupgrade = 0;
 				break;
 
 			case '?':
@@ -241,6 +255,10 @@ static int check_files(alpm_pkg_t *pkg)
 		int isdir = 0;
 		size_t len;
 		struct stat buf;
+
+		if(skip_noextract && alpm_option_match_noextract(handle, file.name)) {
+			continue;
+		}
 
 		strncpy(rel, file.name, space);
 		len = strlen(file.name);
@@ -437,6 +455,8 @@ static int check_file_properties(alpm_pkg_t *pkg)
 			continue;
 		} else if(ppath[0] == '.') {
 			continue;
+		} else if(skip_noextract && alpm_option_match_noextract(handle, ppath)) {
+			continue;
 		} else {
 			strncpy(rel, ppath, space);
 		}
@@ -453,11 +473,16 @@ static int check_file_properties(alpm_pkg_t *pkg)
 		}
 
 		if(cmp_type(pkg, path, entry, &buf) != 0) { ret = 1; }
+
+		if(skip_noupgrade && alpm_option_match_noupgrade(handle, ppath)) {
+			continue;
+		}
+
 		if(cmp_mode(pkg, path, entry, &buf) != 0) { ret = 1; }
 		if(cmp_uid(pkg, path, entry, &buf) != 0) { ret = 1; }
 		if(cmp_gid(pkg, path, entry, &buf) != 0) { ret = 1; }
 
-		if(!include_backups && match_backup(pkg, ppath)) {
+		if(skip_backups && match_backup(pkg, ppath)) {
 			continue;
 		}
 
