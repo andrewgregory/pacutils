@@ -6,7 +6,7 @@
 
 #include <pacutils.h>
 
-int checkfs = 1;
+int checkfs = 0;
 alpm_list_t *pkgnames = NULL;
 
 enum longopt_flags {
@@ -32,7 +32,7 @@ void usage(int ret)
 	hputs("   --help             display this help information");
 	hputs("   --version          display version information");
 	hputs("   --package=<pkg>    limit information to specified package(s)");
-	hputs("   --no-check         do not compare pkg values to filesystem");
+	hputs("   --check            compare database values to filesystem");
 #undef hputs
 	exit(ret);
 }
@@ -51,6 +51,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "root"         , required_argument , NULL       , FLAG_ROOT         } ,
 		{ "version"      , no_argument       , NULL       , FLAG_VERSION      } ,
 		{ "no-check"     , no_argument       , &checkfs   , 0                 } ,
+		{ "check"        , no_argument       , &checkfs   , 1                 } ,
 		{ "package"      , required_argument , NULL       , FLAG_PACKAGE      } ,
 		{ 0, 0, 0, 0 },
 	};
