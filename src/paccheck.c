@@ -171,6 +171,18 @@ pu_config_t *parse_opts(int argc, char **argv)
 	return config;
 }
 
+static int match_backup(alpm_pkg_t *pkg, const char *path)
+{
+	alpm_list_t *i;
+	for(i = alpm_pkg_get_backup(pkg); i; i = alpm_list_next(i)) {
+		alpm_backup_t *b = i->data;
+		if(strcmp(path, b->name) == 0) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
 static int check_depends(alpm_pkg_t *p)
 {
 	int ret = 0;
@@ -414,8 +426,6 @@ static int check_file_properties(alpm_pkg_t *pkg)
 	while(alpm_pkg_mtree_next(pkg, mtree, &entry) == ARCHIVE_OK) {
 		const char *ppath = archive_entry_pathname(entry);
 		struct stat buf;
-		alpm_list_t *i;
-		int isbackup = 0;
 
 		if(strncmp("./", ppath, 2) == 0) { ppath += 2; }
 
@@ -447,15 +457,8 @@ static int check_file_properties(alpm_pkg_t *pkg)
 		if(cmp_uid(pkg, path, entry, &buf) != 0) { ret = 1; }
 		if(cmp_gid(pkg, path, entry, &buf) != 0) { ret = 1; }
 
-		if(!include_backups) {
-			for(i = alpm_pkg_get_backup(pkg); i; i = alpm_list_next(i)) {
-				alpm_backup_t *b = i->data;
-				if(strcmp(ppath, b->name) == 0) {
-					isbackup = 1;
-					break;
-				}
-			}
-			if(isbackup) { continue; }
+		if(!include_backups && match_backup(pkg, ppath)) {
+			continue;
 		}
 
 		if(S_ISLNK(buf.st_mode) && S_ISLNK(archive_entry_mode(entry))) {
