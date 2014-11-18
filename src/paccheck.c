@@ -55,8 +55,8 @@ void usage(int ret)
 	hputs("   --version          display version information");
 	hputs("");
 	hputs("   --recursive        perform checks on package [opt-]depends");
-	hputs("   --depends          check missing dependencies");
-	hputs("   --opt-depends      check missing optional dependencies");
+	hputs("   --depends          check for missing dependencies");
+	hputs("   --opt-depends      check for missing optional dependencies");
 	hputs("   --files            check installed files against package database");
 	hputs("   --file-properties  check installed files against MTREE data");
 	hputs("   --backup           include backup files in modification checks");
