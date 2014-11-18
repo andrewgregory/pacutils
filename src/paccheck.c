@@ -20,9 +20,9 @@ enum longopt_flags {
 	FLAG_FILE_PROPERTIES,
 	FLAG_HELP,
 	FLAG_OPT_DEPENDS,
+	FLAG_QUIET,
 	FLAG_RECURSIVE,
 	FLAG_ROOT,
-	FLAG_VERBOSE,
 	FLAG_VERSION,
 };
 
@@ -37,7 +37,7 @@ pu_config_t *config = NULL;
 alpm_handle_t *handle = NULL;
 alpm_db_t *localdb = NULL;
 alpm_list_t *pkgcache = NULL, *packages = NULL;
-int checks = 0, recursive = 0, include_backups = 0, verbose = 0;
+int checks = 0, recursive = 0, include_backups = 0, quiet = 0;
 
 void usage(int ret)
 {
@@ -50,7 +50,7 @@ void usage(int ret)
 	hputs("   --config=<path>    set an alternate configuration file");
 	hputs("   --dbpath=<path>    set an alternate database location");
 	hputs("   --root=<path>      set an alternate installation root");
-	hputs("   --verbose          display additional information");
+	hputs("   --quiet            only display error messages");
 	hputs("   --help             display this help information");
 	hputs("   --version          display version information");
 	hputs("");
@@ -75,7 +75,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "config"        , required_argument , NULL       , FLAG_CONFIG       } ,
 		{ "dbpath"        , required_argument , NULL       , FLAG_DBPATH       } ,
 		{ "root"          , required_argument , NULL       , FLAG_ROOT         } ,
-		{ "verbose"       , no_argument       , NULL       , FLAG_VERBOSE      } ,
+		{ "quiet"         , no_argument       , NULL       , FLAG_QUIET        } ,
 
 		{ "help"          , no_argument       , NULL       , FLAG_HELP         } ,
 		{ "version"       , no_argument       , NULL       , FLAG_VERSION      } ,
@@ -131,8 +131,8 @@ pu_config_t *parse_opts(int argc, char **argv)
 				free(config->dbpath);
 				config->dbpath = strdup(optarg);
 				break;
-			case FLAG_VERBOSE:
-				verbose = 1;
+			case FLAG_QUIET:
+				quiet = 1;
 				break;
 			case FLAG_ROOT:
 				free(config->rootdir);
@@ -184,7 +184,7 @@ static int check_depends(alpm_pkg_t *p)
 		}
 		free(depstring);
 	}
-	if(verbose && !ret) {
+	if(!quiet && !ret) {
 		printf("%s: all dependencies satisfied\n", alpm_pkg_get_name(p));
 	}
 	return ret;
@@ -204,7 +204,7 @@ static int check_opt_depends(alpm_pkg_t *p)
 		free(depstring);
 		i = alpm_list_next(i);
 	}
-	if(verbose && !ret) {
+	if(!quiet && !ret) {
 		printf("%s: all optional dependencies satisfied\n",
 				alpm_pkg_get_name(p));
 	}
@@ -256,7 +256,7 @@ static int check_files(alpm_pkg_t *pkg)
 		}
 	}
 
-	if(verbose && !ret) {
+	if(!quiet && !ret) {
 		printf("%s: all files match database\n", alpm_pkg_get_name(pkg));
 	}
 
@@ -463,7 +463,7 @@ static int check_file_properties(alpm_pkg_t *pkg)
 		if(cmp_gid(pkg, path, entry, &buf) != 0) { ret = 1; }
 	}
 
-	if(verbose && !ret) {
+	if(!quiet && !ret) {
 		printf("%s: all files match mtree\n", alpm_pkg_get_name(pkg));
 	}
 
