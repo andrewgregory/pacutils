@@ -357,6 +357,15 @@ int _pu_config_read_file(const char *filename, pu_config_t *config,
 			struct _pu_config_setting *s;
 
 #define FOREACHVAL for(v = strtok_r(mini->value, " ", &ctx); v; v = strtok_r(NULL, " ", &ctx))
+#define SETSTROPT(dest, val) if(dest == NULL) { \
+	char *dup = strdup(val); \
+	if(dup) { \
+		free(dest); \
+		dest = dup; \
+	} else { \
+		fprintf(stderr, "Insufficient memory\n"); \
+	} \
+}
 
 			if(!(s = _pu_config_lookup_setting(mini->key))) {
 				printf("unknown option '%s'\n", mini->key);
@@ -400,24 +409,19 @@ int _pu_config_read_file(const char *filename, pu_config_t *config,
 			} else {
 				switch(s->type) {
 					case PU_CONFIG_OPTION_ROOTDIR:
-						free(config->rootdir);
-						config->rootdir = strdup(mini->value);
+						SETSTROPT(config->rootdir, mini->value);
 						break;
 					case PU_CONFIG_OPTION_DBPATH:
-						free(config->dbpath);
-						config->dbpath = strdup(mini->value);
+						SETSTROPT(config->dbpath, mini->value);
 						break;
 					case PU_CONFIG_OPTION_GPGDIR:
-						free(config->gpgdir);
-						config->gpgdir = strdup(mini->value);
+						SETSTROPT(config->gpgdir, mini->value);
 						break;
 					case PU_CONFIG_OPTION_LOGFILE:
-						free(config->logfile);
-						config->logfile = strdup(mini->value);
+						SETSTROPT(config->logfile, mini->value);
 						break;
 					case PU_CONFIG_OPTION_ARCHITECTURE:
-						free(config->architecture);
-						config->architecture = strdup(mini->value);
+						SETSTROPT(config->architecture, mini->value);
 						break;
 					case PU_CONFIG_OPTION_XFERCOMMAND:
 						free(config->xfercommand);
@@ -510,6 +514,7 @@ int _pu_config_read_file(const char *filename, pu_config_t *config,
 		}
 	}
 
+#undef SETSTROPT
 #undef FOREACHVAL
 
 	if(!mini->eof) {

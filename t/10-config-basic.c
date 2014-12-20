@@ -10,16 +10,22 @@ char buf[] =
     "[options]\n"
     "#RootDir = /root1\n"
     "RootDir = /root2\n"
+    "RootDir = /root3\n"
     "DBPath = /dbpath1/ \n"
     "DBPath = /dbpath2/ \n"
     "CacheDir=/cachedir\n"
     "GPGDir =gpgdir\n"
-    "LogFile= /logfile #ignore me\n"
+    "GPGDir =gpgdir2\n"
+    "LogFile= /logfile #this is a comment\n"
+    "LogFile= /logfile2\n"
     " HoldPkg = holdpkga holdpkgb \n"
     "IgnorePkg = ignorepkga\n"
     "IgnorePkg = ignorepkgb\n"
     " IgnoreGroup = ignoregroupa ignoregroupb \n"
     "Architecture = i686\n"
+    "Architecture = x86_64\n"
+    "XferCommand = xcommand\n"
+    "XferCommand = xcommand2\n"
     "NoUpgrade = /tmp/noupgrade*\n"
     "NoExtract = /tmp/noextract*\n"
     "CleanMethod = KeepInstalled KeepCurrent\n"
@@ -71,7 +77,7 @@ int main(void) {
     pu_config_t *config;
     pu_repo_t *repo;
 
-	tap_plan(33);
+	tap_plan(34);
 
     config = pu_config_new_from_file("mockfile.ini");
     if(!tap_ok(config != NULL, "config != NULL")) {
@@ -80,14 +86,11 @@ int main(void) {
     }
 
     tap_is_str(config->rootdir, "/root2", "RootDir");
-
-    tap_todo("review pacman parser before \"fixing\"");
     tap_is_str(config->dbpath, "/dbpath1/", "DBPath");
-    tap_todo(NULL);
-
     tap_is_str(config->gpgdir, "gpgdir", "DPGDir");
     tap_is_str(config->logfile, "/logfile", "LogFile");
     tap_is_str(config->architecture, "i686", "Arch");
+    tap_is_str(config->xfercommand, "xcommand2", "XferCommand");
 
     tap_ok(config->usesyslog, "UseSyslog");
     tap_ok(config->color, "Color");
