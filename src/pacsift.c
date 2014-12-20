@@ -196,7 +196,7 @@ alpm_list_t *filter_strlist(alpm_list_t **pkgs, const char *str, strlist_accesso
 	return matches;
 }
 
-alpm_list_t *filter_pkgs(alpm_list_t *pkgs)
+alpm_list_t *filter_pkgs(alpm_handle_t *handle, alpm_list_t *pkgs)
 {
 	alpm_list_t *i, *matches = NULL, *haystack = alpm_list_copy(pkgs);
 
@@ -256,8 +256,12 @@ alpm_list_t *filter_pkgs(alpm_list_t *pkgs)
 	}
 
 	if(ownsfile) {
+		const char *root = alpm_option_get_root(handle);
+		size_t rootlen = strlen(root);
 		for(i = ownsfile; i; i = i->next) {
-			matches = alpm_list_join(matches, filter_filelist(&haystack, i->data));
+			const char *path = i->data;
+			if(strncmp(path, root, rootlen) == 0) { path += rootlen; }
+			matches = alpm_list_join(matches, filter_filelist(&haystack, path));
 		}
 		if(!or) {
 			alpm_list_free(haystack);
@@ -557,7 +561,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	matches = filter_pkgs(haystack);
+	matches = filter_pkgs(handle, haystack);
 	for(i = matches; i; i = i->next) {
 		pu_fprint_pkgspec(stdout, i->data);
 		fputc('\n', stdout);
