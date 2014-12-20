@@ -147,7 +147,7 @@ Filter pacman log entries.  If multiple filters are provided, the entries
 returned are the union of all filters.  Output can be piped to a second
 instance to find the intersection of filters instead:
 
- paclog --caller ALPM | paclog --after 2014-04-06
+ paclog --caller ALPM | paclog --after "$(date -I --date '3 days ago')"
 
 =item pacreport
 
