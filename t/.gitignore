@@ -1,1 +1,4 @@
+*.gcda
+*.gcno
+*.gcov
 *.t
