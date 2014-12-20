@@ -94,10 +94,25 @@ void usage(int ret)
 
 int parse_time(char *string, time_t *dest)
 {
-	char *c = string;
+	char *c;
 	struct tm stm;
 	memset(&stm, 0, sizeof(struct tm));
+	stm.tm_isdst = -1;
 
+	if((c = strchr(string, 'T'))) {
+		/* ISO 8601 format */
+		char *sep = c;
+		*sep = ' ';
+		if((c = strchr(sep, ':')) && (c = strchr(c + 1, ':'))) {
+			/* seconds */
+			*c = '\0';
+		} else if((c = strchr(sep, '-'))) {
+			/* time zone */
+			*c = '\0';
+		}
+	}
+
+	c = string;
 #define parse_bit(s, f, t) \
 	do { \
 		if(!(s = strptime(s, f, t))) { \
