@@ -45,6 +45,7 @@ struct {
 	const char *action;
 	const char *install;
 	const char *uninstall;
+	const char *transaction;
 
 	const char *reset;
 } palette = {
@@ -55,6 +56,8 @@ struct {
 	.warning   = "\e[37;41m",    // white on red
 	.error     = "\e[37;41m",    // white on red
 	.note      = "\e[34m",       // blue
+
+	.transaction = "\e[35m",
 
 	.action    = "\e[36m",       // cyan
 	.install   = "\e[32m",       // green
@@ -247,6 +250,12 @@ int fprint_entry_color(FILE *stream, pu_log_entry_t *entry)
 		message_color = palette.error;
 	} else if(strncmp(entry->message, "note: ", 6) == 0) {
 		message_color = palette.note;
+	} else if(strcmp(entry->message, "transaction started\n") == 0) {
+		message_color = palette.transaction;
+	} else if(strcmp(entry->message, "transaction completed\n") == 0) {
+		message_color = palette.transaction;
+	} else if(strncmp(entry->message, "transaction ", 12) == 0) {
+		message_color = palette.error;
 	} else {
 		message_color = palette.message;
 	}
