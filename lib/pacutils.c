@@ -703,6 +703,7 @@ void pu_cb_question(alpm_question_t *question)
 				alpm_question_replace_t *q = &question->replace;
 				printf("replacing %s with %s/%s\n", alpm_pkg_get_name(q->oldpkg),
 						alpm_db_get_name(q->newdb), alpm_pkg_get_name(q->newpkg));
+				q->replace = 1;
 			}
 			break;
 		case ALPM_QUESTION_CONFLICT_PKG:
