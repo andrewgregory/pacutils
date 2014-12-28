@@ -122,6 +122,27 @@ alpm_list_t *pu_log_parse_file(FILE *stream)
 	return entries;
 }
 
+pu_log_transaction_status_t pu_log_transaction_parse(const char *message)
+{
+	const char leader[] = "transaction ";
+	const size_t llen = strlen(leader);
+
+	if(strncmp(message, leader, llen) != 0) { return 0; }
+
+	message += llen;
+	if(strcmp(message, "started\n") == 0) {
+		return PU_LOG_TRANSACTION_STARTED;
+	} else if(strcmp(message, "completed\n") == 0) {
+		return PU_LOG_TRANSACTION_COMPLETED;
+	} else if(strcmp(message, "interrupted\n") == 0) {
+		return PU_LOG_TRANSACTION_INTERRUPTED;
+	} else if(strcmp(message, "failed\n") == 0) {
+		return PU_LOG_TRANSACTION_FAILED;
+	}
+
+	return 0;
+}
+
 void pu_log_entry_free(pu_log_entry_t *entry)
 {
 	if(!entry) return;

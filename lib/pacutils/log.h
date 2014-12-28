@@ -22,6 +22,20 @@ typedef struct {
 	char *message;
 } pu_log_entry_t;
 
+typedef enum {
+	PU_LOG_TRANSACTION_STARTED = 1,
+	PU_LOG_TRANSACTION_COMPLETED,
+	PU_LOG_TRANSACTION_INTERRUPTED,
+	PU_LOG_TRANSACTION_FAILED,
+} pu_log_transaction_status_t;
+
+typedef struct {
+	pu_log_transaction_status_t status;
+	alpm_list_t *start, *end;
+} pu_log_transaction_t;
+
+pu_log_transaction_status_t pu_log_transaction_parse(const char *message);
+
 int pu_log_fprint_entry(FILE *stream, pu_log_entry_t *entry);
 alpm_list_t *pu_log_parse_file(FILE *stream);
 void pu_log_entry_free(pu_log_entry_t *entry);
