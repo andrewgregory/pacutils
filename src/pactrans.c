@@ -14,7 +14,7 @@ alpm_transflag_t trans_flags = 0;
 alpm_list_t *spec = NULL, *add = NULL, *rem = NULL, *files = NULL;
 alpm_list_t **list = &spec;
 alpm_list_t *ignore_pkg = NULL, *ignore_group = NULL;
-int printonly = 0, noconfirm = 0, sysupgrade = 0, downgrade = 0;
+int printonly = 0, noconfirm = 0, sysupgrade = 0, downgrade = 0, dbsync = 0;
 
 enum longopt_flags {
 	FLAG_ADD = 1000,
@@ -25,6 +25,7 @@ enum longopt_flags {
 	FLAG_CONFIG,
 	FLAG_DBONLY,
 	FLAG_DBPATH,
+	FLAG_DBSYNC,
 	FLAG_DEBUG,
 	FLAG_DLONLY,
 	FLAG_DOWNGRADE,
@@ -122,6 +123,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "config"        , required_argument , NULL       , FLAG_CONFIG       } ,
 		{ "dbonly"        , no_argument       , NULL       , FLAG_DBONLY       } ,
 		{ "dbpath"        , required_argument , NULL       , FLAG_DBPATH       } ,
+		{ "dbsync"        , no_argument       , NULL       , FLAG_DBSYNC       } ,
 		{ "debug"         , optional_argument , NULL       , FLAG_DEBUG        } ,
 		{ "logfile"       , required_argument , NULL       , FLAG_LOGFILE      } ,
 		{ "print-only"    , no_argument       , NULL       , FLAG_PRINT        } ,
@@ -219,6 +221,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 			case FLAG_DBPATH:
 				free(config->dbpath);
 				config->dbpath = strdup(optarg);
+				break;
+			case FLAG_DBSYNC:
+				dbsync = 1;
 				break;
 			case FLAG_DEBUG:
 				log_level |= ALPM_LOG_DEBUG;
@@ -460,6 +465,21 @@ int main(int argc, char **argv)
 		fprintf(stderr, "error: no valid sync dbs configured.\n");
 		ret = 1;
 		goto cleanup;
+	}
+
+	if(dbsync) {
+		for(i = alpm_get_syncdbs(handle); i; i = i->next) {
+			alpm_db_t *db = i->data;
+			int res = alpm_db_update(0, db);
+			if(res < 0) {
+				fprintf(stderr, "error: could not sync db '%s' (%s)\n",
+						alpm_db_get_name(db), alpm_strerror(alpm_errno(handle)));
+			} else if(res == 1) {
+				/* db was already up to date */
+				printf("%s is up to date\n", alpm_db_get_name(db));
+			}
+			/* else: callbacks display relevant information */
+		}
 	}
 
 	for(i = add; i; i = i->next) {
