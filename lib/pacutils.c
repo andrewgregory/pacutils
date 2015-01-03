@@ -698,21 +698,32 @@ static long _pu_time_diff(struct timeval *t1, struct timeval *t2)
 void pu_cb_question(alpm_question_t *question)
 {
 	switch(question->type) {
+		case ALPM_QUESTION_INSTALL_IGNOREPKG:
+			{
+				alpm_question_install_ignorepkg_t *q = &question->install_ignorepkg;
+				q->install = pu_confirm(1,
+						"Install ignored package '%s'?", alpm_pkg_get_name(q->pkg));
+			}
+			break;
 		case ALPM_QUESTION_REPLACE_PKG:
 			{
 				alpm_question_replace_t *q = &question->replace;
-				printf("replacing %s with %s/%s\n", alpm_pkg_get_name(q->oldpkg),
-						alpm_db_get_name(q->newdb), alpm_pkg_get_name(q->newpkg));
-				q->replace = 1;
+				q->replace = pu_confirm(1, "Replace '%s' with '%s'?",
+						alpm_pkg_get_name(q->oldpkg), alpm_pkg_get_name(q->newpkg));
 			}
 			break;
 		case ALPM_QUESTION_CONFLICT_PKG:
 			{
 				alpm_question_conflict_t *q = (alpm_question_conflict_t*) question;
-				printf("%s and %s are in conflict\n",
-						q->conflict->package1, q->conflict->package2);
+				alpm_conflict_t *c = q->conflict;
+				q->remove = pu_confirm(1, "'%s' conflicts with '%s'.  Remove '%s'?",
+						c->package1, c->package2, c->package2);
 			}
 			break;
+		case ALPM_QUESTION_REMOVE_PKGS:
+		case ALPM_QUESTION_SELECT_PROVIDER:
+		case ALPM_QUESTION_CORRUPTED_PKG:
+		case ALPM_QUESTION_IMPORT_KEY:
 		default:
 			break;
 	}
