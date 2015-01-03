@@ -89,7 +89,7 @@ alpm_pkg_t *pu_find_pkgspec(alpm_handle_t *handle, const char *pkgspec);
 void pu_fprint_pkgspec(FILE *stream, alpm_pkg_t *pkg);
 void pu_display_transaction(alpm_handle_t *handle);
 
-int pu_confirm(int def, const char *prompt);
+int pu_confirm(int def, const char *prompt, ...);
 
 int pu_log_command(alpm_handle_t *handle, const char *caller, int argc, char **argv);
 

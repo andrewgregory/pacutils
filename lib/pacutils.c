@@ -952,11 +952,15 @@ void pu_display_transaction(alpm_handle_t *handle)
 	printf("Size Delta:     %10s\n", pu_hr_size(delta, size));
 }
 
-int pu_confirm(int def, const char *prompt)
+int pu_confirm(int def, const char *prompt, ...)
 {
+	va_list args;
+	va_start(args, prompt);
+	fputs("\n:: ", stdout);
+	vprintf(prompt, args);
+	fputs(def ? " [Y/n]" : " [y/N]", stdout);
+	va_end(args);
 	while(1) {
-		printf("\n:: %s %s? ", prompt, def ? "[Y/n]" : "[y/N]");
-
 		int c = getchar();
 		if(c != '\n') {
 			while(getchar() != '\n');
