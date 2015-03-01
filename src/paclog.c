@@ -275,7 +275,7 @@ int fprint_entry_color(FILE *stream, pu_log_entry_t *entry)
 		message_color = palette.message;
 	}
 
-	strftime(timestamp, 50, "%F %R", entry->timestamp);
+	strftime(timestamp, 50, "%F %R", &entry->timestamp);
 
 	/* strip trailing newline so colors don't span line breaks */
 	if(*(c = message + strlen(message) - 1) == '\n') {
@@ -368,12 +368,12 @@ int main(int argc, char **argv)
 		for(i = entries; i; i = i->next) {
 			pu_log_entry_t *e = i->data;
 
-			if(after && mktime(e->timestamp) >= after) {
+			if(after && mktime(&e->timestamp) >= after) {
 				print_entry(stdout, e);
 				continue;
 			}
 
-			if(before && mktime(e->timestamp) <= before) {
+			if(before && mktime(&e->timestamp) <= before) {
 				print_entry(stdout, e);
 				continue;
 			}

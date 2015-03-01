@@ -1,6 +1,7 @@
 #define _XOPEN_SOURCE
 #define _XOPEN_SOURCE_EXTENDED
 
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -66,7 +67,7 @@ int pu_log_fprint_entry(FILE *stream, pu_log_entry_t *entry)
 {
 	char timestamp[50];
 
-	strftime(timestamp, 50, "%F %R", entry->timestamp);
+	strftime(timestamp, 50, "%F %R", &entry->timestamp);
 	if(entry->caller) {
 		return printf("[%s] [%s] %s", timestamp, entry->caller, entry->message);
 	} else {
@@ -74,51 +75,68 @@ int pu_log_fprint_entry(FILE *stream, pu_log_entry_t *entry)
 	}
 }
 
-alpm_list_t *pu_log_parse_file(FILE *stream)
-{
-	alpm_list_t *entries = NULL;
-	char buf[256];
+pu_log_parser_t *pu_log_parser_new(FILE *stream) {
+	pu_log_parser_t *parser = calloc(sizeof(pu_log_parser_t), 1);
+	parser->stream = stream;
+	return parser;
+}
 
-	while(fgets(buf, 256, stream)) {
-		char *p, *caller;
-		struct tm *timestamp = calloc(sizeof(struct tm), 1);
-		timestamp->tm_isdst = -1;
+pu_log_entry_t *pu_log_parser_next(pu_log_parser_t *parser) {
+	char *p;
+	pu_log_entry_t *entry = calloc(sizeof(pu_log_entry_t), 1);
 
-		if(!(p = strptime(buf, "[%Y-%m-%d %H:%M]", timestamp))) {
-			/* line is a continuation of the previous line */
-			alpm_list_t *last = alpm_list_last(entries);
+	if(entry == NULL) { errno = ENOMEM; return NULL; }
 
-			if(!last) {
-				return NULL;
-			}
-
-			pu_log_entry_t *entry = last->data;
-			size_t newlen = strlen(entry->message) + strlen(buf) + 1;
-			entry->message = realloc(entry->message, newlen);
-			strcat(entry->message, buf);
-
-			free(timestamp);
-
-			continue;
-		}
-
-		pu_log_entry_t *entry = calloc(sizeof(pu_log_entry_t), 1);
-
-		entry->timestamp = timestamp;
-
-		if(sscanf(p, "%*1[ ][%m[^]]]%*1[ ]", &caller) > 0) {
-			entry->caller = caller;
-			p += strlen(caller) + 4;
-		} else {
-			/* old style entries without caller information */
-			p += 1;
-		}
-
-		entry->message = strdup(p);
-
-		entries = alpm_list_add(entries, entry);
+	if(parser->next == NULL && fgets(parser->buf, 256, parser->stream) == NULL) {
+		parser->eof = feof(parser->stream);
+		free(entry);
+		return NULL;
 	}
 
+	if(!(p = strptime(parser->buf, "[%Y-%m-%d %H:%M]", &entry->timestamp))) {
+		errno = EINVAL;
+		return NULL;
+	}
+
+	entry->timestamp.tm_isdst = -1;
+
+	if(sscanf(p, "%*1[ ][%m[^]]]%*1[ ]", &entry->caller) > 0) {
+		p += strlen(entry->caller) + 4;
+	} else {
+		/* old style entries without caller information */
+		p += 1;
+	}
+
+	entry->message = strdup(p);
+
+	while((parser->next = fgets(parser->buf, 256, parser->stream)) != NULL) {
+		struct tm ts;
+		if(strptime(parser->buf, "[%Y-%m-%d %H:%M]", &ts) == NULL) {
+			size_t oldlen = strlen(entry->message);
+			size_t newlen = oldlen + strlen(parser->buf) + 1;
+			char *newmessage = realloc(entry->message, newlen);
+			if(oldlen > newlen || newmessage == NULL) {
+				errno = ENOMEM;
+				return NULL;
+			}
+			entry->message = newmessage;
+			strcpy(entry->message + oldlen, parser->buf);
+		} else {
+			break;
+		}
+	}
+
+	return entry;
+}
+
+alpm_list_t *pu_log_parse_file(FILE *stream) {
+	pu_log_parser_t *parser = pu_log_parser_new(stream);
+	pu_log_entry_t *entry;
+	alpm_list_t *entries = NULL;
+	while((entry = pu_log_parser_next(parser))) {
+		entries = alpm_list_add(entries, entry);
+	}
+	free(parser);
 	return entries;
 }
 
@@ -146,7 +164,6 @@ pu_log_transaction_status_t pu_log_transaction_parse(const char *message)
 void pu_log_entry_free(pu_log_entry_t *entry)
 {
 	if(!entry) return;
-	free(entry->timestamp);
 	free(entry->caller);
 	free(entry->message);
 	free(entry);
