@@ -453,6 +453,7 @@ cleanup:
 	alpm_list_free(entries);
 	alpm_list_free_inner(grep, (alpm_list_fn_free) regfree);
 	alpm_list_free(grep);
+	free(logfile);
 	return ret;
 }
 
