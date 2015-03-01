@@ -191,7 +191,7 @@ Not implemented yet:
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2012-2014 Andrew Gregory
+Copyright (c) 2012-2015 Andrew Gregory
 
 pacutils is distributed under the terms of the MIT license.  See F<COPYING> for
 details.
