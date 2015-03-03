@@ -31,6 +31,7 @@ pu_log_action_t *pu_log_action_parse(char *message)
 		} else if(strcmp(operation, "reinstalled") == 0) {
 			a->operation = PU_LOG_OPERATION_REINSTALL;
 			a->new_version = version;
+			a->old_version = strdup(a->new_version);
 		} else if(strcmp(operation, "upgraded") == 0) {
 			a->operation = PU_LOG_OPERATION_UPGRADE;
 			if(sscanf(version, "%ms -> %ms", &a->old_version, &a->new_version) == 2) {
