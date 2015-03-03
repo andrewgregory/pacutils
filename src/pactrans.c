@@ -1,4 +1,5 @@
 #include <getopt.h>
+#include <limits.h>
 
 #include <pacutils.h>
 
@@ -435,6 +436,15 @@ int main(int argc, char **argv)
 
 	if(!(config = parse_opts(argc, argv))) {
 		goto cleanup;
+	}
+
+	if(!isatty(fileno(stdin)) && !feof(stdin)) {
+		char buf[PATH_MAX];
+		while(fgets(buf, PATH_MAX, stdin)) {
+			char *c = strchr(buf, '\n');
+			if(c) { *c = '\0'; }
+			spec = alpm_list_add(spec, strdup(buf));
+		}
 	}
 
 	if(!spec && !add && !rem && !files && !sysupgrade) {
