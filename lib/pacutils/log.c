@@ -70,9 +70,10 @@ int pu_log_fprint_entry(FILE *stream, pu_log_entry_t *entry)
 
 	strftime(timestamp, 50, "%F %R", &entry->timestamp);
 	if(entry->caller) {
-		return printf("[%s] [%s] %s", timestamp, entry->caller, entry->message);
+		return fprintf(stream, "[%s] [%s] %s",
+				timestamp, entry->caller, entry->message);
 	} else {
-		return printf("[%s] %s", timestamp, entry->message);
+		return fprintf(stream, "[%s] %s", timestamp, entry->message);
 	}
 }
 
