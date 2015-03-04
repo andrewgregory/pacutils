@@ -85,11 +85,11 @@ typedef struct pu_config_t {
 
 /* sync repos */
 typedef struct pu_repo_t {
-	char *name;
-	alpm_list_t *servers;
-	alpm_db_usage_t usage;
-	alpm_siglevel_t siglevel;
-	alpm_siglevel_t siglevel_mask;
+  char *name;
+  alpm_list_t *servers;
+  alpm_db_usage_t usage;
+  alpm_siglevel_t siglevel;
+  alpm_siglevel_t siglevel_mask;
 } pu_repo_t;
 
 struct pu_repo_t *pu_repo_new(void);
