@@ -59,24 +59,6 @@ alpm_file_t *pu_filelist_contains_path(alpm_filelist_t *files, const char *path)
 			(int(*)(const void*, const void*)) _pu_filelist_path_cmp);
 }
 
-size_t pu_strtrim(char *str)
-{
-	char *start = str, *end;
-
-	if(!(str && *str)) {
-		return 0;
-	}
-
-	for(; *start && isspace((int) *start); start++);
-	end = start + strlen(start) - 1;
-	for(; end > start && isspace((int) *end); end--);
-
-	*(++end) = '\0';
-	memmove(str, start, end - start + 1);
-
-	return end - start;
-}
-
 static long _pu_time_diff(struct timeval *t1, struct timeval *t2)
 {
 	return (t1->tv_sec - t2->tv_sec) * 1000 + (t1->tv_usec - t2->tv_usec) / 1000;

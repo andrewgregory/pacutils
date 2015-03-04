@@ -8,7 +8,6 @@ TESTS += \
 		 10-filelist_contains_path.t \
 		 10-pathcmp.t \
 		 10-strreplace.t \
-		 10-strtrim.t \
 		 20-config-includes.t \
 		 20-config-root-inheritance.t
 
