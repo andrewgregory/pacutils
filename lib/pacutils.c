@@ -682,12 +682,6 @@ alpm_list_t *pu_register_syncdbs(alpm_handle_t *handle, alpm_list_t *repos)
 	return alpm_get_syncdbs(handle);
 }
 
-const char *pu_alpm_strerror(alpm_handle_t *handle)
-{
-	alpm_errno_t err = alpm_errno(handle);
-	return alpm_strerror(err);
-}
-
 #define PU_MAX_REFRESH_MS 200
 
 static long _pu_time_diff(struct timeval *t1, struct timeval *t2)
