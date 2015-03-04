@@ -209,9 +209,9 @@ static struct _pu_config_setting *_pu_config_lookup_setting(const char *optname)
   return NULL;
 }
 
-struct pu_config_t *pu_config_new(void)
+pu_config_t *pu_config_new(void)
 {
-  return calloc(sizeof(struct pu_config_t), 1);
+  return calloc(sizeof(pu_config_t), 1);
 }
 
 void pu_repo_free(pu_repo_t *repo)
@@ -226,9 +226,9 @@ void pu_repo_free(pu_repo_t *repo)
   free(repo);
 }
 
-struct pu_repo_t *pu_repo_new(void)
+pu_repo_t *pu_repo_new(void)
 {
-  return calloc(sizeof(struct pu_repo_t), 1);
+  return calloc(sizeof(pu_repo_t), 1);
 }
 
 void pu_config_free(pu_config_t *config)
@@ -552,7 +552,7 @@ pu_config_t *pu_config_new_from_file(const char *filename)
   return config;
 }
 
-alpm_handle_t *pu_initialize_handle_from_config(struct pu_config_t *config)
+alpm_handle_t *pu_initialize_handle_from_config(pu_config_t *config)
 {
   alpm_handle_t *handle = alpm_initialize(config->rootdir, config->dbpath, NULL);
 
@@ -578,7 +578,7 @@ alpm_handle_t *pu_initialize_handle_from_config(struct pu_config_t *config)
   return handle;
 }
 
-alpm_db_t *pu_register_syncdb(alpm_handle_t *handle, struct pu_repo_t *repo)
+alpm_db_t *pu_register_syncdb(alpm_handle_t *handle, pu_repo_t *repo)
 {
   alpm_db_t *db = alpm_register_syncdb(handle, repo->name, repo->siglevel);
   if(db) {

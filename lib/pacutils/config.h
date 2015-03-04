@@ -113,16 +113,16 @@ typedef struct pu_repo_t {
   alpm_siglevel_t siglevel_mask;
 } pu_repo_t;
 
-struct pu_repo_t *pu_repo_new(void);
+pu_repo_t *pu_repo_new(void);
 void pu_repo_free(pu_repo_t *repo);
-alpm_db_t *pu_register_syncdb(alpm_handle_t *handle, struct pu_repo_t *repo);
+alpm_db_t *pu_register_syncdb(alpm_handle_t *handle, pu_repo_t *repo);
 alpm_list_t *pu_register_syncdbs(alpm_handle_t *handle, alpm_list_t *repos);
 
-struct pu_config_t *pu_config_new(void);
-struct pu_config_t *pu_config_new_from_file(const char *filename);
+pu_config_t *pu_config_new(void);
+pu_config_t *pu_config_new_from_file(const char *filename);
 void pu_config_free(pu_config_t *config);
 
-alpm_handle_t *pu_initialize_handle_from_config(struct pu_config_t *config);
+alpm_handle_t *pu_initialize_handle_from_config(pu_config_t *config);
 
 #endif /* PACUTILS_CONFIG_H */
 
