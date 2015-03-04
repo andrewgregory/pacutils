@@ -9,7 +9,7 @@ LIBDIR      = ${EXEC_PREFIX}/lib
 
 all: libpacutils.so
 
-libpacutils.so: pacutils.c pacutils/log.c
+libpacutils.so: pacutils.c pacutils/config.c pacutils/log.c
 	$(CC) $(CFLAGS) -o $@ $^
 
 install: libpacutils.so
