@@ -263,6 +263,17 @@ int _pu_config_read_glob(const char *val, pu_config_t *config, pu_repo_t **repo)
 	return 0;
 }
 
+#define FOREACHVAL for(v = strtok_r(mini->value, " ", &ctx); v; v = strtok_r(NULL, " ", &ctx))
+#define SETSTROPT(dest, val) if(dest == NULL) { \
+  char *dup = strdup(val); \
+  if(dup) { \
+    free(dest); \
+    dest = dup; \
+  } else { \
+    fprintf(stderr, "Insufficient memory\n"); \
+  } \
+}
+
 int _pu_config_read_file(const char *filename, pu_config_t *config,
 		pu_repo_t **repo)
 {
@@ -285,17 +296,6 @@ int _pu_config_read_file(const char *filename, pu_config_t *config,
 		} else {
 			char *v, *ctx;
 			struct _pu_config_setting *s;
-
-#define FOREACHVAL for(v = strtok_r(mini->value, " ", &ctx); v; v = strtok_r(NULL, " ", &ctx))
-#define SETSTROPT(dest, val) if(dest == NULL) { \
-	char *dup = strdup(val); \
-	if(dup) { \
-		free(dest); \
-		dest = dup; \
-	} else { \
-		fprintf(stderr, "Insufficient memory\n"); \
-	} \
-}
 
 			if(!(s = _pu_config_lookup_setting(mini->key))) {
 				printf("unknown option '%s'\n", mini->key);
@@ -444,9 +444,6 @@ int _pu_config_read_file(const char *filename, pu_config_t *config,
 		}
 	}
 
-#undef SETSTROPT
-#undef FOREACHVAL
-
 	if(!mini->eof) {
 		/* TODO */
 		mini_free(mini);
@@ -456,6 +453,9 @@ int _pu_config_read_file(const char *filename, pu_config_t *config,
 	mini_free(mini);
 	return  0;
 }
+
+#undef SETSTROPT
+#undef FOREACHVAL
 
 void _pu_subst_server_vars(pu_config_t *config)
 {
