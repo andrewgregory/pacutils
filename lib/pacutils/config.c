@@ -90,14 +90,13 @@ static char *_pu_strjoin(const char *sep, ...)
     return NULL;
   }
 
-  dest[0] = '\0';
+  c = dest;
   next = va_arg(args, char*);
   while(next) {
-    c = next;
+    c = stpcpy(c, next);
     next = va_arg(args, char*);
-    strcat(dest, c);
     if(next && sep_len) {
-      strcat(dest, sep);
+      c = stpcpy(c, sep);
     }
   }
   va_end(args);
@@ -108,9 +107,9 @@ static char *_pu_strjoin(const char *sep, ...)
 static char *_pu_strreplace(const char *str,
     const char *target, const char *replacement)
 {
-  int found = 0;
   const char *ptr;
-  char *newstr;
+  char *newstr, *c;
+  size_t found = 0;
   size_t tlen = strlen(target);
   size_t rlen = strlen(replacement);
   size_t newlen = strlen(str);
@@ -125,14 +124,15 @@ static char *_pu_strreplace(const char *str,
   /* calculate the length of our new string */
   newlen += (found * (rlen - tlen));
 
-  newstr = malloc(newlen + 1);
+  if((newstr = malloc(newlen + 1)) == NULL) { return NULL; }
   newstr[0] = '\0';
 
   /* copy the string with the replacements */
   ptr = str;
+  c = newstr;
   while((ptr = strstr(ptr, target))) {
-    strncat(newstr, str, ptr - str);
-    strcat(newstr, replacement);
+    c = stpncpy(c, str, ptr - str);
+    c = stpcpy(c, replacement);
     ptr += tlen;
     str = ptr;
   }
