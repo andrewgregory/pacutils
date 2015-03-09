@@ -627,7 +627,7 @@ int main(int argc, char **argv)
 		goto transcleanup;
 	}
 
-	pu_display_transaction(handle);
+	pu_ui_display_transaction(handle);
 
 	if(printonly || (!noconfirm && !pu_ui_confirm(1, "Proceed with transaction?")) ) {
 		goto transcleanup;

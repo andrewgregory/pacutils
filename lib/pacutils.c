@@ -135,65 +135,6 @@ void pu_fprint_pkgspec(FILE *stream, alpm_pkg_t *pkg)
 	}
 }
 
-void pu_display_transaction(alpm_handle_t *handle)
-{
-	off_t install = 0, download = 0, delta = 0;
-	char size[20];
-	alpm_db_t *ldb = alpm_get_localdb(handle);
-	alpm_list_t *i;
-
-	for(i = alpm_trans_get_remove(handle); i; i = i->next) {
-		alpm_pkg_t *p = i->data;
-		printf("removing %s/%s (%s)\n",
-				alpm_db_get_name(alpm_pkg_get_db(p)),
-				alpm_pkg_get_name(p),
-				alpm_pkg_get_version(p));
-
-		install -= alpm_pkg_get_isize(i->data);
-		delta -= alpm_pkg_get_isize(i->data);
-	}
-
-	for(i = alpm_trans_get_add(handle); i; i = i->next) {
-		alpm_pkg_t *p = i->data;
-		alpm_pkg_t *lpkg = alpm_db_get_pkg(ldb, alpm_pkg_get_name(p));
-
-		switch(alpm_pkg_get_origin(p)) {
-			case ALPM_PKG_FROM_FILE:
-				printf("installing %s (%s)",
-						alpm_pkg_get_filename(p),
-						alpm_pkg_get_name(p));
-				break;
-			case ALPM_PKG_FROM_SYNCDB:
-				printf("installing %s/%s",
-						alpm_db_get_name(alpm_pkg_get_db(p)),
-						alpm_pkg_get_name(p));
-				break;
-			case ALPM_PKG_FROM_LOCALDB:
-				/* impossible */
-				break;
-		}
-
-		if(lpkg) {
-			printf(" (%s -> %s)\n",
-					alpm_pkg_get_version(lpkg), alpm_pkg_get_version(p));
-		} else {
-			printf(" (%s)\n", alpm_pkg_get_version(p));
-		}
-
-		install  += alpm_pkg_get_isize(p);
-		download += alpm_pkg_download_size(p);
-		delta    += alpm_pkg_get_isize(p);
-		if(lpkg) {
-			delta  -= alpm_pkg_get_isize(lpkg);
-		}
-	}
-
-	fputs("\n", stdout);
-	printf("Download Size:  %10s\n", pu_hr_size(download, size));
-	printf("Installed Size: %10s\n", pu_hr_size(install, size));
-	printf("Size Delta:     %10s\n", pu_hr_size(delta, size));
-}
-
 int pu_log_command(alpm_handle_t *handle, const char *caller, int argc, char **argv)
 {
 	int i;
