@@ -141,24 +141,27 @@ static char *_pu_strreplace(const char *str,
   return newstr;
 }
 
-void _pu_parse_cleanmethod(pu_config_t *config, char *val)
+int _pu_parse_cleanmethod(pu_config_t *config, char *val)
 {
   char *v, *ctx;
+  int ret = 0;
   for(v = strtok_r(val, " ", &ctx); v; v = strtok_r(NULL, " ", &ctx)) {
     if(strcmp(v, "KeepInstalled") == 0) {
       config->cleanmethod |= PU_CONFIG_CLEANMETHOD_KEEP_INSTALLED;
     } else if(strcmp(v, "KeepCurrent") == 0) {
       config->cleanmethod |= PU_CONFIG_CLEANMETHOD_KEEP_CURRENT;
     } else {
-      printf("unknown clean method '%s'\n", v);
+      ret = -1;
     }
   }
+  return ret;
 }
 
-void _pu_parse_siglevel(char *val,
+int _pu_parse_siglevel(char *val,
     alpm_siglevel_t *level, alpm_siglevel_t *mask)
 {
   char *v, *ctx;
+  int ret = 0;
 
   for(v = strtok_r(val, " ", &ctx); v; v = strtok_r(NULL, " ", &ctx)) {
     int pkg = 1, db = 1;
@@ -189,13 +192,14 @@ void _pu_parse_siglevel(char *val,
       if(pkg) { SET(ALPM_SIG_PACKAGE_MARGINAL_OK | ALPM_SIG_PACKAGE_UNKNOWN_OK); }
       if(db) { SET(ALPM_SIG_DATABASE_MARGINAL_OK | ALPM_SIG_DATABASE_UNKNOWN_OK); }
     } else {
-      fprintf(stderr, "Invalid SigLevel value '%s'\n", v);
+      ret = -1;
     }
   }
 #undef SET
 #undef UNSET
 
   *level &= ~ALPM_SIG_USE_DEFAULT;
+  return ret;
 }
 
 static struct _pu_config_setting *_pu_config_lookup_setting(const char *optname)
