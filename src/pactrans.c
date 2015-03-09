@@ -17,6 +17,7 @@ alpm_list_t *spec = NULL, *add = NULL, *rem = NULL, *files = NULL;
 alpm_list_t **list = &spec;
 alpm_list_t *ignore_pkg = NULL, *ignore_group = NULL;
 int printonly = 0, noconfirm = 0, sysupgrade = 0, downgrade = 0, dbsync = 0;
+int isep = '\n';
 
 enum longopt_flags {
 	FLAG_ADD = 1000,
@@ -40,6 +41,7 @@ enum longopt_flags {
 	FLAG_NOCONFIRM,
 	FLAG_NODEPS,
 	FLAG_NOSCRIPTLET,
+	FLAG_NULL,
 	FLAG_PRINT,
 	FLAG_RECURSIVE,
 	FLAG_REMOVE,
@@ -83,6 +85,7 @@ void usage(int ret)
 	hputs("   --no-confirm");
 	hputs("   --no-deps");
 	hputs("   --no-scriptlet");
+	hputs("   --null=[sep]       parse stdin as <sep> separated values (default NUL)");
 	hputs("   --root=<path>      set an alternate installation root");
 	hputs("   --help             display this help information");
 	hputs("   --version          display version information");
@@ -129,6 +132,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "debug"         , optional_argument , NULL       , FLAG_DEBUG        } ,
 		{ "logfile"       , required_argument , NULL       , FLAG_LOGFILE      } ,
 		{ "print-only"    , no_argument       , NULL       , FLAG_PRINT        } ,
+		{ "null"          , optional_argument , NULL       , FLAG_NULL         } ,
 		{ "no-confirm"    , no_argument       , NULL       , FLAG_NOCONFIRM    } ,
 		{ "noconfirm"     , no_argument       , NULL       , FLAG_NOCONFIRM    } ,
 		{ "no-deps"       , no_argument       , NULL       , FLAG_NODEPS       } ,
@@ -248,6 +252,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 				} else {
 					trans_flags |= ALPM_TRANS_FLAG_NODEPVERSION;
 				}
+				break;
+			case FLAG_NULL:
+				isep = optarg ? optarg[0] : '\0';
 				break;
 			case FLAG_NOSCRIPTLET:
 				trans_flags |= ALPM_TRANS_FLAG_NOSCRIPTLET;
@@ -440,12 +447,14 @@ int main(int argc, char **argv)
 	}
 
 	if(!isatty(fileno(stdin)) && errno != EBADF) {
-		char buf[PATH_MAX];
-		while(fgets(buf, PATH_MAX, stdin)) {
-			char *c = strchr(buf, '\n');
-			if(c) { *c = '\0'; }
+		char *buf = NULL;
+		size_t len = 0;
+		ssize_t read;
+		while((read = getdelim(&buf, &len, isep, stdin)) != -1) {
+			if(buf[read - 1] == isep) { buf[read - 1] = '\0'; }
 			spec = alpm_list_add(spec, strdup(buf));
 		}
+		free(buf);
 	}
 
 	if(!spec && !add && !rem && !files && !sysupgrade) {

@@ -290,6 +290,7 @@ void usage(int ret)
 	hputs("options:");
 	hputs("   --config=<path>     set an alternate configuration file");
 	hputs("   --dbpath=<path>     set an alternate database location");
+	hputs("   --null=[sep]        use <sep> to separate values (default NUL)");
 	hputs("   --help              display this help information");
 	hputs("   --version           display version information");
 

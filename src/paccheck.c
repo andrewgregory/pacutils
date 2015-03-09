@@ -21,6 +21,7 @@ enum longopt_flags {
 	FLAG_HELP,
 	FLAG_NOEXTRACT,
 	FLAG_NOUPGRADE,
+	FLAG_NULL,
 	FLAG_OPT_DEPENDS,
 	FLAG_QUIET,
 	FLAG_RECURSIVE,
@@ -41,6 +42,7 @@ alpm_db_t *localdb = NULL;
 alpm_list_t *pkgcache = NULL, *packages = NULL;
 int checks = 0, recursive = 0, quiet = 0;
 int skip_backups = 1, skip_noextract = 1, skip_noupgrade = 1;
+int isep = '\n';
 
 void usage(int ret)
 {
@@ -53,6 +55,7 @@ void usage(int ret)
 	hputs("   --config=<path>    set an alternate configuration file");
 	hputs("   --dbpath=<path>    set an alternate database location");
 	hputs("   --root=<path>      set an alternate installation root");
+	hputs("   --null=[sep]       parse stdin as <sep> separated values (default NUL)");
 	hputs("   --quiet            only display error messages");
 	hputs("   --help             display this help information");
 	hputs("   --version          display version information");
@@ -81,6 +84,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "dbpath"        , required_argument , NULL       , FLAG_DBPATH       } ,
 		{ "root"          , required_argument , NULL       , FLAG_ROOT         } ,
 		{ "quiet"         , no_argument       , NULL       , FLAG_QUIET        } ,
+		{ "flag"          , optional_argument , NULL       , FLAG_NULL         } ,
 
 		{ "help"          , no_argument       , NULL       , FLAG_HELP         } ,
 		{ "version"       , no_argument       , NULL       , FLAG_VERSION      } ,
@@ -141,6 +145,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 				break;
 			case FLAG_QUIET:
 				quiet = 1;
+				break;
+			case FLAG_NULL:
+				isep = optarg ? optarg[0] : '\0';
 				break;
 			case FLAG_ROOT:
 				free(config->rootdir);
@@ -592,12 +599,15 @@ int main(int argc, char **argv)
 		if(load_pkg(argv[optind]) == NULL) { ret = 1; }
 	}
 	if(!isatty(fileno(stdin)) && errno != EBADF) {
-		char buf[256];
-		while(fgets(buf, 256, stdin)) {
-			size_t len = strlen(buf);
-			if(buf[len - 1] == '\n') { buf[len - 1] = '\0'; }
+		char *buf = NULL;
+		size_t len = 0;
+		ssize_t read;
+
+		while((read = getdelim(&buf, &len, isep, stdin)) != -1) {
+			if(buf[read - 1] == isep) { buf[read - 1] = '\0'; }
 			if(load_pkg(buf) == NULL) { ret = 1; }
 		}
+		free(buf);
 	}
 
 	if(ret) { goto cleanup; }

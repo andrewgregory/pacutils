@@ -10,12 +10,14 @@ pu_config_t *config = NULL;
 alpm_handle_t *handle = NULL;
 
 int level = 2, removable_size = 0;
+int isep = '\n';
 
 enum longopt_flags {
 	FLAG_CONFIG = 1000,
 	FLAG_DBPATH,
 	FLAG_DEBUG,
 	FLAG_HELP,
+	FLAG_NULL,
 	FLAG_REMOVABLE,
 	FLAG_ROOT,
 	FLAG_VERSION,
@@ -118,6 +120,7 @@ void usage(int ret)
 	hputs("   --config=<path>    set an alternate configuration file");
 	hputs("   --dbpath=<path>    set an alternate database location");
 	hputs("   --debug            enable extra debugging messages");
+	hputs("   --null=[sep]       parse stdin as <sep> separated values (default NUL)");
 	hputs("   --root=<path>      set an alternate installation root");
 	hputs("   --removable-size   include removable dependencies in size");
 	hputs("   --help             display this help information");
@@ -142,6 +145,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "dbpath"        , required_argument , NULL       , FLAG_DBPATH       } ,
 		{ "debug"         , no_argument       , NULL       , FLAG_DEBUG        } ,
 		{ "root"          , required_argument , NULL       , FLAG_ROOT         } ,
+		{ "null"          , optional_argument , NULL       , FLAG_NULL         } ,
 
 		{ "short"         , no_argument       , &level     , 1                 } ,
 
@@ -194,6 +198,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 			case FLAG_ROOT:
 				free(config->rootdir);
 				config->rootdir = strdup(optarg);
+				break;
+			case FLAG_NULL:
+				isep = optarg ? optarg[0] : '\0';
 				break;
 			case '?':
 			default:
@@ -329,12 +336,14 @@ int main(int argc, char **argv) {
 	}
 
 	if(!isatty(fileno(stdin)) && errno != EBADF) {
-		char buf[256];
-		while(fgets(buf, 256, stdin)) {
-			char *c = strchr(buf, '\n');
-			if(c) *c = '\0';
+		char *buf = NULL;
+		size_t len = 0;
+		ssize_t read;
+		while((read = getdelim(&buf, &len, isep, stdin)) != -1) {
+			if(buf[read - 1] == isep) { buf[read - 1] = '\0'; }
 			print_pkgspec_info(buf);
 		}
+		free(buf);
 	}
 
 cleanup:
