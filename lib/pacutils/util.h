@@ -21,6 +21,7 @@
  */
 
 #include <alpm.h>
+#include <stdio.h>
 
 #ifndef PACUTILS_UTIL_H
 #define PACUTILS_UTIL_H
