@@ -255,24 +255,6 @@ void pu_fprint_pkgspec(FILE *stream, alpm_pkg_t *pkg)
 	}
 }
 
-char *pu_hr_size(off_t bytes, char *dest)
-{
-	static char *suff[] = {"B", "K", "M", "G", "T", "P", "E", NULL};
-	float hrsize;
-	int s = 0;
-	while((bytes >= 1000000 || bytes <= -1000000) && suff[s + 1]) {
-		bytes /= 1024;
-		++s;
-	}
-	hrsize = bytes;
-	if((hrsize >= 1000 || hrsize <= -1000) && suff[s + 1]) {
-		hrsize /= 1024;
-		++s;
-	}
-	sprintf(dest, "%.2f %s", hrsize, suff[s]);
-	return dest;
-}
-
 void pu_display_transaction(alpm_handle_t *handle)
 {
 	off_t install = 0, download = 0, delta = 0;

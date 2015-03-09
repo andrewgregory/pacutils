@@ -11,13 +11,15 @@ HEADERS = \
 		  pacutils.h \
 		  pacutils/config.h \
 		  pacutils/log.h \
-		  pacutils/ui.h
+		  pacutils/ui.h \
+		  pacutils/util.h
 
 SOURCES = \
 		  pacutils.c \
 		  pacutils/config.c \
 		  pacutils/log.c \
-		  pacutils/ui.c
+		  pacutils/ui.c \
+		  pacutils/util.c
 
 all: libpacutils.so
 

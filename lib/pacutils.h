@@ -9,6 +9,7 @@
 
 #include "pacutils/config.h"
 #include "pacutils/ui.h"
+#include "pacutils/util.h"
 
 #ifndef PACUTILS_H
 #define PACUTILS_H
@@ -34,8 +35,6 @@ int pu_confirm(int def, const char *prompt, ...);
 int pu_log_command(alpm_handle_t *handle, const char *caller, int argc, char **argv);
 
 char *pu_basename(char *path);
-
-char *pu_hr_size(off_t bytes, char *dest);
 
 #endif /* PACUTILS_H */
 
