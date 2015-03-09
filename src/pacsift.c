@@ -15,7 +15,7 @@ alpm_loglevel_t log_level = ALPM_LOG_ERROR | ALPM_LOG_WARNING;
 
 int srch_cache = 0, srch_local = 0, srch_sync = 0;
 int invert = 0, re = 0, exact = 0, or = 0;
-char sep = '\n';
+int osep = '\n', isep = '\n';
 alpm_list_t *search_dbs = NULL;
 alpm_list_t *repo = NULL, *name = NULL, *description = NULL, *packager = NULL;
 alpm_list_t *group = NULL, *license = NULL;
@@ -31,6 +31,7 @@ enum longopt_flags {
 	FLAG_DBPATH,
 	FLAG_DEBUG,
 	FLAG_HELP,
+	FLAG_NULL,
 	FLAG_ROOT,
 	FLAG_VERSION,
 
@@ -351,6 +352,8 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "regex"         , no_argument       , &re     , 1                  } ,
 		{ "exact"         , no_argument       , &exact  , 1                  } ,
 
+		{ "null"          , optional_argument , NULL    , FLAG_NULL          } ,
+
 		{ "repo"          , required_argument , NULL    , FLAG_REPO          } ,
 		{ "packager"      , required_argument , NULL    , FLAG_PACKAGER      } ,
 		{ "name"          , required_argument , NULL    , FLAG_NAME          } ,
@@ -398,6 +401,10 @@ pu_config_t *parse_opts(int argc, char **argv)
 				break;
 			case FLAG_HELP:
 				usage(0);
+				break;
+			case FLAG_NULL:
+				osep = optarg ? optarg[0] : '\0';
+				isep = osep;
 				break;
 			case FLAG_VERSION:
 				pu_print_version(myname, myver);
@@ -479,23 +486,27 @@ int main(int argc, char **argv)
 	}
 
 	if(!isatty(fileno(stdin)) && errno != EBADF) {
+		char *buf = NULL;
+		size_t len = 0;
+		ssize_t read;
+
 		if(srch_local || srch_sync || srch_cache) {
 			fprintf(stderr, "error: --local, --sync, and --cache cannot be used as filters\n");
 			ret = 1;
 			goto cleanup;
 		}
 
-		char buf[256];
-		while(fgets(buf, 256, stdin)) {
+		while((read = getdelim(&buf, &len, isep, stdin)) != -1) {
 			alpm_pkg_t *pkg;
-			char *c = strchr(buf, '\n');
-			if(c) *c = '\0';
+			if(buf[read - 1] == isep) { buf[read - 1] = '\0'; }
 			if((pkg = pu_find_pkgspec(handle, buf))) {
 				haystack = alpm_list_add(haystack, pkg);
 			} else {
 				fprintf(stderr, "warning: could not locate pkg '%s'\n", buf);
 			}
 		}
+
+		free(buf);
 	} else {
 		alpm_list_t *p, *s;
 
@@ -551,7 +562,7 @@ int main(int argc, char **argv)
 	matches = filter_pkgs(handle, haystack);
 	for(i = matches; i; i = i->next) {
 		pu_fprint_pkgspec(stdout, i->data);
-		fputc('\n', stdout);
+		fputc(osep, stdout);
 	}
 
 cleanup:
