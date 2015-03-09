@@ -469,9 +469,9 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
-	alpm_option_set_questioncb(handle, pu_cb_question);
-	alpm_option_set_progresscb(handle, pu_cb_progress);
-	alpm_option_set_dlcb(handle, pu_cb_download);
+	alpm_option_set_questioncb(handle, pu_ui_cb_question);
+	alpm_option_set_progresscb(handle, pu_ui_cb_progress);
+	alpm_option_set_dlcb(handle, pu_ui_cb_download);
 	alpm_option_set_logcb(handle, cb_log);
 
 	for(i = ignore_pkg; i; i = i->next) {
@@ -629,7 +629,7 @@ int main(int argc, char **argv)
 
 	pu_display_transaction(handle);
 
-	if(printonly || (!noconfirm && !pu_confirm(1, "Proceed with transaction?")) ) {
+	if(printonly || (!noconfirm && !pu_ui_confirm(1, "Proceed with transaction?")) ) {
 		goto transcleanup;
 	}
 

@@ -28,6 +28,15 @@
 void pu_ui_error(const char *fmt, ...);
 void pu_ui_warn(const char *fmt, ...);
 
+int pu_ui_confirm(int def, const char *prompt, ...);
+
+const char *pu_ui_msg_progress(alpm_progress_t event);
+
+void pu_ui_cb_download(const char *filename, off_t xfered, off_t total);
+void pu_ui_cb_progress(alpm_progress_t event, const char *pkgname, int percent,
+    size_t total, size_t current);
+void pu_ui_cb_question(alpm_question_t *question);
+
 #endif /* PACUTILS_UI_H */
 
 /* vim: set ts=2 sw=2 et: */
