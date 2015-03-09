@@ -71,4 +71,16 @@ alpm_list_t *_pu_list_append(alpm_list_t **list, void *data)
   return new;
 }
 
+void *_pu_list_shift(alpm_list_t **list)
+{
+  alpm_list_t *l = *list;
+  void *data;
+  if(l == NULL) { return NULL; }
+  data = l->data;
+  if(l->next) { l->next->prev = l->prev; }
+  *list = l->next;
+  free(l);
+  return data;
+}
+
 /* vim: set ts=2 sw=2 et: */

@@ -10,7 +10,8 @@ TESTS += \
 		 10-strreplace.t \
 		 20-config-includes.t \
 		 20-config-root-inheritance.t \
-		 99-pu_list_append.t
+		 99-pu_list_append.t \
+		 99-pu_list_shift.t
 
 %.t: %.c
 	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $< $(LDLIBS) -o $@
