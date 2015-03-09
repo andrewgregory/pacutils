@@ -457,19 +457,6 @@ void parse_pkg_spec(char *spec, char **pkgname, char **dbname)
 	}
 }
 
-alpm_db_t *find_db(const char *dbname) {
-	alpm_list_t *s;
-	if(strcmp(dbname, "local") == 0) {
-		return alpm_get_localdb(handle);
-	}
-	for(s = alpm_get_syncdbs(handle); s; s = s->next) {
-		if(strcmp(dbname, alpm_db_get_name(s->data)) == 0) {
-			return s->data;
-		}
-	}
-	return NULL;
-}
-
 int main(int argc, char **argv)
 {
 	alpm_list_t *haystack = NULL, *matches = NULL, *i;
