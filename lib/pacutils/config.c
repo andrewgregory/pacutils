@@ -482,19 +482,24 @@ int _pu_config_read_file(const char *filename, pu_config_t *config,
 #undef SETSTROPT
 #undef FOREACHVAL
 
-void _pu_subst_server_vars(pu_config_t *config)
+static int _pu_subst_server_vars(pu_config_t *config)
 {
   alpm_list_t *r;
   for(r = config->repos; r; r = r->next) {
     pu_repo_t *repo = r->data;
     alpm_list_t *s;
     for(s = repo->servers; s; s = s->next) {
-      char *url = _pu_strreplace(s->data, "$repo", repo->name);
+      char *rrepo, *rarch;
+      rrepo = _pu_strreplace(s->data, "$repo", repo->name);
+      if(rrepo == NULL) { return -1; }
+      rarch = _pu_strreplace(rrepo, "$arch", config->architecture);
+      free(rrepo);
+      if(rarch == NULL) { return -1; }
       free(s->data);
-      s->data = _pu_strreplace(url, "$arch", config->architecture);
-      free(url);
+      s->data = rarch;
     }
   }
+  return 0;
 }
 
 pu_config_t *pu_config_new_from_file(const char *filename)
