@@ -1,4 +1,5 @@
 #include <getopt.h>
+#include <errno.h>
 #include <stdio.h>
 
 #include <pacutils.h>
@@ -327,7 +328,7 @@ int main(int argc, char **argv) {
 		print_pkgspec_info(*argv);
 	}
 
-	if(!isatty(fileno(stdin)) && !feof(stdin)) {
+	if(!isatty(fileno(stdin)) && errno != EBADF) {
 		char buf[256];
 		while(fgets(buf, 256, stdin)) {
 			char *c = strchr(buf, '\n');

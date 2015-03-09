@@ -1,4 +1,5 @@
 #include <getopt.h>
+#include <errno.h>
 #include <limits.h>
 
 #include <pacutils.h>
@@ -438,7 +439,7 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
-	if(!isatty(fileno(stdin)) && !feof(stdin)) {
+	if(!isatty(fileno(stdin)) && errno != EBADF) {
 		char buf[PATH_MAX];
 		while(fgets(buf, PATH_MAX, stdin)) {
 			char *c = strchr(buf, '\n');

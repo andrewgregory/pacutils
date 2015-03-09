@@ -491,7 +491,7 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
-	if(!isatty(fileno(stdin)) && !feof(stdin)) {
+	if(!isatty(fileno(stdin)) && errno != EBADF) {
 		if(srch_local || srch_sync || srch_cache) {
 			fprintf(stderr, "error: --local, --sync, and --cache cannot be used as filters\n");
 			ret = 1;

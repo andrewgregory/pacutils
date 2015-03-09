@@ -316,7 +316,7 @@ int main(int argc, char **argv)
 		color = 0;
 	}
 
-	if(!isatty(fileno(stdin)) && !feof(stdin)) {
+	if(!isatty(fileno(stdin)) && errno != EBADF) {
 		free(logfile);
 		logfile = strdup("<stdin>");
 		f = stdin;

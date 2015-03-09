@@ -591,7 +591,7 @@ int main(int argc, char **argv)
 	for(; optind < argc; ++optind) {
 		if(load_pkg(argv[optind]) == NULL) { ret = 1; }
 	}
-	if(!isatty(fileno(stdin)) && !feof(stdin)) {
+	if(!isatty(fileno(stdin)) && errno != EBADF) {
 		char buf[256];
 		while(fgets(buf, 256, stdin)) {
 			size_t len = strlen(buf);
