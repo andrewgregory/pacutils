@@ -1,11 +1,11 @@
-#include "pacutils.c"
+#include "pacutils/config.c"
 
 #include "tap.h"
 
 int main(void) {
     tap_plan(8);
 #define CHECK(in, tgt, repl, exp, desc) do { \
-    char *got = pu_strreplace(in, tgt, repl); \
+    char *got = _pu_strreplace(in, tgt, repl); \
     tap_is_str(got, exp, desc); \
     free(got); \
 } while(0);
