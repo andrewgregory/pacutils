@@ -24,9 +24,8 @@
 #include <glob.h>
 #include <sys/utsname.h>
 
-#include "../../ext/mini.c/mini.c"
-
 #include "config.h"
+#include "util.h"
 
 struct _pu_config_setting {
   char *name;
@@ -539,7 +538,15 @@ pu_config_t *pu_config_new_from_file(const char *filename)
     config->architecture = strdup(un.machine);
   }
 
-#define SETSIGLEVEL(l, m) if(m) { l = (l & (m)) | (config->siglevel & ~(m)); }
+#define SETSIGLEVEL(l, m) \
+  if(m) { l = (l & (m)) | (config->siglevel & ~(m)); } \
+  else { l = ALPM_SIG_USE_DEFAULT; }
+
+  if(!config->siglevel_mask) {
+    config->siglevel = (
+        ALPM_SIG_PACKAGE | ALPM_SIG_PACKAGE_OPTIONAL |
+        ALPM_SIG_DATABASE | ALPM_SIG_DATABASE_OPTIONAL);
+  }
   SETSIGLEVEL(config->localfilesiglevel, config->localfilesiglevel_mask);
   SETSIGLEVEL(config->remotefilesiglevel, config->remotefilesiglevel_mask);
 
@@ -601,4 +608,336 @@ alpm_list_t *pu_register_syncdbs(alpm_handle_t *handle, alpm_list_t *repos)
   return alpm_get_syncdbs(handle);
 }
 
+static int _pu_glob(alpm_list_t **dest, const char *pattern)
+{
+  glob_t gbuf;
+  size_t gindex;
+  alpm_list_t *items = NULL;
+  int gret = glob(pattern, GLOB_NOCHECK, NULL, &gbuf);
+
+  if(gret != 0 && gret != GLOB_NOMATCH) { return -1; }
+
+  for(gindex = 0; gindex < gbuf.gl_pathc; gindex++) {
+    char *dup = strdup(gbuf.gl_pathv[gindex]);
+    if(dup == NULL || _pu_list_append(&items, dup) == NULL) {
+      free(dup);
+      FREELIST(items);
+      globfree(&gbuf);
+      return -1;
+    }
+  }
+
+  globfree(&gbuf);
+  *dest = alpm_list_join(*dest, items);
+
+  return 0;
+}
+
+#define SETSTROPT(dest, val) if(!dest) { \
+  char *dup = strdup(val); \
+  if(dup) { \
+    free(dest); \
+    dest = dup; \
+  } else { \
+    reader->status = PU_CONFIG_READER_STATUS_ERROR; \
+    reader->error = 1; \
+    return -1; \
+  } \
+}
+#define APPENDLIST(dest, str) do { \
+  char *v, *ctx; \
+  for(v = strtok_r(str, " ", &ctx); v; v = strtok_r(NULL, " ", &ctx)) { \
+    char *dup = strdup(v); \
+    if(dup == NULL || _pu_list_append(dest, dup) == NULL) { \
+      reader->status = PU_CONFIG_READER_STATUS_ERROR; \
+      reader->error = 1; \
+      return -1; \
+    } \
+  } \
+} while(0)
+
+int pu_config_reader_next(pu_config_reader_t *reader)
+{
+  mini_t *mini = reader->_mini;
+  pu_config_t *config = reader->config;
+
+  reader->status = PU_CONFIG_READER_STATUS_OK;
+
+#define _PU_ERR(r, s) { r->status = s; r->error = 1; return -1; }
+
+  if(mini_next(mini) == NULL) {
+    if(mini->eof) {
+      if(reader->_parent == NULL) {
+        reader->eof = 1;
+        return -1;
+      }
+
+      mini_free(mini);
+      free(reader->file);
+
+      if(reader->_parent->_includes) {
+        /* switch to the next included file */
+        reader->file = _pu_list_shift(&reader->_parent->_includes);
+        reader->_includes = NULL;
+        if(reader->_mini == mini_init(reader->file)) {
+          _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
+        }
+      } else {
+        /* switch back to the parent */
+        pu_config_reader_t *p = reader->_parent;
+        reader->file = p->file;
+        reader->_mini = p->_mini;
+        reader->_parent = p->_parent;
+        reader->_includes = p->_includes;
+        free(p);
+      }
+      return pu_config_reader_next(reader);
+    } else {
+      _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
+    }
+  }
+
+  reader->line = mini->lineno;
+  reader->key = mini->key;
+  reader->value = mini->value;
+
+  if(!mini->key) {
+    free(reader->section);
+    if((reader->section = strdup(mini->section)) == NULL) {
+      _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
+    }
+
+    if(strcmp(reader->section, "options") == 0) {
+      reader->repo = NULL;
+    } else {
+      pu_repo_t *r = pu_repo_new();
+      if(r == NULL || (r->name = strdup(reader->section)) == NULL) {
+        _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
+      }
+      r->name = strdup(reader->section);
+      r->siglevel = ALPM_SIG_USE_DEFAULT;
+      if(_pu_list_append(&config->repos, r) == NULL) {
+        _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
+        return -1;
+      }
+      reader->repo = r;
+    }
+  } else {
+    struct _pu_config_setting *s;
+
+    if(!(s = _pu_config_lookup_setting(mini->key))) {
+      reader->status = PU_CONFIG_READER_STATUS_UNKNOWN_OPTION;
+      return 0;
+    }
+
+    if(s->type == PU_CONFIG_OPTION_INCLUDE) {
+      if(_pu_glob(&reader->_includes, mini->value) != 0) {
+        _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
+      } else if(reader->_includes == NULL) {
+        return pu_config_reader_next(reader);
+      } else {
+        char *file = _pu_list_shift(&reader->_includes);
+        pu_config_reader_t *p = malloc(sizeof(pu_config_reader_t));
+        mini_t *newmini = mini_init(file);
+
+        if(p == NULL || newmini == NULL) {
+          free(file);
+          free(p);
+          mini_free(newmini);
+          _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
+        }
+
+        memcpy(p, reader, sizeof(pu_config_reader_t));
+        reader->file = file;
+        reader->line = 0;
+        reader->_parent = p;
+        reader->_mini = newmini;
+        reader->_includes = NULL;
+      }
+      return 0;
+    }
+
+    if(reader->repo) {
+      pu_repo_t *r = reader->repo;
+      char *v, *ctx;
+      switch(s->type) {
+        case PU_CONFIG_OPTION_SIGLEVEL:
+          if(_pu_parse_siglevel(mini->value, &(r->siglevel),
+                &(r->siglevel_mask)) != 0) {
+            reader->status = PU_CONFIG_READER_STATUS_INVALID_VALUE;
+            reader->error = 1;
+          }
+          break;
+        case PU_CONFIG_OPTION_SERVER:
+          r->servers = alpm_list_add(r->servers, strdup(mini->value));
+          break;
+        case PU_CONFIG_OPTION_USAGE:
+          for(v = strtok_r(mini->value, " ", &ctx); v; v = strtok_r(NULL, " ", &ctx)) {
+            if(strcmp(v, "Sync") == 0) {
+              r->usage |= ALPM_DB_USAGE_SYNC;
+            } else if(strcmp(v, "Search") == 0) {
+              r->usage |= ALPM_DB_USAGE_SEARCH;
+            } else if(strcmp(v, "Install") == 0) {
+              r->usage |= ALPM_DB_USAGE_INSTALL;
+            } else if(strcmp(v, "Upgrade") == 0) {
+              r->usage |= ALPM_DB_USAGE_UPGRADE;
+            } else if(strcmp(v, "All") == 0) {
+              r->usage |= ALPM_DB_USAGE_ALL;
+            } else {
+              reader->status = PU_CONFIG_READER_STATUS_INVALID_VALUE;
+              reader->error = 1;
+            }
+          }
+          break;
+        default:
+          reader->status = PU_CONFIG_READER_STATUS_UNKNOWN_OPTION;
+          break;
+      }
+    } else if(reader->section == NULL) {
+      reader->status = PU_CONFIG_READER_STATUS_UNKNOWN_OPTION;
+    } else if(mini->value) {
+      switch(s->type) {
+        case PU_CONFIG_OPTION_ROOTDIR:
+          SETSTROPT(config->rootdir, mini->value);
+          break;
+        case PU_CONFIG_OPTION_DBPATH:
+          SETSTROPT(config->dbpath, mini->value);
+          break;
+        case PU_CONFIG_OPTION_GPGDIR:
+          SETSTROPT(config->gpgdir, mini->value);
+          break;
+        case PU_CONFIG_OPTION_LOGFILE:
+          SETSTROPT(config->logfile, mini->value);
+          break;
+        case PU_CONFIG_OPTION_ARCHITECTURE:
+          SETSTROPT(config->architecture, mini->value);
+          break;
+        case PU_CONFIG_OPTION_XFERCOMMAND:
+          free(config->xfercommand);
+          if((config->xfercommand = strdup(mini->value)) == NULL) {
+            _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
+          }
+          break;
+        case PU_CONFIG_OPTION_CLEANMETHOD:
+          if(_pu_parse_cleanmethod(config, mini->value) != 0) {
+              reader->status = PU_CONFIG_READER_STATUS_INVALID_VALUE;
+              reader->error = 1;
+          }
+          break;
+        case PU_CONFIG_OPTION_USEDELTA:
+          {
+            char *end;
+            float d = strtof(mini->value, &end);
+            if(*end != '\0' || d < 0.0 || d > 2.0) {
+              reader->status = PU_CONFIG_READER_STATUS_INVALID_VALUE;
+              reader->error = 1;
+            } else {
+              config->usedelta = d;
+            }
+          }
+          break;
+        case PU_CONFIG_OPTION_SIGLEVEL:
+          if(_pu_parse_siglevel(mini->value, &(config->siglevel),
+                &(config->siglevel_mask)) != 0) {
+            reader->status = PU_CONFIG_READER_STATUS_INVALID_VALUE;
+            reader->error = 1;
+          }
+          break;
+        case PU_CONFIG_OPTION_LOCAL_SIGLEVEL:
+          if(_pu_parse_siglevel(mini->value, &(config->localfilesiglevel),
+                &(config->localfilesiglevel_mask)) != 0) {
+            reader->status = PU_CONFIG_READER_STATUS_INVALID_VALUE;
+            reader->error = 1;
+          }
+          break;
+        case PU_CONFIG_OPTION_REMOTE_SIGLEVEL:
+          if(_pu_parse_siglevel(mini->value, &(config->remotefilesiglevel),
+                &(config->remotefilesiglevel_mask)) != 0) {
+            reader->status = PU_CONFIG_READER_STATUS_INVALID_VALUE;
+            reader->error = 1;
+          }
+          break;
+        case PU_CONFIG_OPTION_HOLDPKGS:
+          APPENDLIST(&config->holdpkgs, mini->value);
+          break;
+        case PU_CONFIG_OPTION_IGNOREPKGS:
+          APPENDLIST(&config->ignorepkgs, mini->value);
+          break;
+        case PU_CONFIG_OPTION_IGNOREGROUPS:
+          APPENDLIST(&config->ignoregroups, mini->value);
+          break;
+        case PU_CONFIG_OPTION_NOUPGRADE:
+          APPENDLIST(&config->noupgrade, mini->value);
+          break;
+        case PU_CONFIG_OPTION_NOEXTRACT:
+          APPENDLIST(&config->noextract, mini->value);
+          break;
+        case PU_CONFIG_OPTION_CACHEDIRS:
+          APPENDLIST(&config->cachedirs, mini->value);
+          break;
+        default:
+          reader->status = PU_CONFIG_READER_STATUS_UNKNOWN_OPTION;
+          break;
+      }
+    } else {
+      switch(s->type) {
+        case PU_CONFIG_OPTION_COLOR:
+          config->color = 1;
+          break;
+        case PU_CONFIG_OPTION_USESYSLOG:
+          config->usesyslog = 1;
+          break;
+        case PU_CONFIG_OPTION_USEDELTA:
+          config->usedelta = 0.7;
+          break;
+        case PU_CONFIG_OPTION_TOTALDOWNLOAD:
+          config->totaldownload = 1;
+          break;
+        case PU_CONFIG_OPTION_CHECKSPACE:
+          config->checkspace = 1;
+          break;
+        case PU_CONFIG_OPTION_VERBOSEPKGLISTS:
+          config->verbosepkglists = 1;
+          break;
+        case PU_CONFIG_OPTION_ILOVECANDY:
+          config->ilovecandy = 1;
+          break;
+        default:
+          reader->status = PU_CONFIG_READER_STATUS_UNKNOWN_OPTION;
+          break;
+      }
+    }
+  }
+
+#undef _PU_ERR
+
+  return  0;
+}
+
+#undef SETSTROPT
+#undef APPENDLIST
+
+pu_config_reader_t *pu_config_reader_new(pu_config_t *config, const char *file)
+{
+  pu_config_reader_t *reader = calloc(sizeof(pu_config_reader_t), 1);
+  if(reader == NULL) { return NULL; }
+  if((reader->_mini = mini_init(file)) == NULL) {
+    pu_config_reader_free(reader); return NULL;
+  }
+  if((reader->file = strdup(file)) == NULL) {
+    pu_config_reader_free(reader); return NULL;
+  }
+  reader->config = config;
+  return reader;
+}
+
+void pu_config_reader_free(pu_config_reader_t *reader)
+{
+  if(!reader) { return; }
+  free(reader->file);
+  mini_free(reader->_mini);
+  FREELIST(reader->_includes);
+  pu_config_reader_free(reader->_parent);
+  free(reader);
+}
 /* vim: set ts=2 sw=2 et: */

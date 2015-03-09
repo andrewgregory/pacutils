@@ -15,6 +15,7 @@ HEADERS = \
 		  pacutils/util.h
 
 SOURCES = \
+		  ../ext/mini.c/mini.c \
 		  pacutils.c \
 		  pacutils/config.c \
 		  pacutils/log.c \

@@ -22,6 +22,8 @@
 
 #include <alpm.h>
 
+#include "../../ext/mini.c/mini.h"
+
 #ifndef PACUTILS_CONFIG_H
 #define PACUTILS_CONFIG_H
 
@@ -113,6 +115,25 @@ typedef struct pu_repo_t {
   alpm_siglevel_t siglevel_mask;
 } pu_repo_t;
 
+typedef enum pu_config_reader_status_t {
+  PU_CONFIG_READER_STATUS_OK,
+  PU_CONFIG_READER_STATUS_ERROR,
+  PU_CONFIG_READER_STATUS_INVALID_VALUE,
+  PU_CONFIG_READER_STATUS_UNKNOWN_OPTION,
+} pu_config_reader_status_t;
+
+typedef struct pu_config_reader_t {
+  int eof, line, error;
+  char *file, *section, *key, *value;
+  pu_config_t *config;
+  pu_repo_t *repo;
+  pu_config_reader_status_t status;
+
+  mini_t *_mini;
+  struct pu_config_reader_t *_parent;
+  alpm_list_t *_includes;
+} pu_config_reader_t;
+
 pu_repo_t *pu_repo_new(void);
 void pu_repo_free(pu_repo_t *repo);
 alpm_db_t *pu_register_syncdb(alpm_handle_t *handle, pu_repo_t *repo);
@@ -123,6 +144,10 @@ pu_config_t *pu_config_new_from_file(const char *filename);
 void pu_config_free(pu_config_t *config);
 
 alpm_handle_t *pu_initialize_handle_from_config(pu_config_t *config);
+
+pu_config_reader_t *pu_config_reader_new(pu_config_t *config, const char *file);
+int pu_config_reader_next(pu_config_reader_t *reader);
+void pu_config_reader_free(pu_config_reader_t *reader);
 
 #endif /* PACUTILS_CONFIG_H */
 

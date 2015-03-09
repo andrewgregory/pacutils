@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -64,26 +65,55 @@ FILE *fopen(const char *path, const char *mode) {
 
 
 #define is_str_list(l, str, desc) do { \
-        if(l) { \
-            tap_is_str(l->data, str, desc); \
-            l = alpm_list_next(l); \
-        } else { \
-            tap_ok(l != NULL, desc); \
+    if(l) { \
+        tap_is_str(l->data, str, desc); \
+        l = alpm_list_next(l); \
+    } else { \
+        tap_ok(l != NULL, desc); \
+    } \
+} while(0)
+
+#define sig_diag(sl, s) if(sl & s) { tap_diag("              %s", #s); }
+#define sig_dump(sl) \
+    do { \
+        sig_diag(sl, ALPM_SIG_USE_DEFAULT); \
+        sig_diag(sl, ALPM_SIG_PACKAGE); \
+        sig_diag(sl, ALPM_SIG_PACKAGE_OPTIONAL); \
+        sig_diag(sl, ALPM_SIG_PACKAGE_UNKNOWN_OK); \
+        sig_diag(sl, ALPM_SIG_PACKAGE_MARGINAL_OK); \
+        sig_diag(sl, ALPM_SIG_DATABASE); \
+        sig_diag(sl, ALPM_SIG_DATABASE_OPTIONAL); \
+        sig_diag(sl, ALPM_SIG_DATABASE_UNKNOWN_OK); \
+        sig_diag(sl, ALPM_SIG_DATABASE_MARGINAL_OK); \
+    } while(0)
+
+#define is_siglevel(g, e, ...) \
+    do { \
+        if(!tap_ok(g == e, __VA_ARGS__)) { \
+            tap_diag("   expected:"); \
+            sig_dump(e); \
+            tap_diag("        got:"); \
+            sig_dump(g); \
         } \
     } while(0)
 
 int main(void) {
     alpm_list_t *i;
-    pu_config_t *config;
+    pu_config_t *config = pu_config_new();
+    pu_config_reader_t *reader = pu_config_reader_new(config, "mockfile.ini");
     pu_repo_t *repo;
 
-	tap_plan(34);
+	tap_plan(36);
 
-    config = pu_config_new_from_file("mockfile.ini");
-    if(!tap_ok(config != NULL, "config != NULL")) {
-        tap_bail("pu_config_new_from_file failed");
+    if(config == NULL || reader == NULL) {
+        tap_bail("error initializing reader (%s)", strerror(errno));
         return 1;
     }
+    while(pu_config_reader_next(reader) != -1);
+
+    tap_ok(reader->eof, "eof reached");
+    tap_ok(!reader->error, "no error");
+    tap_ok(pu_config_resolve(config) == 0, "finalize config");
 
     tap_is_str(config->rootdir, "/root2", "RootDir");
     tap_is_str(config->dbpath, "/dbpath1/", "DBPath");
@@ -99,7 +129,7 @@ int main(void) {
     tap_ok(config->verbosepkglists, "VerbosePkgLists");
     tap_ok(config->ilovecandy, "ILoveCandy");
 
-    tap_is_int(config->siglevel, 0, "SigLevel");
+    is_siglevel(config->siglevel, 0, "SigLevel");
 
     i = config->ignorepkgs;
     is_str_list(i, "ignorepkga", "IgnorePkg a");
