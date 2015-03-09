@@ -9,7 +9,8 @@ TESTS += \
 		 10-pathcmp.t \
 		 10-strreplace.t \
 		 20-config-includes.t \
-		 20-config-root-inheritance.t
+		 20-config-root-inheritance.t \
+		 99-pu_list_append.t
 
 %.t: %.c
 	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $< $(LDLIBS) -o $@

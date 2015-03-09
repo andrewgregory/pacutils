@@ -20,11 +20,15 @@
  * IN THE SOFTWARE.
  */
 
+#include <alpm.h>
+
 #ifndef PACUTILS_UTIL_H
 #define PACUTILS_UTIL_H
 
 char *pu_basename(char *path);
 char *pu_hr_size(off_t bytes, char *dest);
+
+alpm_list_t *_pu_list_append(alpm_list_t **list, void *data);
 
 #endif /* PACUTILS_UTIL_H */
 
