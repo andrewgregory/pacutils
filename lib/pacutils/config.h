@@ -141,6 +141,8 @@ alpm_list_t *pu_register_syncdbs(alpm_handle_t *handle, alpm_list_t *repos);
 
 pu_config_t *pu_config_new(void);
 pu_config_t *pu_config_new_from_file(const char *filename);
+void pu_config_merge(pu_config_t *dest, pu_config_t *src);
+int pu_config_resolve(pu_config_t *config);
 void pu_config_free(pu_config_t *config);
 
 alpm_handle_t *pu_initialize_handle_from_config(pu_config_t *config);

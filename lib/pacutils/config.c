@@ -613,6 +613,105 @@ alpm_list_t *pu_register_syncdbs(alpm_handle_t *handle, alpm_list_t *repos)
   return alpm_get_syncdbs(handle);
 }
 
+int pu_config_resolve(pu_config_t *config)
+{
+  alpm_list_t *i;
+
+#define SETDEFAULT(opt, val) if(!opt) { opt = val; if(!opt) { return -1; } }
+  if(config->rootdir) {
+    SETDEFAULT(config->dbpath,
+        _pu_strjoin("/", config->rootdir, "var/lib/pacman/", NULL));
+    SETDEFAULT(config->logfile,
+        _pu_strjoin("/", config->rootdir, "var/log/pacman.log", NULL));
+  } else {
+    SETDEFAULT(config->rootdir, strdup("/"));
+    SETDEFAULT(config->dbpath, strdup("/var/lib/pacman/"));
+    SETDEFAULT(config->logfile, strdup("/var/log/pacman.log"));
+  }
+  SETDEFAULT(config->gpgdir, strdup("/etc/pacman.d/gnupg/"));
+  SETDEFAULT(config->cachedirs,
+      alpm_list_add(NULL, strdup("/var/cache/pacman/pkg")));
+  SETDEFAULT(config->cleanmethod, PU_CONFIG_CLEANMETHOD_KEEP_INSTALLED);
+
+  if(!config->architecture || strcmp(config->architecture, "auto") == 0) {
+    struct utsname un;
+    char *arch;
+    if(uname(&un) != 0 || (arch = strdup(un.machine)) == NULL) { return -1; }
+    free(config->architecture);
+    config->architecture = arch;
+  }
+
+#define SETSIGLEVEL(l, m) \
+  if(m) { l = (l & (m)) | (config->siglevel & ~(m)); } \
+  else { l = ALPM_SIG_USE_DEFAULT; }
+
+  if(!config->siglevel_mask) {
+    config->siglevel = (
+        ALPM_SIG_PACKAGE | ALPM_SIG_PACKAGE_OPTIONAL |
+        ALPM_SIG_DATABASE | ALPM_SIG_DATABASE_OPTIONAL);
+  }
+  SETSIGLEVEL(config->localfilesiglevel, config->localfilesiglevel_mask);
+  SETSIGLEVEL(config->remotefilesiglevel, config->remotefilesiglevel_mask);
+
+  for(i = config->repos; i; i = i->next) {
+    pu_repo_t *r = i->data;
+    SETDEFAULT(r->usage, ALPM_DB_USAGE_ALL);
+    SETSIGLEVEL(r->siglevel, r->siglevel_mask);
+  }
+#undef SETSIGLEVEL
+#undef SETDEFAULT
+
+  if(_pu_subst_server_vars(config) != 0) { return -1; }
+
+  return 0;
+}
+
+void pu_config_merge(pu_config_t *dest, pu_config_t *src)
+{
+#define MERGESTR(ds, ss) if(!ds) { ds = ss; ss = NULL; }
+#define MERGELIST(dl, sl) do { dl = alpm_list_join(dl, sl); sl = NULL; } while(0)
+#define MERGEVAL(dv, sv) if(!dv) { dv = sv; }
+#define MERGESL(ds, dm, ss, sm) if(!dm) { ds = ss; dm = sm; }
+
+  MERGEVAL(dest->usesyslog, src->usesyslog);
+  MERGEVAL(dest->totaldownload, src->totaldownload);
+  MERGEVAL(dest->checkspace, src->checkspace);
+  MERGEVAL(dest->verbosepkglists, src->verbosepkglists);
+  MERGEVAL(dest->color, src->color);
+  MERGEVAL(dest->ilovecandy, src->ilovecandy);
+  MERGEVAL(dest->cleanmethod, src->cleanmethod);
+  MERGEVAL(dest->usedelta, src->usedelta);
+
+  MERGESTR(dest->rootdir, src->rootdir);
+  MERGESTR(dest->dbpath, src->dbpath);
+  MERGESTR(dest->logfile, src->logfile);
+  MERGESTR(dest->gpgdir, src->gpgdir);
+  MERGESTR(dest->xfercommand, src->xfercommand);
+  MERGESTR(dest->architecture, src->architecture);
+
+  MERGELIST(dest->cachedirs, src->cachedirs);
+  MERGELIST(dest->holdpkgs, src->holdpkgs);
+  MERGELIST(dest->noextract, src->noextract);
+  MERGELIST(dest->noupgrade, src->noupgrade);
+  MERGELIST(dest->ignorepkgs, src->ignorepkgs);
+  MERGELIST(dest->ignoregroups, src->ignoregroups);
+  MERGELIST(dest->repos, src->repos);
+
+  MERGESL(dest->siglevel, dest->siglevel_mask,
+      src->siglevel, src->siglevel_mask);
+  MERGESL(dest->localfilesiglevel, dest->localfilesiglevel_mask,
+      src->localfilesiglevel, src->localfilesiglevel_mask);
+  MERGESL(dest->remotefilesiglevel, dest->remotefilesiglevel_mask,
+      src->remotefilesiglevel, src->remotefilesiglevel_mask);
+
+#undef MERGESTR
+#undef MERGELIST
+#undef MERGEVAL
+#undef MERGESL
+
+  pu_config_free(src);
+}
+
 static int _pu_glob(alpm_list_t **dest, const char *pattern)
 {
   glob_t gbuf;
