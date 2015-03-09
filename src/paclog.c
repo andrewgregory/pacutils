@@ -228,7 +228,7 @@ void parse_opts(int argc, char **argv)
 	}
 
 	if(!logfile) {
-		pu_config_t *config = pu_config_new_from_file(config_file);
+		pu_config_t *config = pu_ui_config_parse(NULL, config_file);
 		if(config) {
 			logfile = strdup(config->logfile);
 			pu_config_free(config);

@@ -83,7 +83,7 @@ void parse_opts(int argc, char **argv)
 		}
 	}
 
-	config = pu_config_new_from_file(config_file);
+	config = pu_ui_config_parse(NULL, config_file);
 	if(!config) {
 		fprintf(stderr, "error parsing '%s'\n", config_file);
 	}

@@ -22,6 +22,8 @@
 
 #include <alpm.h>
 
+#include "config.h"
+
 #ifndef PACUTILS_UI_H
 #define PACUTILS_UI_H
 
@@ -38,6 +40,8 @@ void pu_ui_cb_download(const char *filename, off_t xfered, off_t total);
 void pu_ui_cb_progress(alpm_progress_t event, const char *pkgname, int percent,
     size_t total, size_t current);
 void pu_ui_cb_question(alpm_question_t *question);
+
+pu_config_t *pu_ui_config_parse(pu_config_t *dest, const char *file);
 
 #endif /* PACUTILS_UI_H */
 

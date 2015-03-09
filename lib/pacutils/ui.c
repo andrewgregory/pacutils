@@ -20,6 +20,8 @@
  * IN THE SOFTWARE.
  */
 
+#include <errno.h>
+#include <string.h>
 #include <sys/time.h>
 
 #include "ui.h"
@@ -251,6 +253,61 @@ void pu_ui_display_transaction(alpm_handle_t *handle)
   printf("Download Size:  %10s\n", pu_hr_size(download, size));
   printf("Installed Size: %10s\n", pu_hr_size(install, size));
   printf("Size Delta:     %10s\n", pu_hr_size(delta, size));
+}
+
+pu_config_t *pu_ui_config_parse(pu_config_t *dest, const char *file) {
+  pu_config_t *config = pu_config_new();
+  pu_config_reader_t *reader = pu_config_reader_new(config, file);
+
+  if(config == NULL || reader == NULL) {
+    pu_ui_error("reading '%s' failed (%s)", file, strerror(errno));
+    pu_config_free(config);
+    pu_config_reader_free(reader);
+    return NULL;
+  }
+
+  while(pu_config_reader_next(reader) != -1) {
+    switch(reader->status) {
+      case PU_CONFIG_READER_STATUS_INVALID_VALUE:
+        pu_ui_error("config %s line %d: invalid value '%s' for '%s'",
+            reader->file, reader->line, reader->value, reader->key);
+        break;
+      case PU_CONFIG_READER_STATUS_UNKNOWN_OPTION:
+        pu_ui_warn("config %s line %d: unknown option '%s'",
+            reader->file, reader->line, reader->key);
+        break;
+      case PU_CONFIG_READER_STATUS_OK:
+        /* todo debugging */
+        break;
+      case PU_CONFIG_READER_STATUS_ERROR:
+        /* should never get here, hard errors return -1 */
+        break;
+    }
+  }
+  if(reader->error) {
+    if(!reader->eof) {
+      pu_ui_error("reading '%s' failed (%s)", reader->file, strerror(errno));
+    }
+    pu_config_reader_free(reader);
+    pu_config_free(config);
+    return NULL;
+  }
+  pu_config_reader_free(reader);
+
+  if(dest) {
+    pu_config_merge(dest, config);
+    config = NULL;
+  } else {
+    dest = config;
+  }
+
+  if(pu_config_resolve(dest) != 0) {
+    pu_ui_error("resolving config values failed (%s)", strerror(errno));
+    pu_config_free(config);
+    return NULL;
+  }
+
+  return dest;
 }
 
 /* vim: set ts=2 sw=2 et: */
