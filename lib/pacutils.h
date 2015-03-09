@@ -8,6 +8,7 @@
 #include <alpm.h>
 
 #include "pacutils/config.h"
+#include "pacutils/ui.h"
 
 #ifndef PACUTILS_H
 #define PACUTILS_H

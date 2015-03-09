@@ -10,12 +10,14 @@ LIBDIR      = ${EXEC_PREFIX}/lib
 HEADERS = \
 		  pacutils.h \
 		  pacutils/config.h \
-		  pacutils/log.h
+		  pacutils/log.h \
+		  pacutils/ui.h
 
 SOURCES = \
 		  pacutils.c \
 		  pacutils/config.c \
-		  pacutils/log.c
+		  pacutils/log.c \
+		  pacutils/ui.c
 
 all: libpacutils.so
 
