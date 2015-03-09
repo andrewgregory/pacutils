@@ -23,6 +23,7 @@
 #ifndef PACUTILS_UTIL_H
 #define PACUTILS_UTIL_H
 
+char *pu_basename(char *path);
 char *pu_hr_size(off_t bytes, char *dest);
 
 #endif /* PACUTILS_UTIL_H */

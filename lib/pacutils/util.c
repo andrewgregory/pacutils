@@ -20,9 +20,18 @@
  * IN THE SOFTWARE.
  */
 
-#include  <stdio.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "util.h"
+
+char *pu_basename(char *path)
+{
+  char *c;
+  if(!path) { return NULL; }
+  for(c = path + strlen(path); c > path && *(c - 1) != '/'; --c);
+  return c;
+}
 
 char *pu_hr_size(off_t bytes, char *dest)
 {

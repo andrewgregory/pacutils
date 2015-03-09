@@ -164,19 +164,4 @@ int pu_log_command(alpm_handle_t *handle, const char *caller, int argc, char **a
 	return 0;
 }
 
-char *pu_basename(char *path)
-{
-	char *c;
-
-	if(!path) {
-		return NULL;
-	}
-
-	for(c = path + strlen(path); c > path && *(c - 1) != '/'; --c) {
-		/* empty loop */
-	}
-
-	return c;
-}
-
 /* vim: set ts=2 sw=2 noet: */
