@@ -6,13 +6,22 @@ const char *myname = "pacconf", *myver = "0.2";
 
 pu_config_t *config = NULL;
 alpm_list_t *directives = NULL;
-char sep = '\n', *repo_name = NULL, *config_file = NULL;
+char sep = '\n', *repo_name = NULL;
 int repo_list = 0, verbose = 0;
+
+enum {
+	FLAG_ARCH = 1000,
+	FLAG_CONFIG,
+	FLAG_HELP,
+	FLAG_REPO,
+	FLAG_REPO_LIST,
+	FLAG_ROOT,
+	FLAG_VERBOSE,
+	FLAG_VERSION,
+};
 
 void cleanup(void)
 {
-	free(repo_name);
-	free(config_file);
 	alpm_list_free(directives);
 	pu_config_free(config);
 }
@@ -25,11 +34,13 @@ void usage(int ret)
 	hputs("usage:  pacconf [options] <directive>...");
 	hputs("        pacconf (--repo-list|--help|--version)");
 	hputs("options:");
+	hputs("  --arch=<arch>    set an alternate architecture");
 	hputs("  --config=<path>  set an alternate configuration file");
-	hputs("  --repo=<remote>  query options for a specific repo");
-	hputs("  --verbose        always show directive names");
-	hputs("  --repo-list      list configured repositories");
 	hputs("  --help           display this help information");
+	hputs("  --repo-list      list configured repositories");
+	hputs("  --repo=<remote>  query options for a specific repo");
+	hputs("  --root=<path>    set an alternate installation root");
+	hputs("  --verbose        always show directive names");
 	hputs("  --version        display version information");
 #undef hputs
 	cleanup();
@@ -38,40 +49,49 @@ void usage(int ret)
 
 void parse_opts(int argc, char **argv)
 {
+	char *config_file = "/etc/pacman.conf";
+	pu_config_t *argv_config = pu_config_new();
 	int c;
-	config_file = strdup("/etc/pacman.conf");
 
 	char *short_opts = "";
 	struct option long_opts[] = {
-		{ "config"    , required_argument , NULL , 'c' },
-		{ "repo"      , required_argument , NULL , 'r' },
-		{ "repo-list" , no_argument       , NULL , 'l' },
-		{ "verbose"   , no_argument       , NULL , 'v' },
-		{ "help"      , no_argument       , NULL , 'h' },
-		{ "version"   , no_argument       , NULL , 'V' },
+		{ "arch"      , required_argument , NULL , FLAG_ARCH      },
+		{ "config"    , required_argument , NULL , FLAG_CONFIG    },
+		{ "help"      , no_argument       , NULL , FLAG_HELP      },
+		{ "repo"      , required_argument , NULL , FLAG_REPO      },
+		{ "repo-list" , no_argument       , NULL , FLAG_REPO_LIST },
+		{ "root"      , required_argument , NULL , FLAG_ROOT      },
+		{ "verbose"   , no_argument       , NULL , FLAG_VERBOSE   },
+		{ "version"   , no_argument       , NULL , FLAG_VERSION   },
 		{ 0, 0, 0, 0 },
 	};
 
 	while((c = getopt_long(argc, argv, short_opts, long_opts, NULL)) != -1) {
 		switch(c) {
-			case 'c':
-				free(config_file);
-				config_file = strdup(optarg);
+			case FLAG_ARCH:
+				free(argv_config->architecture);
+				argv_config->architecture = strdup(optarg);
 				break;
-			case 'l':
-				repo_list = 1;
+			case FLAG_CONFIG:
+				config_file = optarg;
 				break;
-			case 'r':
-				free(repo_name);
-				repo_name = strdup(optarg);
-				break;
-			case 'v':
-				verbose = 1;
-				break;
-			case 'h':
+			case FLAG_HELP:
 				usage(0);
 				break;
-			case 'V':
+			case FLAG_REPO:
+				repo_name = optarg;
+				break;
+			case FLAG_REPO_LIST:
+				repo_list = 1;
+				break;
+			case FLAG_ROOT:
+				free(argv_config->rootdir);
+				argv_config->rootdir = strdup(optarg);
+				break;
+			case FLAG_VERBOSE:
+				verbose = 1;
+				break;
+			case FLAG_VERSION:
 				pu_print_version(myname, myver);
 				cleanup();
 				exit(0);
@@ -83,8 +103,7 @@ void parse_opts(int argc, char **argv)
 		}
 	}
 
-	config = pu_ui_config_parse(NULL, config_file);
-	if(!config) {
+	if((config = pu_ui_config_parse(argv_config, config_file)) == NULL) {
 		fprintf(stderr, "error parsing '%s'\n", config_file);
 	}
 }
