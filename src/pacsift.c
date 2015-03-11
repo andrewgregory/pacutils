@@ -83,9 +83,11 @@ void _regcomp(regex_t *preg, const char *regex, int cflags)
 	}
 }
 
-alpm_list_t *filter_filelist(alpm_list_t **pkgs, const char *str)
+alpm_list_t *filter_filelist(alpm_list_t **pkgs, const char *str,
+		const char *root, const size_t rootlen)
 {
 	alpm_list_t *p, *matches = NULL;
+	if(strncmp(str, root, rootlen) == 0) { str += rootlen; }
 	if(re) {
 		regex_t preg;
 		_regcomp(&preg, str, REG_EXTENDED | REG_ICASE | REG_NOSUB);
@@ -197,79 +199,32 @@ alpm_list_t *filter_strlist(alpm_list_t **pkgs, const char *str, strlist_accesso
 	return matches;
 }
 
+#define match(list, filter) \
+	if(list) { \
+		alpm_list_t *lp; \
+		for(lp = list; lp; lp = alpm_list_next(lp)) { \
+			void *i = lp->data; \
+			matches = alpm_list_join(matches, filter); \
+		} \
+		if(!or) { \
+			alpm_list_free(haystack); \
+			haystack = matches; \
+			matches = NULL; \
+		} \
+	}
+
 alpm_list_t *filter_pkgs(alpm_handle_t *handle, alpm_list_t *pkgs)
 {
-	alpm_list_t *i, *matches = NULL, *haystack = alpm_list_copy(pkgs);
+	alpm_list_t *matches = NULL, *haystack = alpm_list_copy(pkgs);
+	const char *root = alpm_option_get_root(handle);
+	const size_t rootlen = strlen(root);
 
-	if(name) {
-		for(i = name; i; i = i->next) {
-			matches = alpm_list_join(matches, filter_str(&haystack, i->data, alpm_pkg_get_name));
-		}
-		if(!or) {
-			alpm_list_free(haystack);
-			haystack = matches;
-			matches = NULL;
-		}
-	}
-
-	if(description) {
-		for(i = description; i; i = i->next) {
-			matches = alpm_list_join(matches, filter_str(&haystack, i->data, alpm_pkg_get_desc));
-		}
-		if(!or) {
-			alpm_list_free(haystack);
-			haystack = matches;
-			matches = NULL;
-		}
-	}
-
-	if(packager) {
-		for(i = packager; i; i = i->next) {
-			matches = alpm_list_join(matches, filter_str(&haystack, i->data, alpm_pkg_get_packager));
-		}
-		if(!or) {
-			alpm_list_free(haystack);
-			haystack = matches;
-			matches = NULL;
-		}
-	}
-
-	if(repo) {
-		for(i = repo; i; i = i->next) {
-			matches = alpm_list_join(matches, filter_str(&haystack, i->data, get_dbname));
-		}
-		if(!or) {
-			alpm_list_free(haystack);
-			haystack = matches;
-			matches = NULL;
-		}
-	}
-
-	if(group) {
-		for(i = group; i; i = i->next) {
-			matches = alpm_list_join(matches, filter_strlist(&haystack, i->data, alpm_pkg_get_groups));
-		}
-		if(!or) {
-			alpm_list_free(haystack);
-			haystack = matches;
-			matches = NULL;
-		}
-	}
-
-	if(ownsfile) {
-		const char *root = alpm_option_get_root(handle);
-		size_t rootlen = strlen(root);
-		for(i = ownsfile; i; i = i->next) {
-			const char *path = i->data;
-			if(strncmp(path, root, rootlen) == 0) { path += rootlen; }
-			matches = alpm_list_join(matches, filter_filelist(&haystack, path));
-		}
-		if(!or) {
-			alpm_list_free(haystack);
-			haystack = matches;
-			matches = NULL;
-		}
-	}
+	match(name, filter_str(&haystack, i, alpm_pkg_get_name));
+	match(description, filter_str(&haystack, i, alpm_pkg_get_desc));
+	match(packager, filter_str(&haystack, i, alpm_pkg_get_desc));
+	match(repo, filter_str(&haystack, i, get_dbname));
+	match(group, filter_strlist(&haystack, i, alpm_pkg_get_groups));
+	match(ownsfile, filter_filelist(&haystack, i, root, rootlen));
 
 	if(invert) {
 		matches = alpm_list_diff(pkgs, haystack, ptr_cmp);
@@ -279,6 +234,8 @@ alpm_list_t *filter_pkgs(alpm_handle_t *handle, alpm_list_t *pkgs)
 		return haystack;
 	}
 }
+
+#undef match
 
 void usage(int ret)
 {
