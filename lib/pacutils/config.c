@@ -530,7 +530,6 @@ int pu_config_reader_next(pu_config_reader_t *reader)
       if(r == NULL || (r->name = strdup(reader->section)) == NULL) {
         _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
       }
-      r->name = strdup(reader->section);
       r->siglevel = ALPM_SIG_USE_DEFAULT;
       if(_pu_list_append(&config->repos, r) == NULL) {
         _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
@@ -751,6 +750,7 @@ void pu_config_reader_free(pu_config_reader_t *reader)
 {
   if(!reader) { return; }
   free(reader->file);
+  free(reader->section);
   mini_free(reader->_mini);
   FREELIST(reader->_includes);
   pu_config_reader_free(reader->_parent);
