@@ -477,7 +477,7 @@ static int check_file_properties(alpm_pkg_t *pkg)
 			continue;
 		} else if(ppath[0] == '.') {
 			continue;
-		} else if(skip_noextract && alpm_option_match_noextract(handle, ppath)) {
+		} else if(skip_noextract && alpm_option_match_noextract(handle, ppath) == 0) {
 			continue;
 		} else {
 			strncpy(rel, ppath, space);
@@ -496,7 +496,7 @@ static int check_file_properties(alpm_pkg_t *pkg)
 
 		if(cmp_type(pkg, path, entry, &buf) != 0) { ret = 1; }
 
-		if(skip_noupgrade && alpm_option_match_noupgrade(handle, ppath)) {
+		if(skip_noupgrade && alpm_option_match_noupgrade(handle, ppath) == 0) {
 			continue;
 		}
 
