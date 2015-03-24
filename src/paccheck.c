@@ -19,6 +19,8 @@ enum longopt_flags {
 	FLAG_FILES,
 	FLAG_FILE_PROPERTIES,
 	FLAG_HELP,
+	FLAG_MD5SUM,
+	FLAG_SHA256SUM,
 	FLAG_NOEXTRACT,
 	FLAG_NOUPGRADE,
 	FLAG_NULL,
@@ -34,6 +36,8 @@ enum check_types {
 	CHECK_OPT_DEPENDS = 1 << 1,
 	CHECK_FILES = 1 << 2,
 	CHECK_FILE_PROPERTIES = 1 << 3,
+	CHECK_MD5SUM = 1 << 4,
+	CHECK_SHA256SUM = 1 << 5,
 };
 
 pu_config_t *config = NULL;
@@ -65,6 +69,8 @@ void usage(int ret)
 	hputs("   --opt-depends      check for missing optional dependencies");
 	hputs("   --files            check installed files against package database");
 	hputs("   --file-properties  check installed files against MTREE data");
+	hputs("   --md5sum           check file md5sums against MTREE data");
+	hputs("   --sha256sum        check file sha256sums against MTREE data");
 	hputs("   --backup           include backup files in modification checks");
 	hputs("   --noextract        include NoExtract files in modification checks");
 	hputs("   --noupgrade        include NoUpgrade files in modification checks");
@@ -99,6 +105,8 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "opt-depends"   , no_argument       , NULL       , FLAG_OPT_DEPENDS  } ,
 		{ "files"         , no_argument       , NULL       , FLAG_FILES        } ,
 		{ "file-properties", no_argument      , NULL       , FLAG_FILE_PROPERTIES } ,
+		{ "md5sum"        , no_argument       , NULL       , FLAG_MD5SUM       } ,
+		{ "sha256sum"     , no_argument       , NULL       , FLAG_SHA256SUM    } ,
 
 		{ 0, 0, 0, 0 },
 	};
@@ -167,6 +175,13 @@ pu_config_t *parse_opts(int argc, char **argv)
 			case FLAG_FILE_PROPERTIES:
 				checks |= CHECK_FILE_PROPERTIES;
 				break;
+			case FLAG_MD5SUM:
+				checks |= CHECK_MD5SUM;
+				break;
+			case FLAG_SHA256SUM:
+				checks |= CHECK_SHA256SUM;
+				break;
+
 
 			/* misc */
 			case FLAG_RECURSIVE:
@@ -512,6 +527,78 @@ static int check_file_properties(alpm_pkg_t *pkg)
 	return ret;
 }
 
+static int check_md5sum(alpm_pkg_t *pkg)
+{
+	int ret = 0;
+	char path[PATH_MAX], *rel;
+	alpm_list_t *i, *entries = pu_mtree_load_pkg_mtree(handle, pkg);
+
+	strcpy(path, alpm_option_get_root(handle));
+	rel = path + strlen(alpm_option_get_root(handle));
+
+	for(i = entries; i; i = alpm_list_next(i)) {
+		pu_mtree_t *m = i->data;
+		char *md5;
+		if(m->md5digest[0] == '\0') { continue; }
+		if(m->path[0] == '.') { continue; }
+		if(skip_backups && match_backup(pkg, m->path)) { continue; }
+		if(skip_noextract && alpm_option_match_noextract(handle, m->path) == 0) { continue; }
+		if(skip_noupgrade && alpm_option_match_noupgrade(handle, m->path) == 0) { continue; }
+
+		strcpy(rel, m->path);
+		if((md5 = alpm_compute_md5sum(path)) == NULL) {
+			printf("%s: '%s' read error (%s)\n",
+					alpm_pkg_get_name(pkg), path, strerror(errno));
+		} else if(memcmp(m->md5digest, md5, 32) != 0) {
+			printf("%s: '%s' md5sum mismatch (expected %s)\n",
+					alpm_pkg_get_name(pkg), path, m->md5digest);
+			ret = 1;
+		}
+		free(md5);
+	}
+
+	alpm_list_free_inner(entries, (alpm_list_fn_free) pu_mtree_free);
+	alpm_list_free(entries);
+
+	return ret;
+}
+
+static int check_sha256sum(alpm_pkg_t *pkg)
+{
+	int ret = 0;
+	alpm_list_t *i, *entries = pu_mtree_load_pkg_mtree(handle, pkg);
+	char path[PATH_MAX], *rel;
+
+	strcpy(path, alpm_option_get_root(handle));
+	rel = path + strlen(alpm_option_get_root(handle));
+
+	for(i = entries; i; i = alpm_list_next(i)) {
+		pu_mtree_t *m = i->data;
+		char *sha;
+		if(m->sha256digest[0] == '\0') { continue; }
+		if(m->path[0] == '.') { continue; }
+		if(skip_backups && match_backup(pkg, m->path)) { continue; }
+		if(skip_noextract && alpm_option_match_noextract(handle, m->path) == 0) { continue; }
+		if(skip_noupgrade && alpm_option_match_noupgrade(handle, m->path) == 0) { continue; }
+
+		strcpy(rel, m->path);
+		if((sha = alpm_compute_sha256sum(path)) == NULL) {
+			printf("%s: '%s' read error (%s)\n",
+					alpm_pkg_get_name(pkg), path, strerror(errno));
+		} else if(memcmp(m->sha256digest, sha, 32) != 0) {
+			printf("%s: '%s' sha256sum mismatch (expected %s)\n",
+					alpm_pkg_get_name(pkg), path, m->sha256digest);
+			ret = 1;
+		}
+		free(sha);
+	}
+
+	alpm_list_free_inner(entries, (alpm_list_fn_free) pu_mtree_free);
+	alpm_list_free(entries);
+
+	return ret;
+}
+
 int list_find(alpm_list_t *haystack, void *needle)
 {
 	alpm_list_t *i;
@@ -630,6 +717,8 @@ int main(int argc, char **argv)
 		RUNCHECK(CHECK_OPT_DEPENDS, check_opt_depends(i->data));
 		RUNCHECK(CHECK_FILES, check_files(i->data));
 		RUNCHECK(CHECK_FILE_PROPERTIES, check_file_properties(i->data));
+		RUNCHECK(CHECK_MD5SUM, check_md5sum(i->data));
+		RUNCHECK(CHECK_SHA256SUM, check_sha256sum(i->data));
 #undef RUNCHECK
 	}
 
