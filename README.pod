@@ -66,6 +66,36 @@ C<Server> directives and C<Architecture> will be replaced if set to C<auto>.
 
 =back
 
+=head2 MTREE
+
+Package mtree reading functions are provided to fill gaps in libarchive's mtree
+reader, notably C<md5digest> and C<sha256digest> which are currently not read
+by libarchive.  Support is incomplete and libalpm's mtree reader should be used
+whenever possible.
+
+=over
+
+=item pu_mtree_t
+
+  typedef struct pu_mtree_t {
+    char *path;
+    char type[16];
+    uid_t uid;
+    gid_t gid;
+    mode_t mode;
+    off_t size;
+    char md5digest[33];
+    char sha256digest[65];
+  } pu_mtree_t;
+
+=item alpm_list_t *pu_mtree_load_pkg_mtree(alpm_handle_t *handle, alpm_pkg_t *pkg);
+
+Returns a list of mtree entries for C<pkg>.
+
+=item void pu_mtree_free(pu_mtree_t *mtree);
+
+=back
+
 =head2 Pkgspec
 
 A C<pkgspec> is a string consisting of sufficient information to uniquely

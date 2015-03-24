@@ -8,6 +8,7 @@
 #include <alpm.h>
 
 #include "pacutils/config.h"
+#include "pacutils/mtree.h"
 #include "pacutils/ui.h"
 #include "pacutils/util.h"
 
