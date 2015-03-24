@@ -560,6 +560,10 @@ static int check_md5sum(alpm_pkg_t *pkg)
 	alpm_list_free_inner(entries, (alpm_list_fn_free) pu_mtree_free);
 	alpm_list_free(entries);
 
+	if(!quiet && !ret) {
+		printf("%s: all files match mtree md5sums\n", alpm_pkg_get_name(pkg));
+	}
+
 	return ret;
 }
 
@@ -595,6 +599,10 @@ static int check_sha256sum(alpm_pkg_t *pkg)
 
 	alpm_list_free_inner(entries, (alpm_list_fn_free) pu_mtree_free);
 	alpm_list_free(entries);
+
+	if(!quiet && !ret) {
+		printf("%s: all files match mtree sha256sums\n", alpm_pkg_get_name(pkg));
+	}
 
 	return ret;
 }
