@@ -63,6 +63,24 @@ static struct archive *_open_pkg_mtree(alpm_handle_t *h, alpm_pkg_t *p) {
   return mtree;
 }
 
+static char *_mtree_path(const char *mpath, const char *end) {
+  char oct[4], *path = malloc(strlen(mpath)), *c = path;
+  if(mpath[0] == '.' && mpath[1] == '/') { mpath += 2; }
+  oct[3] = '\0';
+  while(mpath < end) {
+    if(*mpath == '\\' && mpath + 3 < end) {
+      strncpy(oct, mpath + 1, 3);
+      *(c++) = (int) strtol(oct, NULL, 8);
+      mpath += 4;
+    } else {
+      *(c++) = *mpath;
+      mpath++;
+    }
+  }
+  *c = '\0';
+  return path;
+}
+
 alpm_list_t *pu_mtree_load_pkg_mtree(alpm_handle_t *handle, alpm_pkg_t *pkg) {
   alpm_list_t *entries = NULL;
   pu_mtree_t defaults;
@@ -93,8 +111,7 @@ alpm_list_t *pu_mtree_load_pkg_mtree(alpm_handle_t *handle, alpm_pkg_t *pkg) {
       while(*sep && !isspace(*sep)) { sep++; }
       entry = malloc(sizeof(pu_mtree_t));
       memcpy(entry, &defaults, sizeof(pu_mtree_t));
-      c+= 2;
-      entry->path = strndup(c, sep - c);
+      entry->path = _mtree_path(c, sep);
       c = sep;
       entries = alpm_list_add(entries, entry);
     }
