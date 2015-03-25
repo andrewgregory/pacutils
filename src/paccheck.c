@@ -201,6 +201,8 @@ pu_config_t *parse_opts(int argc, char **argv)
 	return config;
 }
 
+#define match_noupgrade(h, p) (alpm_option_match_noupgrade(h, p) == 0)
+#define match_noextract(h, p) (alpm_option_match_noextract(h, p) == 0)
 static int match_backup(alpm_pkg_t *pkg, const char *path)
 {
 	alpm_list_t *i;
@@ -272,9 +274,7 @@ static int check_files(alpm_pkg_t *pkg)
 		size_t len;
 		struct stat buf;
 
-		if(skip_noextract && alpm_option_match_noextract(handle, file.name) == 0) {
-			continue;
-		}
+		if(skip_noextract && match_noextract(handle, file.name)) { continue; }
 
 		strncpy(rel, file.name, space);
 		len = strlen(file.name);
@@ -472,7 +472,7 @@ static int check_file_properties(alpm_pkg_t *pkg)
 			continue;
 		} else if(ppath[0] == '.') {
 			continue;
-		} else if(skip_noextract && alpm_option_match_noextract(handle, ppath) == 0) {
+		} else if(skip_noextract && match_noextract(handle, ppath)) {
 			continue;
 		} else {
 			strncpy(rel, ppath, space);
@@ -491,9 +491,7 @@ static int check_file_properties(alpm_pkg_t *pkg)
 
 		if(cmp_type(pkg, path, entry, &buf) != 0) { ret = 1; }
 
-		if(skip_noupgrade && alpm_option_match_noupgrade(handle, ppath) == 0) {
-			continue;
-		}
+		if(skip_noupgrade && match_noupgrade(handle, ppath)) { continue; }
 
 		if(cmp_mode(pkg, path, entry, &buf) != 0) { ret = 1; }
 		if(cmp_uid(pkg, path, entry, &buf) != 0) { ret = 1; }
@@ -537,8 +535,8 @@ static int check_md5sum(alpm_pkg_t *pkg)
 		if(m->md5digest[0] == '\0') { continue; }
 		if(m->path[0] == '.') { continue; }
 		if(skip_backups && match_backup(pkg, m->path)) { continue; }
-		if(skip_noextract && alpm_option_match_noextract(handle, m->path) == 0) { continue; }
-		if(skip_noupgrade && alpm_option_match_noupgrade(handle, m->path) == 0) { continue; }
+		if(skip_noextract && match_noextract(handle, m->path)) { continue; }
+		if(skip_noupgrade && match_noupgrade(handle, m->path)) { continue; }
 
 		strcpy(rel, m->path);
 		if((md5 = alpm_compute_md5sum(path)) == NULL) {
@@ -577,8 +575,8 @@ static int check_sha256sum(alpm_pkg_t *pkg)
 		if(m->sha256digest[0] == '\0') { continue; }
 		if(m->path[0] == '.') { continue; }
 		if(skip_backups && match_backup(pkg, m->path)) { continue; }
-		if(skip_noextract && alpm_option_match_noextract(handle, m->path) == 0) { continue; }
-		if(skip_noupgrade && alpm_option_match_noupgrade(handle, m->path) == 0) { continue; }
+		if(skip_noextract && match_noextract(handle, m->path)) { continue; }
+		if(skip_noupgrade && match_noupgrade(handle, m->path)) { continue; }
 
 		strcpy(rel, m->path);
 		if((sha = alpm_compute_sha256sum(path)) == NULL) {
