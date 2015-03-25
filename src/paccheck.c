@@ -59,7 +59,7 @@ void usage(int ret)
 	hputs("   --config=<path>    set an alternate configuration file");
 	hputs("   --dbpath=<path>    set an alternate database location");
 	hputs("   --root=<path>      set an alternate installation root");
-	hputs("   --null=[sep]       parse stdin as <sep> separated values (default NUL)");
+	hputs("   --null[=<sep>]     parse stdin as <sep> separated values (default NUL)");
 	hputs("   --quiet            only display error messages");
 	hputs("   --help             display this help information");
 	hputs("   --version          display version information");
