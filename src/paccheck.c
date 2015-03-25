@@ -278,7 +278,7 @@ static int check_files(alpm_pkg_t *pkg)
 		size_t len;
 		struct stat buf;
 
-		if(skip_noextract && alpm_option_match_noextract(handle, file.name)) {
+		if(skip_noextract && alpm_option_match_noextract(handle, file.name) == 0) {
 			continue;
 		}
 
