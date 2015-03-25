@@ -105,6 +105,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "opt-depends"   , no_argument       , NULL       , FLAG_OPT_DEPENDS  } ,
 		{ "files"         , no_argument       , NULL       , FLAG_FILES        } ,
 		{ "file-properties", no_argument      , NULL       , FLAG_FILE_PROPERTIES } ,
+		{ "mtree"         , no_argument       , NULL       , FLAG_FILE_PROPERTIES } ,
 		{ "md5sum"        , no_argument       , NULL       , FLAG_MD5SUM       } ,
 		{ "sha256sum"     , no_argument       , NULL       , FLAG_SHA256SUM    } ,
 
