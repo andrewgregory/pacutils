@@ -8,6 +8,7 @@ pacinstall
 paclog
 pacremove
 pacrepairdb
+pacrepairfile
 pacreport
 pacsift
 pacsync

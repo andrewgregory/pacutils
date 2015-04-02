@@ -177,6 +177,12 @@ used to call with relative paths or paths containing symbolic links:
 
  pacfile "$(realpath ./foo)"
 
+=item pacrepairfile
+
+Repair file properties based on pacman's database.
+
+ find /usr/share | pacrepairfile --uid --gid
+
 =item paclog
 
 Filter pacman log entries.  If multiple filters are provided, the entries

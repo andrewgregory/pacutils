@@ -1,0 +1,83 @@
+=head1 NAME
+
+pacrepairfile - reset properties on alpm-managed files
+
+=head1 SYNOPSIS
+
+ pacrepairfile [options] (--gid|--mode|--mtime|--uid)... <file>...
+ pacrepairfile (--help|--version)
+
+=head1 DESCRIPTION
+
+Resets file properties for alpm-managed files based on MTREE data.
+
+If F<stdin> is not connected to a terminal, files will be read from F<stdin>.
+
+=head1 OPTIONS
+
+=over
+
+=item B<--config>=F<path>
+
+Set an alternate configuration file path.
+
+=item B<--dbpath>=F<path>
+
+Set an alternate database path.
+
+=item B<--root>=F<path>
+
+Set an alternate installation root.
+
+=item B<--quiet>
+
+Do not display progress information.
+
+=item B<--package>=I<pkgname>
+
+Search I<pkgname> for file properties.  May be specified multiple times.  If
+B<--package> is not specified, all installed packages will be searched.
+
+=item B<--help>
+
+Display usage information and exit.
+
+=item B<--version>
+
+Display version information and exit.
+
+=back
+
+=head2 Fields
+
+=over
+
+=item B<--gid>
+
+Reset file owner group id.
+
+=item B<--mode>
+
+Reset file permissions.
+
+=item B<--mtime>
+
+Reset file modification time.
+
+=item B<--uid>
+
+Reset file owner user id.
+
+=back
+
+=head1 CAVEATS
+
+B<pacrepairfile> determines whether or not to read files from F<stdin> based on
+a naive check using L<isatty(3)>.  If B<pacrepairfile> is called in an
+environment, such as a shell function or script being used in a pipe, where
+F<stdin> is not connected to a terminal but does not contain files to reset,
+B<pacrepairfile> should be called with F<stdin> closed.  For POSIX-compatible
+shells, this can be done with C<< <&- >>.
+
+In order for B<pacrepairfile> to reset a file's properties, the package which
+owns the file must have MTREE data.
