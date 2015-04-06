@@ -47,10 +47,9 @@ void usage(int ret)
 	exit(ret);
 }
 
-void parse_opts(int argc, char **argv)
+pu_config_t *parse_opts(int argc, char **argv)
 {
 	char *config_file = "/etc/pacman.conf";
-	pu_config_t *argv_config = pu_config_new();
 	int c;
 
 	char *short_opts = "";
@@ -66,11 +65,16 @@ void parse_opts(int argc, char **argv)
 		{ 0, 0, 0, 0 },
 	};
 
+	if((config = pu_config_new()) == NULL) {
+		perror("malloc");
+		return NULL;
+	}
+
 	while((c = getopt_long(argc, argv, short_opts, long_opts, NULL)) != -1) {
 		switch(c) {
 			case FLAG_ARCH:
-				free(argv_config->architecture);
-				argv_config->architecture = strdup(optarg);
+				free(config->architecture);
+				config->architecture = strdup(optarg);
 				break;
 			case FLAG_CONFIG:
 				config_file = optarg;
@@ -85,8 +89,8 @@ void parse_opts(int argc, char **argv)
 				repo_list = 1;
 				break;
 			case FLAG_ROOT:
-				free(argv_config->rootdir);
-				argv_config->rootdir = strdup(optarg);
+				free(config->rootdir);
+				config->rootdir = strdup(optarg);
 				break;
 			case FLAG_VERBOSE:
 				verbose = 1;
@@ -97,15 +101,17 @@ void parse_opts(int argc, char **argv)
 				exit(0);
 				break;
 			case '?':
-			default:
 				usage(1);
 				break;
 		}
 	}
 
-	if((config = pu_ui_config_parse(argv_config, config_file)) == NULL) {
-		fprintf(stderr, "error parsing '%s'\n", config_file);
+	if(!pu_ui_config_load(config, config_file)) {
+		fprintf(stderr, "error: could not parse '%s'\n", config_file);
+		return NULL;
 	}
+
+	return config;
 }
 
 void list_repos(void)
@@ -397,8 +403,7 @@ int main(int argc, char **argv)
 {
 	int ret = 0;
 
-	parse_opts(argc, argv);
-	if(!config) {
+	if(!parse_opts(argc, argv)) {
 		ret = 1;
 		goto cleanup;
 	}

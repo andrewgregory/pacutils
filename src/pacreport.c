@@ -14,7 +14,7 @@
 
 const char *myname = "pacreport", *myver = "1.0";
 
-pu_config_t *config;
+pu_config_t *config = NULL;
 alpm_handle_t *handle;
 alpm_list_t *groups = NULL, *ignore = NULL, *pkg_ignore = NULL;
 int missing_files = 0, backup_files = 0, orphan_files = 0;
@@ -592,7 +592,6 @@ void usage(int ret)
 pu_config_t *parse_opts(int argc, char **argv)
 {
 	char *config_file = "/etc/pacman.conf";
-	pu_config_t *config = NULL;
 	int c;
 
 	char *short_opts = "";
@@ -614,8 +613,12 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{0, 0, 0, 0 }
 	};
 
-	/* check for a custom config file location */
-	while((c = getopt_long(argc, argv, short_opts, long_opts, NULL)) != -1) {
+	if((config = pu_config_new()) == NULL) {
+		perror("malloc");
+		return NULL;
+	}
+
+	while(( c = getopt_long(argc, argv, short_opts, long_opts, NULL)) != -1) {
 		switch(c) {
 			case FLAG_CONFIG:
 				config_file = optarg;
@@ -627,22 +630,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 				pu_print_version(myname, myver);
 				exit(0);
 				break;
-			case '?':
-				usage(1);
-				break;
-		}
-	}
 
-	/* load the config file */
-	config = pu_ui_config_parse(NULL, config_file);
-	if(!config) {
-		fprintf(stderr, "error: could not parse '%s'\n", config_file);
-		return NULL;
-	}
-
-	optind = 1;
-	while(( c = getopt_long(argc, argv, "", long_opts, NULL)) != -1) {
-		switch(c) {
 			case FLAG_BACKUPS:
 				++backup_files;
 				break;
@@ -668,6 +656,11 @@ pu_config_t *parse_opts(int argc, char **argv)
 				config->rootdir = strdup(optarg);
 				break;
 		}
+	}
+
+	if(!pu_ui_config_load(config, config_file)) {
+		fprintf(stderr, "error: could not parse '%s'\n", config_file);
+		return NULL;
 	}
 
 	return config;

@@ -301,9 +301,16 @@ pu_config_t *pu_ui_config_parse(pu_config_t *dest, const char *file) {
     dest = config;
   }
 
+  return dest;
+}
+
+pu_config_t *pu_ui_config_load(pu_config_t *dest, const char *file) {
+  int allocd = dest == NULL ? 1 : 0;
+  if((dest = pu_ui_config_parse(dest, file)) == NULL) { return NULL; }
+
   if(pu_config_resolve(dest) != 0) {
     pu_ui_error("resolving config values failed (%s)", strerror(errno));
-    pu_config_free(config);
+    if(allocd) { pu_config_free(dest); }
     return NULL;
   }
 

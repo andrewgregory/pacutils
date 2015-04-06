@@ -111,26 +111,8 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ 0, 0, 0, 0 },
 	};
 
-	/* check for a custom config file location */
-	while((c = getopt_long(argc, argv, short_opts, long_opts, NULL)) != -1) {
-		switch(c) {
-			case FLAG_CONFIG:
-				config_file = optarg;
-				break;
-			case FLAG_HELP:
-				usage(0);
-				break;
-			case FLAG_VERSION:
-				pu_print_version(myname, myver);
-				exit(0);
-				break;
-		}
-	}
-
-	/* load the config file */
-	config = pu_ui_config_parse(NULL, config_file);
-	if(!config) {
-		fprintf(stderr, "error: could not parse '%s'\n", config_file);
+	if((config = pu_config_new()) == NULL) {
+		perror("malloc");
 		return NULL;
 	}
 
@@ -145,7 +127,14 @@ pu_config_t *parse_opts(int argc, char **argv)
 
 			/* general options */
 			case FLAG_CONFIG:
-				/* already handled */
+				config_file = optarg;
+				break;
+			case FLAG_HELP:
+				usage(0);
+				break;
+			case FLAG_VERSION:
+				pu_print_version(myname, myver);
+				exit(0);
 				break;
 			case FLAG_DBPATH:
 				free(config->dbpath);
@@ -198,10 +187,14 @@ pu_config_t *parse_opts(int argc, char **argv)
 				break;
 
 			case '?':
-			default:
 				usage(1);
 				break;
 		}
+	}
+
+	if(!pu_ui_config_load(config, config_file)) {
+		fprintf(stderr, "error: could not parse '%s'\n", config_file);
+		return NULL;
 	}
 
 	return config;

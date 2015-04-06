@@ -42,6 +42,7 @@ void pu_ui_cb_progress(alpm_progress_t event, const char *pkgname, int percent,
 void pu_ui_cb_question(alpm_question_t *question);
 
 pu_config_t *pu_ui_config_parse(pu_config_t *dest, const char *file);
+pu_config_t *pu_ui_config_load(pu_config_t *dest, const char *file);
 
 #endif /* PACUTILS_UI_H */
 

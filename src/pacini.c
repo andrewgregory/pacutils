@@ -72,7 +72,6 @@ void parse_opts(int argc, char **argv)
 				exit(0);
 				break;
 			case '?':
-			default:
 				usage(1);
 				break;
 		}

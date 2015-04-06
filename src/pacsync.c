@@ -47,7 +47,6 @@ void version(void)
 pu_config_t *parse_opts(int argc, char **argv)
 {
 	char *config_file = "/etc/pacman.conf";
-	pu_config_t *config = NULL;
 	int c;
 
 	char *short_opts = "";
@@ -62,28 +61,18 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ 0, 0, 0, 0 },
 	};
 
-	/* check for a custom config file location */
-	while((c = getopt_long(argc, argv, short_opts, long_opts, NULL)) != -1) {
-		if(c == FLAG_CONFIG) {
-			config_file = optarg;
-			break;
-		}
-	}
-
-	/* load the config file */
-	config = pu_ui_config_parse(NULL, config_file);
-	if(!config) {
-		fprintf(stderr, "error: could not parse '%s'\n", config_file);
+	if((config = pu_config_new()) == NULL) {
+		perror("malloc");
 		return NULL;
 	}
 
-	/* process remaining command-line options */
-	optind = 1;
 	while((c = getopt_long(argc, argv, short_opts, long_opts, NULL)) != -1) {
 		switch(c) {
 			case 0:
-			case FLAG_CONFIG:
 				/* already handled */
+				break;
+			case FLAG_CONFIG:
+				config_file = optarg;
 				break;
 			case FLAG_DBPATH:
 				free(config->dbpath);
@@ -104,10 +93,14 @@ pu_config_t *parse_opts(int argc, char **argv)
 				version();
 				break;
 			case '?':
-			default:
 				usage(1);
 				break;
 		}
+	}
+
+	if(!pu_ui_config_load(config, config_file)) {
+		fprintf(stderr, "error: could not parse '%s'\n", config_file);
+		return NULL;
 	}
 
 	return config;
@@ -125,7 +118,7 @@ int main(int argc, char **argv)
 	alpm_list_t *i, *sync_dbs = NULL, *targets = NULL;
 	int ret = 0;
 
-	if(!(config = parse_opts(argc, argv))) {
+	if(!parse_opts(argc, argv)) {
 		goto cleanup;
 	}
 

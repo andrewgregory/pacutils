@@ -161,41 +161,29 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ 0, 0, 0, 0 },
 	};
 
-	/* check for a custom config file location */
+	if((config = pu_config_new()) == NULL) {
+		perror("malloc");
+		return NULL;
+	}
+
+	/* process remaining command-line options */
 	while((c = getopt_long(argc, argv, short_opts, long_opts, NULL)) != -1) {
 		switch(c) {
-			case FLAG_CONFIG:
-				config_file = optarg;
+			case 0:
+				/* already handled */
 				break;
+
+			case 1:
+				/* non-option arguments */
+				*list = alpm_list_add(*list, strdup(optarg));
+				break;
+
 			case FLAG_HELP:
 				usage(0);
 				break;
 			case FLAG_VERSION:
 				pu_print_version(myname, myver);
 				exit(0);
-				break;
-		}
-	}
-
-	/* load the config file */
-	config = pu_ui_config_parse(NULL, config_file);
-	if(!config) {
-		fprintf(stderr, "error: could not parse '%s'\n", config_file);
-		return NULL;
-	}
-
-	/* process remaining command-line options */
-	optind = 1;
-	while((c = getopt_long(argc, argv, short_opts, long_opts, NULL)) != -1) {
-		switch(c) {
-
-			case 0:
-				/* already handled */
-				break;
-
-			/* non-option arguments */
-			case 1:
-				*list = alpm_list_add(*list, strdup(optarg));
 				break;
 
 			/* action selectors */
@@ -218,7 +206,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 				config->cachedirs = alpm_list_add(NULL, strdup(optarg));
 				break;
 			case FLAG_CONFIG:
-				/* already handled */
+				config_file = optarg;
 				break;
 			case FLAG_DBONLY:
 				trans_flags |= ALPM_TRANS_FLAG_DBONLY;
@@ -315,10 +303,15 @@ pu_config_t *parse_opts(int argc, char **argv)
 				break;
 
 			case '?':
-			default:
+			case ':':
 				usage(1);
 				break;
 		}
+	}
+
+	if(!pu_ui_config_load(config, config_file)) {
+		fprintf(stderr, "error: could not parse '%s'\n", config_file);
+		return NULL;
 	}
 
 	return config;

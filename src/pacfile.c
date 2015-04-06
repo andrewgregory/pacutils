@@ -56,32 +56,18 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ 0, 0, 0, 0 },
 	};
 
-	/* check for a custom config file location */
-	opterr = 0;
-	c = getopt_long(argc, argv, short_opts, long_opts, NULL);
-	while(c != -1) {
-		if(c == FLAG_CONFIG) {
-			config_file = optarg;
-			break;
-		}
-		c = getopt_long(argc, argv, short_opts, long_opts, NULL);
-	}
-
-	/* load the config file */
-	config = pu_ui_config_parse(NULL, config_file);
-	if(!config) {
-		fprintf(stderr, "error: could not parse '%s'\n", config_file);
+	if((config = pu_config_new()) == NULL) {
+		perror("malloc");
 		return NULL;
 	}
 
-	/* process remaining command-line options */
-	optind = opterr = 1;
-	c = getopt_long(argc, argv, short_opts, long_opts, NULL);
-	while(c != -1) {
+	while((c = getopt_long(argc, argv, short_opts, long_opts, NULL)) != -1) {
 		switch(c) {
 			case 0:
-			case FLAG_CONFIG:
 				/* already handled */
+				break;
+			case FLAG_CONFIG:
+				config_file = optarg;
 				break;
 			case FLAG_DBPATH:
 				free(config->dbpath);
@@ -102,11 +88,15 @@ pu_config_t *parse_opts(int argc, char **argv)
 				pkgnames = alpm_list_add(pkgnames, strdup(optarg));
 				break;
 			case '?':
-			default:
 				usage(1);
 				break;
 		}
-		c = getopt_long(argc, argv, short_opts, long_opts, NULL);
+	}
+
+	if(!pu_ui_config_load(config, config_file)) {
+		fprintf(stderr, "error: could not parse '%s'\n", config_file);
+		pu_config_free(config);
+		return NULL;
 	}
 
 	return config;
