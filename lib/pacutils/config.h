@@ -69,6 +69,12 @@ typedef enum pu_config_cleanmethod_t {
   PU_CONFIG_CLEANMETHOD_KEEP_CURRENT   = (1 << 1),
 } pu_config_cleanmethod_t;
 
+typedef enum pu_config_bool_t {
+  PU_CONFIG_BOOL_UNSET = -1,
+  PU_CONFIG_BOOL_FALSE = 0,
+  PU_CONFIG_BOOL_TRUE = 1,
+} pu_config_bool_t;
+
 typedef struct pu_config_t {
   char *rootdir;
   char *dbpath;
@@ -77,12 +83,12 @@ typedef struct pu_config_t {
   char *architecture;
   char *xfercommand;
 
-  unsigned short usesyslog;
-  unsigned short totaldownload;
-  unsigned short checkspace;
-  unsigned short verbosepkglists;
-  unsigned short color;
-  unsigned short ilovecandy;
+  pu_config_bool_t checkspace;
+  pu_config_bool_t color;
+  pu_config_bool_t ilovecandy;
+  pu_config_bool_t totaldownload;
+  pu_config_bool_t usesyslog;
+  pu_config_bool_t verbosepkglists;
 
   float usedelta;
 
@@ -94,12 +100,12 @@ typedef struct pu_config_t {
   alpm_siglevel_t localfilesiglevel_mask;
   alpm_siglevel_t remotefilesiglevel_mask;
 
-  alpm_list_t *holdpkgs;
-  alpm_list_t *ignorepkgs;
-  alpm_list_t *ignoregroups;
-  alpm_list_t *noupgrade;
-  alpm_list_t *noextract;
   alpm_list_t *cachedirs;
+  alpm_list_t *holdpkgs;
+  alpm_list_t *ignoregroups;
+  alpm_list_t *ignorepkgs;
+  alpm_list_t *noextract;
+  alpm_list_t *noupgrade;
 
   pu_config_cleanmethod_t cleanmethod;
 

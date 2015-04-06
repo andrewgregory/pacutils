@@ -214,7 +214,17 @@ static struct _pu_config_setting *_pu_config_lookup_setting(const char *optname)
 
 pu_config_t *pu_config_new(void)
 {
-  return calloc(sizeof(pu_config_t), 1);
+  pu_config_t *config = calloc(sizeof(pu_config_t), 1);
+  if(config == NULL) { return NULL; }
+
+  config->checkspace = PU_CONFIG_BOOL_UNSET;
+  config->color = PU_CONFIG_BOOL_UNSET;
+  config->ilovecandy = PU_CONFIG_BOOL_UNSET;
+  config->totaldownload = PU_CONFIG_BOOL_UNSET;
+  config->usesyslog = PU_CONFIG_BOOL_UNSET;
+  config->verbosepkglists = PU_CONFIG_BOOL_UNSET;
+
+  return config;
 }
 
 void pu_repo_free(pu_repo_t *repo)
@@ -353,6 +363,14 @@ int pu_config_resolve(pu_config_t *config)
     config->architecture = arch;
   }
 
+#define SETBOOL(opt) if(opt == -1) { opt = 0; }
+  SETBOOL(config->checkspace);
+  SETBOOL(config->color);
+  SETBOOL(config->ilovecandy);
+  SETBOOL(config->totaldownload);
+  SETBOOL(config->usesyslog);
+  SETBOOL(config->verbosepkglists);
+
 #define SETSIGLEVEL(l, m) \
   if(m) { l = (l & (m)) | (config->siglevel & ~(m)); } \
   else { l = ALPM_SIG_USE_DEFAULT; }
@@ -371,6 +389,7 @@ int pu_config_resolve(pu_config_t *config)
     SETSIGLEVEL(r->siglevel, r->siglevel_mask);
   }
 #undef SETSIGLEVEL
+#undef SETBOOL
 #undef SETDEFAULT
 
   if(_pu_subst_server_vars(config) != 0) { return -1; }
@@ -384,13 +403,15 @@ void pu_config_merge(pu_config_t *dest, pu_config_t *src)
 #define MERGELIST(dl, sl) do { dl = alpm_list_join(dl, sl); sl = NULL; } while(0)
 #define MERGEVAL(dv, sv) if(!dv) { dv = sv; }
 #define MERGESL(ds, dm, ss, sm) if(!dm) { ds = ss; dm = sm; }
+#define MERGEBOOL(dv, sv) if(dv == -1) { dv = sv; }
 
-  MERGEVAL(dest->usesyslog, src->usesyslog);
-  MERGEVAL(dest->totaldownload, src->totaldownload);
-  MERGEVAL(dest->checkspace, src->checkspace);
-  MERGEVAL(dest->verbosepkglists, src->verbosepkglists);
-  MERGEVAL(dest->color, src->color);
-  MERGEVAL(dest->ilovecandy, src->ilovecandy);
+  MERGEBOOL(dest->usesyslog, src->usesyslog);
+  MERGEBOOL(dest->totaldownload, src->totaldownload);
+  MERGEBOOL(dest->checkspace, src->checkspace);
+  MERGEBOOL(dest->verbosepkglists, src->verbosepkglists);
+  MERGEBOOL(dest->color, src->color);
+  MERGEBOOL(dest->ilovecandy, src->ilovecandy);
+
   MERGEVAL(dest->cleanmethod, src->cleanmethod);
   MERGEVAL(dest->usedelta, src->usedelta);
 
@@ -420,6 +441,7 @@ void pu_config_merge(pu_config_t *dest, pu_config_t *src)
 #undef MERGELIST
 #undef MERGEVAL
 #undef MERGESL
+#undef MERGEBOOL
 
   pu_config_free(src);
 }
