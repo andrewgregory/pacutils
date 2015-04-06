@@ -117,7 +117,7 @@ int main(void) {
 
     tap_is_str(config->rootdir, "/root2", "RootDir");
     tap_is_str(config->dbpath, "/dbpath1/", "DBPath");
-    tap_is_str(config->gpgdir, "gpgdir", "DPGDir");
+    tap_is_str(config->gpgdir, "gpgdir", "GPGDir");
     tap_is_str(config->logfile, "/logfile", "LogFile");
     tap_is_str(config->architecture, "i686", "Arch");
     tap_is_str(config->xfercommand, "xcommand2", "XferCommand");
