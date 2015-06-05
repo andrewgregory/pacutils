@@ -22,8 +22,6 @@
 
 #include <alpm.h>
 
-#include "../../ext/mini.c/mini.h"
-
 #ifndef PACUTILS_CONFIG_H
 #define PACUTILS_CONFIG_H
 
@@ -135,7 +133,7 @@ typedef struct pu_config_reader_t {
   pu_repo_t *repo;
   pu_config_reader_status_t status;
 
-  mini_t *_mini;
+  void *_mini;
   struct pu_config_reader_t *_parent;
   alpm_list_t *_includes;
 } pu_config_reader_t;

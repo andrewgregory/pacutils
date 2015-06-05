@@ -24,6 +24,8 @@
 #include <glob.h>
 #include <sys/utsname.h>
 
+#include "../../ext/mini.c/mini.h"
+
 #include "config.h"
 #include "util.h"
 
