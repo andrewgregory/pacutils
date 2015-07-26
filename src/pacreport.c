@@ -577,14 +577,21 @@ void usage(int ret)
 #define hputs(s) fputs(s"\n", stream);
 	hputs("pacreport - generate installed package report");
 	hputs("usage: pacreport [options]");
-	hputs("       pacreport [--help|--version]");
+	hputs("       pacreport (--help|--version)");
 	hputs("");
 	hputs("options:");
-	hputs("   --backups        list .pac{save,orig,new} files");
-	hputs("                    (pass twice for extended search outside /etc)");
-	hputs("   --group=<GROUP>  list missing group packages");
-	hputs("   --missing-files  list missing package files");
-	hputs("   --unowned-files  list unowned files");
+	hputs("   --root=<path>      set an alternate installation root");
+	hputs("   --cachedir=<path>  set an alternate cache location");
+	hputs("   --config=<path>    set an alternate pacman configuration file");
+	hputs("   --dbpath=<path>    set an alternate database location");
+	hputs("");
+	hputs("   --backups          list .pac{save,orig,new} files");
+	hputs("                      (pass twice for extended search outside /etc)");
+	hputs("   --group=<GROUP>    list missing group packages");
+	hputs("   --missing-files    list missing package files");
+	hputs("   --unowned-files    list unowned files");
+	hputs("   --help             display this help information");
+	hputs("   --version          display version information");
 #undef hputs
 	exit(ret);
 }
