@@ -449,6 +449,7 @@ static int check_file_properties(alpm_pkg_t *pkg)
 
 	if(!mtree) {
 		/* TODO should this return failure? files haven't actually been verified */
+		printf("%s: mtree data not available\n", alpm_pkg_get_name(pkg));
 		return 0;
 	}
 
