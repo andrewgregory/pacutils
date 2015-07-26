@@ -222,7 +222,7 @@ void parse_opts(int argc, char **argv)
 				break;
 
 			case '?':
-				exit(2);
+				usage(2);
 				break;
 		}
 	}
