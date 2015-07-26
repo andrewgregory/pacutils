@@ -8,7 +8,7 @@ pu_config_t *config = NULL;
 alpm_handle_t *handle = NULL;
 alpm_loglevel_t log_level = ALPM_LOG_ERROR | ALPM_LOG_WARNING;
 alpm_transflag_t trans_flags = 0;
-int force = 0;
+int force = 0, ret_updated = 0;
 
 enum longopt_flags {
 	FLAG_CONFIG = 1000,
@@ -32,6 +32,7 @@ void usage(int ret)
 	hputs("   --force            sync repos even if already up-to-date");
 	hputs("   --debug            enable extra debugging messages");
 	hputs("   --logfile=<path>   set an alternate log file");
+	hputs("   --updated          return false unless a database was updated");
 	hputs("   --help             display this help information");
 	hputs("   --version          display version information");
 	exit(ret);
@@ -55,6 +56,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "dbpath"       , required_argument , NULL         , FLAG_DBPATH   } ,
 		{ "debug"        , no_argument       , NULL         , FLAG_DEBUG    } ,
 		{ "force"        , no_argument       , &force       , 1             } ,
+		{ "updated"      , no_argument       , &ret_updated , 1             } ,
 		{ "help"         , no_argument       , NULL         , FLAG_HELP     } ,
 		{ "version"      , no_argument       , NULL         , FLAG_VERSION  } ,
 		{ "logfile"      , required_argument , NULL         , FLAG_LOGFILE  } ,
@@ -116,7 +118,7 @@ void cb_log(alpm_loglevel_t level, const char *fmt, va_list args)
 int main(int argc, char **argv)
 {
 	alpm_list_t *i, *sync_dbs = NULL, *targets = NULL;
-	int ret = 0;
+	int ret = 0, updated = 0;
 
 	if(!parse_opts(argc, argv)) {
 		goto cleanup;
@@ -174,8 +176,10 @@ int main(int argc, char **argv)
 		} else if(res == 1) {
 			/* db was already up to date */
 			printf("%s is up to date\n", alpm_db_get_name(db));
+		} else {
+			/* callbacks display relevant information */
+			updated = 1;
 		}
-		/* else: callbacks display relevant information */
 	}
 
 cleanup:
@@ -184,6 +188,10 @@ cleanup:
 	}
 	alpm_release(handle);
 	pu_config_free(config);
+
+	if(ret == 0 && ret_updated && updated == 0) {
+		ret = 1;
+	}
 
 	return ret;
 }
