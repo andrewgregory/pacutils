@@ -83,14 +83,15 @@ void usage(int ret)
 	hputs("options:");
 	hputs("   --cachedir=<path>  set an alternate cache location");
 	hputs("   --config=<path>    set an alternate configuration file");
-	hputs("   --dbonly");
+	hputs("   --dbonly           make the requested changes only to the database");
 	hputs("   --dbpath=<path>    set an alternate database location");
 	hputs("   --debug            enable extra debugging messages");
 	hputs("   --logfile=<path>   set an alternate log file");
-	hputs("   --print-only");
-	hputs("   --no-confirm");
-	hputs("   --no-deps");
-	hputs("   --no-scriptlet");
+	hputs("   --print-only       display transaction information and exit");
+	hputs("   --no-confirm       assume default responses to all prompts");
+	hputs("   --no-deps          ignore dependency version restrictions");
+	hputs("                      (pass twice to ignore dependencies altogether)");
+	hputs("   --no-scriptlet     do not run package install scripts");
 	hputs("   --null=[sep]       parse stdin as <sep> separated values (default NUL)");
 	hputs("   --root=<path>      set an alternate installation root");
 	hputs("   --help             display this help information");
@@ -108,10 +109,11 @@ void usage(int ret)
 	hputs("   --download-only    download packages without installing");
 	hputs("");
 	hputs("remove options:");
-	hputs("   --cascade");
-	hputs("   --no-backup");
-	hputs("   --recursive");
-	hputs("   --unneeded");
+	hputs("   --cascade          remove packages that depend on removed packages");
+	hputs("   --no-backup        do not save configuration file backups");
+	hputs("   --recursive        remove unneeded dependencies of removed packages");
+	hputs("                      (pass twice to include explicitly installed packages");
+	hputs("   --unneeded         only remove packages that are unneeded");
 #undef hputs
 #undef hputf
 	exit(ret);
