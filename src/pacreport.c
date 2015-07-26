@@ -655,6 +655,10 @@ pu_config_t *parse_opts(int argc, char **argv)
 				free(config->rootdir);
 				config->rootdir = strdup(optarg);
 				break;
+
+			default:
+				usage(2);
+				break;
 		}
 	}
 
