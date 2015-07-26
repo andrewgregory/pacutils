@@ -600,20 +600,9 @@ static int check_sha256sum(alpm_pkg_t *pkg)
 	return ret;
 }
 
-int list_find(alpm_list_t *haystack, void *needle)
-{
-	alpm_list_t *i;
-	for(i = haystack; i; i = alpm_list_next(i)) {
-		if(i->data == needle) {
-			return 1;
-		}
-	}
-	return 0;
-}
-
 alpm_list_t *list_add_unique(alpm_list_t *list, void *data)
 {
-	if(list_find(list, data)) {
+	if(alpm_list_find_ptr(list, data)) {
 		return list; 
 	} else {
 		return alpm_list_add(list, data);
@@ -641,7 +630,7 @@ void add_deps(alpm_pkg_t *pkg)
 	for(i = alpm_pkg_get_depends(pkg); i; i = alpm_list_next(i)) {
 		char *depstring = alpm_dep_compute_string(i->data);
 		alpm_pkg_t *p = alpm_find_satisfier(pkgcache, depstring);
-		if(p && !list_find(packages, p)) {
+		if(p && !alpm_list_find_ptr(packages, p)) {
 			packages = alpm_list_add(packages, p);
 			add_deps(p);
 		}
@@ -651,7 +640,7 @@ void add_deps(alpm_pkg_t *pkg)
 		for(i = alpm_pkg_get_optdepends(pkg); i; i = alpm_list_next(i)) {
 			char *depstring = alpm_dep_compute_string(i->data);
 			alpm_pkg_t *p = alpm_find_satisfier(pkgcache, depstring);
-			if(p && !list_find(packages, p)) {
+			if(p && !alpm_list_find_ptr(packages, p)) {
 				packages = alpm_list_add(packages, p);
 				add_deps(p);
 			}
