@@ -2,6 +2,8 @@ CFLAGS += -Wall -Wextra -I../lib
 LDFLAGS += -L../lib
 LDLIBS += -lpacutils -lalpm -larchive
 
+PROVE ?= prove
+
 TESTS += \
 		 10-basename.t \
 		 10-config-basic.t \
@@ -18,7 +20,7 @@ TESTS += \
 
 check: tests
 	# resolve test paths because prove does PATH lookup for compiled tests
-	LD_LIBRARY_PATH=../lib prove `realpath $(TESTS)`
+	LD_LIBRARY_PATH=../lib $(PROVE) `realpath $(TESTS)`
 
 tests: $(TESTS)
 
