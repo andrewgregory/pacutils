@@ -31,19 +31,19 @@ pacinstall: | pactrans
 	ln -fs $| $@
 
 install: all
-	install -d ${DESTDIR}${BINDIR}
-	install -m 755 pacinfo    ${DESTDIR}${BINDIR}/pacinfo
-	install -m 755 pacini     ${DESTDIR}${BINDIR}/pacini
-	install -m 755 pacfile    ${DESTDIR}${BINDIR}/pacfile
-	install -m 755 pacconf    ${DESTDIR}${BINDIR}/pacconf
-	install -m 755 paccheck   ${DESTDIR}${BINDIR}/paccheck
-	install -m 755 pacsync    ${DESTDIR}${BINDIR}/pacsync
-	install -m 755 pacsift    ${DESTDIR}${BINDIR}/pacsift
-	install -m 755 paclog     ${DESTDIR}${BINDIR}/paclog
-	install -m 755 pactrans   ${DESTDIR}${BINDIR}/pactrans
-	install -m 755 pacreport  ${DESTDIR}${BINDIR}/pacreport
-	cp -d          pacinstall ${DESTDIR}${BINDIR}/pacinstall
-	cp -d          pacremove  ${DESTDIR}${BINDIR}/pacremove
+	install -d "${DESTDIR}${BINDIR}"
+	install -m 755 pacinfo    "${DESTDIR}${BINDIR}/pacinfo"
+	install -m 755 pacini     "${DESTDIR}${BINDIR}/pacini"
+	install -m 755 pacfile    "${DESTDIR}${BINDIR}/pacfile"
+	install -m 755 pacconf    "${DESTDIR}${BINDIR}/pacconf"
+	install -m 755 paccheck   "${DESTDIR}${BINDIR}/paccheck"
+	install -m 755 pacsync    "${DESTDIR}${BINDIR}/pacsync"
+	install -m 755 pacsift    "${DESTDIR}${BINDIR}/pacsift"
+	install -m 755 paclog     "${DESTDIR}${BINDIR}/paclog"
+	install -m 755 pactrans   "${DESTDIR}${BINDIR}/pactrans"
+	install -m 755 pacreport  "${DESTDIR}${BINDIR}/pacreport"
+	cp -d          pacinstall "${DESTDIR}${BINDIR}/pacinstall"
+	cp -d          pacremove  "${DESTDIR}${BINDIR}/pacremove"
 
 clean:
 	$(RM) $(OBJECTS)

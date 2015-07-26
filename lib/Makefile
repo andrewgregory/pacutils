@@ -30,10 +30,10 @@ libpacutils.so: ${SOURCES}
 	$(CC) $(CFLAGS) -o $@ $^
 
 install: libpacutils.so
-	install -d ${DESTDIR}${INCLUDEDIR}/pacutils
+	install -d "${DESTDIR}${INCLUDEDIR}/pacutils"
 	for h in ${HEADERS}; do install -m 644 $$h "${DESTDIR}${INCLUDEDIR}/$$h"; done
-	install -d ${DESTDIR}${LIBDIR}
-	install -m 644 libpacutils.so ${DESTDIR}${LIBDIR}/libpacutils.so
+	install -d "${DESTDIR}${LIBDIR}"
+	install -m 644 libpacutils.so "${DESTDIR}${LIBDIR}/libpacutils.so"
 
 clean:
 	$(RM) *.o *.so*
