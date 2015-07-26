@@ -61,6 +61,12 @@ void fatal(const char *msg)
 void usage(int ret)
 {
 	FILE *stream = (ret ? stderr : stdout);
+	alpm_list_t **def = &spec;
+	if(myname && strcasecmp(myname, "pacinstall") == 0) {
+		def = &add;
+	} else if(myname && strcasecmp(myname, "pacremove") == 0) {
+		def = &rem;
+	}
 #define hputf(format, ...) fprintf(stream, format"\n", __VA_ARGS__);
 #define hputs(s) fputs(s"\n", stream);
 	hputf("%s - install/remove packages", myname);
@@ -68,9 +74,9 @@ void usage(int ret)
 	hputf("        %s (--help|--version)", myname);
 	hputs("");
 	hputs("actions (may be used together):");
-	hputf("   --spec             install sync/file specs, remove local specs%s", list == &spec ? " (default)" : "");
-	hputf("   --install          install packages from sync database%s", list == &add ? " (default)" : "");
-	hputf("   --remove           remove packages%s", list == &rem ? " (default)" : "");
+	hputf("   --spec             install sync/file specs, remove local specs%s", def == &spec ? " (default)" : "");
+	hputf("   --install          install packages from sync database%s", def == &add ? " (default)" : "");
+	hputf("   --remove           remove packages%s", def == &rem ? " (default)" : "");
 	hputs("   --file             install packages from files");
 	hputs("   --sysupgrade       upgrade installed packages");
 	hputs("");
