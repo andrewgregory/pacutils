@@ -120,7 +120,8 @@ void usage(int ret)
 	hputs("   --config=<path>    set an alternate configuration file");
 	hputs("   --dbpath=<path>    set an alternate database location");
 	hputs("   --debug            enable extra debugging messages");
-	hputs("   --null=[sep]       parse stdin as <sep> separated values (default NUL)");
+	hputs("   --null[=sep]       parse stdin as <sep> separated values (default NUL)");
+	hputs("   --short            display brief package information");
 	hputs("   --root=<path>      set an alternate installation root");
 	hputs("   --removable-size   include removable dependencies in size");
 	hputs("   --help             display this help information");
