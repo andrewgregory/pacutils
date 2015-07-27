@@ -279,7 +279,7 @@ alpm_list_t *filter_pkgs(alpm_handle_t *handle, alpm_list_t *pkgs)
 		alpm_list_free(haystack);
 		return matches;
 	} else {
-		return haystack;
+		return or ? matches : haystack;
 	}
 }
 
@@ -357,6 +357,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "invert"        , no_argument       , &invert , 1                  } ,
 		{ "regex"         , no_argument       , &re     , 1                  } ,
 		{ "exact"         , no_argument       , &exact  , 1                  } ,
+		{ "or"            , no_argument       , &or     , 1                  } ,
 
 		{ "null"          , optional_argument , NULL    , FLAG_NULL          } ,
 
