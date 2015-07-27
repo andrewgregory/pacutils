@@ -40,6 +40,7 @@ enum longopt_flags {
 	FLAG_NAME,
 	FLAG_DESCRIPTION,
 	FLAG_GROUP,
+	FLAG_LICENSE,
 	FLAG_OWNSFILE,
 	FLAG_PACKAGER,
 	FLAG_PROVIDES,
@@ -265,6 +266,7 @@ alpm_list_t *filter_pkgs(alpm_handle_t *handle, alpm_list_t *pkgs)
 	match(packager, filter_str(&haystack, i, alpm_pkg_get_packager));
 	match(repo, filter_str(&haystack, i, get_dbname));
 	match(group, filter_strlist(&haystack, i, alpm_pkg_get_groups));
+	match(license, filter_strlist(&haystack, i, alpm_pkg_get_licenses));
 	match(ownsfile, filter_filelist(&haystack, i, root, rootlen));
 
 	match(provides, filter_deplist(&haystack, i, alpm_pkg_get_provides));
@@ -323,7 +325,7 @@ void usage(int ret)
 	hputs("   --packager=<name>");
 	hputs("   --group=<name>      search packages in group <name>");
 	hputs("   --owns-file=<path>  search packages that own <path>");
-	/*hputs("   --license");*/
+	hputs("   --license           search package licenses");
 	hputs("   --provides          search package provides");
 	hputs("   --depends           search package dependencies");
 	hputs("   --conflicts         search package conflicts");
@@ -363,6 +365,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "description"   , required_argument , NULL    , FLAG_DESCRIPTION   } ,
 		{ "owns-file"     , required_argument , NULL    , FLAG_OWNSFILE      } ,
 		{ "group"         , required_argument , NULL    , FLAG_GROUP         } ,
+		{ "license"       , required_argument , NULL    , FLAG_LICENSE       } ,
 
 		{ "provides"      , required_argument , NULL    , FLAG_PROVIDES      } ,
 		{ "depends"       , required_argument , NULL    , FLAG_DEPENDS       } ,
@@ -432,6 +435,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 				break;
 			case FLAG_GROUP:
 				group = alpm_list_add(group, strdup(optarg));
+				break;
+			case FLAG_LICENSE:
+				license = alpm_list_add(license, strdup(optarg));
 				break;
 
 			case FLAG_PROVIDES:
