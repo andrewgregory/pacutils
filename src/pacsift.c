@@ -262,7 +262,7 @@ alpm_list_t *filter_pkgs(alpm_handle_t *handle, alpm_list_t *pkgs)
 
 	match(name, filter_str(&haystack, i, alpm_pkg_get_name));
 	match(description, filter_str(&haystack, i, alpm_pkg_get_desc));
-	match(packager, filter_str(&haystack, i, alpm_pkg_get_desc));
+	match(packager, filter_str(&haystack, i, alpm_pkg_get_packager));
 	match(repo, filter_str(&haystack, i, get_dbname));
 	match(group, filter_strlist(&haystack, i, alpm_pkg_get_groups));
 	match(ownsfile, filter_filelist(&haystack, i, root, rootlen));
