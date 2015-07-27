@@ -293,23 +293,24 @@ void usage(int ret)
 	hputs("usage:  pacsift [options] (<field> <term>)...");
 	hputs("        pacsift (--help|--version)");
 	hputs("options:");
-	hputs("   --config=<path>     set an alternate configuration file");
-	hputs("   --dbpath=<path>     set an alternate database location");
-	hputs("   --null=[sep]        use <sep> to separate values (default NUL)");
-	hputs("   --help              display this help information");
-	hputs("   --version           display version information");
+	hputs("   --config=<path>      set an alternate configuration file");
+	hputs("   --dbpath=<path>      set an alternate database location");
+	hputs("   --null[=sep]         use <sep> to separate values (default NUL)");
+	hputs("   --help               display this help information");
+	hputs("   --version            display version information");
 
-	hputs("   --invert            display packages which DO NOT match search criteria");
-	/*hputs("   --or                OR search terms instead of AND");*/
+	hputs("   --invert             display packages which DO NOT match search criteria");
+	hputs("   --or                 OR search terms instead of AND");
 
-	hputs("   --exact");
-	hputs("   --regex");
+	hputs("   --exact              match search terms exactly");
+	hputs("   --regex              use regular expressions for matching");
+	hputs("                        (does not affect dependency matching)");
 
 	hputs(" Filters:");
 	hputs("   Note: filters are unaffected by --invert and --or");
-	hputs("   --cache             search packages in cache (EXPERIMENTAL)");
-	hputs("   --local             search installed packages");
-	hputs("   --sync              search packages in all sync repositories");
+	hputs("   --cache              search packages in cache (EXPERIMENTAL)");
+	hputs("   --local              search installed packages");
+	hputs("   --sync               search packages in all sync repositories");
 	/*hputs("   --depends           limit to packages installed as dependencies");*/
 	/*hputs("   --explicit          limit to packages installed explicitly");*/
 	/*hputs("   --unrequired        limit to unrequired packages");*/
@@ -319,17 +320,17 @@ void usage(int ret)
 
 	hputs(" Package Fields:");
 	hputs("   Note: options specified multiple times will be OR'd");
-	hputs("   --repo=<name>       search packages in repo <name>");
-	hputs("   --name=<name>");
-	hputs("   --description=<desc>");
-	hputs("   --packager=<name>");
-	hputs("   --group=<name>      search packages in group <name>");
-	hputs("   --owns-file=<path>  search packages that own <path>");
-	hputs("   --license           search package licenses");
-	hputs("   --provides          search package provides");
-	hputs("   --depends           search package dependencies");
-	hputs("   --conflicts         search package conflicts");
-	hputs("   --replaces          search package replaces");
+	hputs("   --repo=<val>         search packages in repo <name>");
+	hputs("   --name=<val>         search package names");
+	hputs("   --description=<val>  search package descriptions");
+	hputs("   --packager=<val>     search package packager field");
+	hputs("   --group=<val>        search package group field");
+	hputs("   --owns-file=<val>    search package file lists");
+	hputs("   --license=<val>      search package licenses");
+	hputs("   --provides=<val>     search package provides");
+	hputs("   --depends=<val>      search package dependencies");
+	hputs("   --conflicts=<val>    search package conflicts");
+	hputs("   --replaces=<val>     search package replaces");
 #undef hputs
 
 	cleanup(ret);
