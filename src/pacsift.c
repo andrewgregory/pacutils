@@ -21,10 +21,11 @@ alpm_list_t *repo = NULL, *name = NULL, *description = NULL, *packager = NULL;
 alpm_list_t *group = NULL, *license = NULL;
 alpm_list_t *ownsfile = NULL;
 alpm_list_t *requiredby = NULL;
-alpm_list_t *provides = NULL, *dependson = NULL, *conflicts = NULL, *replaces = NULL;
+alpm_list_t *provides = NULL, *depends = NULL, *conflicts = NULL, *replaces = NULL;
 
 typedef const char* (str_accessor) (alpm_pkg_t* pkg);
 typedef alpm_list_t* (strlist_accessor) (alpm_pkg_t* pkg);
+typedef alpm_list_t* (deplist_accessor) (alpm_pkg_t* pkg);
 
 enum longopt_flags {
 	FLAG_CONFIG = 1000,
@@ -41,6 +42,10 @@ enum longopt_flags {
 	FLAG_GROUP,
 	FLAG_OWNSFILE,
 	FLAG_PACKAGER,
+	FLAG_PROVIDES,
+	FLAG_DEPENDS,
+	FLAG_CONFLICTS,
+	FLAG_REPLACES,
 	FLAG_REPO,
 };
 
@@ -160,6 +165,42 @@ alpm_list_t *filter_str(alpm_list_t **pkgs, const char *str, str_accessor *func)
 	return matches;
 }
 
+int depcmp(alpm_depend_t *d, alpm_depend_t *needle)
+{
+	if(needle->name_hash != d->name_hash || strcmp(needle->name, d->name) != 0) {
+		return 1;
+	}
+
+	if(!exact && !needle->version) { return 0; }
+
+	if(needle->mod == d->mod
+			&& alpm_pkg_vercmp(needle->version, d->version) == 0) {
+		return 0;
+	}
+
+	return 1;
+}
+
+alpm_list_t *filter_deplist(alpm_list_t **pkgs, const char *str, deplist_accessor *func)
+{
+	alpm_list_t *p, *matches = NULL;
+	alpm_depend_t *needle = alpm_dep_from_string(str);
+	if(needle == NULL) {
+		fprintf(stderr, "error: invalid dependency '%s'\n", str);
+		cleanup(1);
+	}
+	for(p = *pkgs; p; p = p->next) {
+		alpm_list_t *deps = func(p->data);
+		if(alpm_list_find(deps, needle, (alpm_list_fn_cmp) depcmp)) {
+			matches = alpm_list_add(matches, p->data);
+		}
+	}
+	for(p = matches; p; p = p->next) {
+		*pkgs = alpm_list_remove(*pkgs, p->data, ptr_cmp, NULL);
+	}
+	return matches;
+}
+
 alpm_list_t *filter_strlist(alpm_list_t **pkgs, const char *str, strlist_accessor *func)
 {
 	alpm_list_t *p, *matches = NULL;
@@ -226,6 +267,11 @@ alpm_list_t *filter_pkgs(alpm_handle_t *handle, alpm_list_t *pkgs)
 	match(group, filter_strlist(&haystack, i, alpm_pkg_get_groups));
 	match(ownsfile, filter_filelist(&haystack, i, root, rootlen));
 
+	match(provides, filter_deplist(&haystack, i, alpm_pkg_get_provides));
+	match(depends, filter_deplist(&haystack, i, alpm_pkg_get_depends));
+	match(conflicts, filter_deplist(&haystack, i, alpm_pkg_get_conflicts));
+	match(replaces, filter_deplist(&haystack, i, alpm_pkg_get_replaces));
+
 	if(invert) {
 		matches = alpm_list_diff(pkgs, haystack, ptr_cmp);
 		alpm_list_free(haystack);
@@ -278,11 +324,10 @@ void usage(int ret)
 	hputs("   --group=<name>      search packages in group <name>");
 	hputs("   --owns-file=<path>  search packages that own <path>");
 	/*hputs("   --license");*/
-	/*hputs("   --provides");*/
-	/*hputs("   --depends-on");*/
-	/*hputs("   --required-by");*/
-	/*hputs("   --conflicts");*/
-	/*hputs("   --replaces");*/
+	hputs("   --provides          search package provides");
+	hputs("   --depends           search package dependencies");
+	hputs("   --conflicts         search package conflicts");
+	hputs("   --replaces          search package replaces");
 #undef hputs
 
 	cleanup(ret);
@@ -318,6 +363,11 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "description"   , required_argument , NULL    , FLAG_DESCRIPTION   } ,
 		{ "owns-file"     , required_argument , NULL    , FLAG_OWNSFILE      } ,
 		{ "group"         , required_argument , NULL    , FLAG_GROUP         } ,
+
+		{ "provides"      , required_argument , NULL    , FLAG_PROVIDES      } ,
+		{ "depends"       , required_argument , NULL    , FLAG_DEPENDS       } ,
+		{ "conflicts"     , required_argument , NULL    , FLAG_CONFLICTS     } ,
+		{ "replaces"      , required_argument , NULL    , FLAG_REPLACES      } ,
 
 		{ 0, 0, 0, 0 },
 	};
@@ -382,6 +432,19 @@ pu_config_t *parse_opts(int argc, char **argv)
 				break;
 			case FLAG_GROUP:
 				group = alpm_list_add(group, strdup(optarg));
+				break;
+
+			case FLAG_PROVIDES:
+				provides = alpm_list_add(provides, strdup(optarg));
+				break;
+			case FLAG_DEPENDS:
+				depends = alpm_list_add(depends, strdup(optarg));
+				break;
+			case FLAG_REPLACES:
+				replaces = alpm_list_add(replaces, strdup(optarg));
+				break;
+			case FLAG_CONFLICTS:
+				conflicts = alpm_list_add(conflicts, strdup(optarg));
 				break;
 
 			case '?':
