@@ -1,9 +1,11 @@
 #define _GNU_SOURCE /* strcasestr */
 
+#include <limits.h>
 #include <dirent.h>
 #include <errno.h>
 #include <getopt.h>
 #include <regex.h>
+#include <math.h>
 
 #include <pacutils.h>
 
@@ -23,7 +25,9 @@ alpm_list_t *group = NULL, *license = NULL;
 alpm_list_t *ownsfile = NULL;
 alpm_list_t *requiredby = NULL;
 alpm_list_t *provides = NULL, *depends = NULL, *conflicts = NULL, *replaces = NULL;
+alpm_list_t *isize = NULL, *size = NULL, *dsize = NULL;
 
+typedef off_t (size_accessor) (alpm_pkg_t* pkg);
 typedef const char* (str_accessor) (alpm_pkg_t* pkg);
 typedef alpm_list_t* (strlist_accessor) (alpm_pkg_t* pkg);
 typedef alpm_list_t* (deplist_accessor) (alpm_pkg_t* pkg);
@@ -42,6 +46,9 @@ enum longopt_flags {
 	FLAG_NAME,
 	FLAG_DESCRIPTION,
 	FLAG_GROUP,
+	FLAG_ISIZE,
+	FLAG_DSIZE,
+	FLAG_SIZE,
 	FLAG_LICENSE,
 	FLAG_OWNSFILE,
 	FLAG_PACKAGER,
@@ -50,6 +57,20 @@ enum longopt_flags {
 	FLAG_CONFLICTS,
 	FLAG_REPLACES,
 	FLAG_REPO,
+};
+
+enum cmp {
+	CMP_EQ,
+	CMP_NE,
+	CMP_GT,
+	CMP_LT,
+	CMP_GE,
+	CMP_LE,
+};
+
+struct size_cmp {
+	off_t bytes;
+	enum cmp cmp;
 };
 
 void cleanup(int ret)
@@ -74,7 +95,114 @@ void cleanup(int ret)
 	FREELIST(conflicts);
 	FREELIST(replaces);
 
+	FREELIST(size);
+	FREELIST(isize);
+	FREELIST(dsize);
+
 	exit(ret);
+}
+
+int parse_size_units(off_t *dest, long double bytes, const char *str)
+{
+	off_t base = 1024, power = 0;
+	size_t len;
+	int bits = 0;
+
+	if(str == NULL || *str == '\0' || (len = strlen(str)) > 3) { return 0; }
+
+	if(len == 3) {
+		if(str[1] == 'i') { base = 1000; }
+		else { return 0; }
+		if(str[2] == 'b') { bits = 1; }
+		else if(str[2] == 'B') { bits = 0; }
+		else { return 0; }
+	} else if(len == 2) {
+		if(str[1] == 'i') { base = 1000; }
+		else if(str[1] == 'b') { bits = 1; }
+		else if(str[1] == 'B') { bits = 0; }
+		else { return 0; }
+	}
+
+	switch(str[0]) {
+		case 'B': power = 0; if(len > 1) { return 0; } break;
+		case 'K': power = 1; break;
+		case 'M': power = 2; break;
+		case 'G': power = 3; break;
+		case 'T': power = 4; break;
+		case 'P': power = 5; break;
+		case 'E': power = 6; break;
+		case 'Z': power = 7; break;
+		case 'Y': power = 8; break;
+		default: return 0;
+	}
+
+	if(power) {
+		off_t new = bytes * pow(base, power);
+		if(new < bytes) { return 0; }
+		else { *dest = new; }
+	} else {
+		*dest = bytes;
+	}
+	if(bits) {
+		if(*dest % 8) { *dest /= 8; *dest += 1; }
+		else { *dest /= 8; }
+	}
+
+	return 1;
+}
+
+struct size_cmp *parse_size(const char *str)
+{
+	struct size_cmp size, *ret;
+	const char *c = str;
+	char *end;
+	size_t len;
+	long double bytes;
+	if(c == NULL || *c == '\0') { return NULL; }
+	if((len = strspn(c, "=<>!"))) {
+		if     (strncmp("=",  c, len) == 0) { size.cmp = CMP_EQ; }
+		else if(strncmp(">",  c, len) == 0) { size.cmp = CMP_GT; }
+		else if(strncmp("<",  c, len) == 0) { size.cmp = CMP_LT; }
+		else if(strncmp("==", c, len) == 0) { size.cmp = CMP_EQ; }
+		else if(strncmp("!=", c, len) == 0) { size.cmp = CMP_NE; }
+		else if(strncmp(">=", c, len) == 0) { size.cmp = CMP_GE; }
+		else if(strncmp("<=", c, len) == 0) { size.cmp = CMP_LE; }
+		else {
+			fprintf(stderr, "error: invalid size comparison '%s'\n", str);
+			cleanup(1);
+		}
+		c += len;
+	} else {
+		size.cmp = CMP_EQ;
+	}
+
+	errno = 0;
+	bytes = strtold(c, &end);
+	if(errno != 0 || end == c) {
+		fprintf(stderr, "error: invalid size comparison '%s'\n", str);
+		cleanup(1);
+	}
+
+	if(bytes > 0) {
+		while(isspace(*end)) { end++; }
+		if(*end && !parse_size_units(&size.bytes, bytes, end)) {
+			fprintf(stderr, "error: invalid size comparison '%s'\n", str);
+			cleanup(1);
+		}
+	} else if(bytes == 0.0) {
+		size.bytes = 0;
+	} else {
+		fprintf(stderr, "error: invalid size comparison '%s'\n", str);
+		cleanup(1);
+	}
+
+	if((ret = malloc(sizeof(struct size_cmp))) == NULL) {
+		perror("malloc");
+		cleanup(1);
+	}
+
+	memcpy(ret, &size, sizeof(struct size_cmp));
+	return ret;
 }
 
 const char *get_dbname(alpm_pkg_t *pkg)
@@ -134,6 +262,34 @@ alpm_list_t *filter_filelist(alpm_list_t **pkgs, const char *str,
 					break;
 				}
 			}
+		}
+	}
+	for(p = matches; p; p = p->next) {
+		*pkgs = alpm_list_remove(*pkgs, p->data, ptr_cmp, NULL);
+	}
+	return matches;
+}
+
+int match_size(struct size_cmp *size, off_t bytes)
+{
+	switch(size->cmp) {
+		case CMP_EQ: return bytes == size->bytes;
+		case CMP_NE: return bytes != size->bytes;
+		case CMP_GT: return bytes >  size->bytes;
+		case CMP_GE: return bytes >= size->bytes;
+		case CMP_LT: return bytes <  size->bytes;
+		case CMP_LE: return bytes <= size->bytes;
+		default: return 0;
+	}
+}
+
+alpm_list_t *filter_size(alpm_list_t **pkgs, struct size_cmp *size, size_accessor *func)
+{
+	alpm_list_t *p, *matches = NULL;
+	for(p = *pkgs; p; p = p->next) {
+		off_t bytes = func(p->data);
+		if(match_size(size, bytes)) {
+			matches = alpm_list_add(matches, p->data);
 		}
 	}
 	for(p = matches; p; p = p->next) {
@@ -281,6 +437,10 @@ alpm_list_t *filter_pkgs(alpm_handle_t *handle, alpm_list_t *pkgs)
 	match(license, filter_strlist(&haystack, i, alpm_pkg_get_licenses));
 	match(ownsfile, filter_filelist(&haystack, i, root, rootlen));
 
+	match(isize, filter_size(&haystack, i, alpm_pkg_get_isize));
+	match(dsize, filter_size(&haystack, i, alpm_pkg_download_size));
+	match(size, filter_size(&haystack, i, alpm_pkg_get_size));
+
 	match(provides, filter_deplist(&haystack, i, alpm_pkg_get_provides));
 	match(depends, filter_deplist(&haystack, i, alpm_pkg_get_depends));
 	match(conflicts, filter_deplist(&haystack, i, alpm_pkg_get_conflicts));
@@ -344,6 +504,11 @@ void usage(int ret)
 	hputs("   --depends=<val>      search package dependencies");
 	hputs("   --conflicts=<val>    search package conflicts");
 	hputs("   --replaces=<val>     search package replaces");
+	hputs("   --installed-size=<val>");
+	hputs("                        search package installed size");
+	hputs("   --download-size=<val>");
+	hputs("                        search package download size");
+	hputs("   --size=<val>         search package size");
 #undef hputs
 
 	cleanup(ret);
@@ -387,6 +552,12 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "depends"       , required_argument , NULL    , FLAG_DEPENDS       } ,
 		{ "conflicts"     , required_argument , NULL    , FLAG_CONFLICTS     } ,
 		{ "replaces"      , required_argument , NULL    , FLAG_REPLACES      } ,
+
+		{ "installed-size", required_argument , NULL    , FLAG_ISIZE         } ,
+		{ "isize"         , required_argument , NULL    , FLAG_ISIZE         } ,
+		{ "download-size" , required_argument , NULL    , FLAG_DSIZE         } ,
+		{ "dsize"         , required_argument , NULL    , FLAG_DSIZE         } ,
+		{ "size"          , required_argument , NULL    , FLAG_SIZE          } ,
 
 		{ 0, 0, 0, 0 },
 	};
@@ -457,6 +628,16 @@ pu_config_t *parse_opts(int argc, char **argv)
 				break;
 			case FLAG_LICENSE:
 				license = alpm_list_add(license, strdup(optarg));
+				break;
+
+			case FLAG_ISIZE:
+				isize = alpm_list_add(isize, parse_size(optarg));
+				break;
+			case FLAG_DSIZE:
+				dsize = alpm_list_add(dsize, parse_size(optarg));
+				break;
+			case FLAG_SIZE:
+				size = alpm_list_add(size, parse_size(optarg));
 				break;
 
 			case FLAG_PROVIDES:
