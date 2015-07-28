@@ -9,7 +9,7 @@ const char *myname = "pacinfo", *myver = "0.1";
 pu_config_t *config = NULL;
 alpm_handle_t *handle = NULL;
 
-int level = 2, removable_size = 0;
+int level = 2, removable_size = 0, raw = 0;
 int isep = '\n';
 
 enum longopt_flags {
@@ -24,10 +24,14 @@ enum longopt_flags {
 };
 
 void printt(const char *field, alpm_time_t t) {
-		char time_buf[26];
+		char time_buf[50];
 		struct tm ltime;
 		if(t) {
-			strftime(time_buf, 26, "%F %T", localtime_r(&t, &ltime));
+			if(raw) {
+				snprintf(time_buf, 50, "%lu", t);
+			} else {
+				strftime(time_buf, 50, "%F %T", localtime_r(&t, &ltime));
+			}
 			printf(field, time_buf);
 		}
 }
@@ -49,8 +53,12 @@ void printd(const char *field, alpm_list_t *values) {
 }
 
 void printo(const char *field, off_t size) {
-	char hrsize[10];
-	pu_hr_size(size, hrsize);
+	char hrsize[50];
+	if(raw) {
+		snprintf(hrsize, 50, "%lu", size);
+	} else {
+		pu_hr_size(size, hrsize);
+	}
 	printf(field, hrsize);
 }
 
@@ -122,6 +130,7 @@ void usage(int ret)
 	hputs("   --debug            enable extra debugging messages");
 	hputs("   --null[=sep]       parse stdin as <sep> separated values (default NUL)");
 	hputs("   --short            display brief package information");
+	hputs("   --raw              display raw numeric values");
 	hputs("   --root=<path>      set an alternate installation root");
 	hputs("   --removable-size   include removable dependencies in size");
 	hputs("   --help             display this help information");
@@ -149,6 +158,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "null"          , optional_argument , NULL       , FLAG_NULL         } ,
 
 		{ "short"         , no_argument       , &level     , 1                 } ,
+		{ "raw"           , no_argument       , &raw       , 1                 } ,
 
 		{ "removable-size", no_argument       , NULL       , FLAG_REMOVABLE    } ,
 		{ 0, 0, 0, 0 },
