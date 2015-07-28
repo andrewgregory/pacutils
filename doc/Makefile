@@ -5,6 +5,7 @@ MAN8DIR     ?= $(MANDIR)/man8
 MAN8EXT     ?= .8
 
 MANPAGES = \
+		   pacsift$(MAN8EXT) \
 		   pactrans$(MAN8EXT)
 
 all: doc pacinstall$(MAN8EXT) pacremove$(MAN8EXT)

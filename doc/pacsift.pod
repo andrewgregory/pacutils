@@ -1,0 +1,178 @@
+=head1 NAME
+
+pacsift - query and filter packages
+
+=head1 SYNOPSIS
+
+ pacsift [options] (<field> <term>)...
+ pacsift (--help|--version)
+
+=head1 DESCRIPTION
+
+By default the intersection of matched packages are returned.  If a field is
+provided multiple times the union of matches will be used for that field.
+
+Combine with B<pacinfo> to display brief package information similar to
+C<pacman -Qs> and C<pacman -Ss>:
+
+ pacsift --name pacman | pacinfo --short
+
+=head1 OPTIONS
+
+=over
+
+=item B<--config>=F<path>
+
+Set an alternate configuration file path.
+
+=item B<--dbpath>=F<path>
+
+Set an alternate database path.
+
+=item B<--root>=F<path>
+
+Set an alternate installation root.
+
+=item B<--null>[=I<sep>]
+
+Set an alternate separator for values parsed from F<stdin>.  By default
+a newline C<\n> is used as the separator.  If B<--null> is used without
+specifying I<sep> C<NUL> will be used.
+
+=item B<--invert>
+
+Return packages that B<DO NOT> match the provided search terms.
+
+=item B<--or>
+
+Return the union of matched packages rather than the intersection.
+
+=item B<--exact>
+
+Match values exactly.
+
+=item B<--regex>
+
+Treat string values as extended case-insensitive regular expressions.
+
+=item B<--help>
+
+Display usage information and exit.
+
+=item B<--version>
+
+Display version information and exit.
+
+=back
+
+=head2 Filters
+
+Filters limit the initial set of packages to be searched.  They may not be used
+if packages are provided on F<stdin> and they are not affected by B<--invert>
+or B<--or>.
+
+=over
+
+=item B<--local>
+
+Search locally installed packages.  Similar to:
+ pacsift --repo=local
+
+=item B<--sync>
+
+Search packages in sync databases.  Similar to:
+ pacsift --invert --repo=local
+
+=item B<--cache> (B<EXPERIMENTAL>)
+
+Search packages in cache directories.
+
+=back
+
+=head2 String Fields
+
+By default string fields will use a case-insensitive substring search.  If
+B<--exact> is used string fields must match I<val> exactly.  If C<--regex> is
+used I<val> will be used as an extended case-insensitive regular expression.
+
+=over
+
+=item B<--repo>=I<val>
+
+=item B<--name>=I<val>
+
+=item B<--description>=I<val>
+
+=item B<--packager>=I<val>
+
+=item B<--group>=I<val>
+
+=item B<--owns-file>=I<val>
+
+File paths must match the package database; no attempt is made to resolve the
+provided path.  May be used with B<realpath> or B<which> to more easily search
+for the owner of installed files:
+
+ pacsift --local --owns-file="$(which pacsift)"
+
+=item B<--license>=I<val>
+
+=back
+
+=head2 Dependency Fields
+
+Dependencies may be specified in the format C<< <pkgname>[<cmp><version] >>.
+C<cmp> may be any of the following: C<=>, C<< < >>, C<< <= >>, C<< > >>,
+C<< >= >>.  If C<version> is provided the package dependency must be an exact
+match to the search term.  If C<version> is omitted only C<pkgname> will be
+compared unless B<--exact> is used.  If C<--exact> is used and C<version> is
+not provided only dependencies with no version specified will be matched.
+
+Dependency fields are not affected by B<--regex>.
+
+=over
+
+=item B<--provides>
+
+=item B<--conflicts>
+
+=item B<--replaces>
+
+=item B<--depends>
+
+=back
+
+=head2 Size Fields
+
+Size fields may be prefixed with any of the following comparisons: C<=>, C<!=>,
+C<< < >>, C<< <= >>, C<< > >>, C<< >= >>.  If no comparison is provided C<=>
+will be used.  The size may be followed by abbreviated unit.  Units are
+case-sensitive.
+
+=over
+
+=item B<--size>
+
+=item B<--installed-size>
+
+=item B<--download-size>
+
+=back
+
+=head1 EXAMPLES
+
+=over
+
+=item Find broken packages:
+
+ pacsift --packager allan
+
+=item Find large installed packages:
+
+ pacsift --local --size '>1.5GB'
+
+=item Find packages with either C<pacman> or C<alpm> in their description:
+
+ pacsift --description pacman --description alpm
+
+=back
