@@ -1,0 +1,217 @@
+=head1 NAME
+
+pactrans, pacinstall, pacremove - install/remove alpm packages
+
+=head1 SYNOPSIS
+
+ pactrans   [options] <target>...
+ pacinstall [options] <target>...
+ pacremove  [options] <target>...
+ pactrans   (--help|--version)
+
+=head1 DESCRIPTION
+
+Install/remove alpm packages.  The B<pacinstall> and B<pacremove> aliases
+are provided as a convenience, differing only in their default interpretation
+of I<targets>.  Otherwise, they are identical.
+
+=head1 OPTIONS
+
+=head2 Operations
+
+Operation options affect the interpretation of all targets following them until
+another operation option is encountered.
+
+=over
+
+=item B<--spec> (B<pactrans> default)
+
+Interpret following targets as I<pkgspec>s.  If a I<pkgspec> indicates
+a package file or a repository package, it will be installed.  If it indicates
+a package in the local database, it will be removed.  See L<PKGSPEC> for
+details on the format.
+
+=item B<--install> (B<pacinstall> default)
+
+Interpret following targets as packages to be installed from a repository.  If
+only the package name is provided repositories will be searched in the order
+they are declared.
+
+=item B<--remove> (B<pacremove> default)
+
+Interpret following targets as package names to be uninstalled.
+
+=item B<--file>
+
+Interpret following targets as paths to package files to be installed.
+
+=item B<--sysupgrade>
+
+Upgrade installed packages.
+
+=back
+
+=head2 Configuration Options
+
+=over
+
+=item B<--cache-dir>=F<path>
+
+Set an alternate cache directory path.
+
+=item B<--config>=F<path>
+
+Set an alternate configuration file path.
+
+=item B<--dbpath>=F<path>
+
+Set an alternate database path.
+
+=item B<--logfile>=F<path>
+
+Set an alternate log file path.
+
+=item B<--root>=F<path>
+
+Set an alternate installation root.
+
+=item B<--null>[=I<sep>]
+
+Set an alternate separator for values parsed from F<stdin>.  By default
+a newline C<\n> is used as the separator.  If B<--null> is used without
+specifying I<sep> C<NUL> will be used.
+
+=item B<--debug>
+
+Display additional debugging information.
+
+=item B<--print-only>
+
+Display the what the transaction would do and exit.
+
+=item B<--no-confirm>
+
+Assume default responses to all prompts.
+
+=item B<--help>
+
+Display usage information and exit.
+
+=item B<--version>
+
+Display version information and exit.
+
+=back
+
+=head2 Transaction Options
+
+=over
+
+=item B<--dbonly>
+
+Make the changes to the database without actually extracting or removing any
+packages.
+
+=item B<--nodeps>
+
+Ignore dependency versions.  Pass twice to ignore dependency checks altogether.
+
+=item B<--noscriptlet>
+
+Do not run package install scripts.
+
+=back
+
+=head2 Sysupgrade Options
+
+=over
+
+=item B<--ignore-pkg>=I<package>
+
+Ignore upgrades for package I<package>.  I<package> may be a shell-style glob
+pattern.
+
+=item B<--ignore-group>=I<group>
+
+Ignore upgrades for any packages in group I<group>.  I<group> may be
+a shell-style glob pattern.
+
+=back
+
+=head2 B<--install>/B<--file> Options
+
+=over
+
+=item B<--as-deps>
+
+Mark all installed packages as dependencies.
+
+=item B<--as-explicit>
+
+Mark all installed packages as explicitly installed.
+
+=item B<--download-only>
+
+Download packages without actually installing them.
+
+=back
+
+=head2 B<--remove> Options
+
+=over
+
+=item B<--cascade>
+
+Uninstall all installed packages that depend on a package being uninstalled.
+
+=item B<--no-backup>
+
+Do not save F<.pacsave> backups.
+
+=item B<--recursive>
+
+Uninstall any dependencies of packages being removed that are not required by
+any other packages.
+
+=item B<--unneeded>
+
+Do not uninstall any packages required by an installed package.
+
+=back
+
+=head1 PKGSPEC
+
+A I<pkgspec> is a string that can identify an individual package.  Accepted
+formats are:
+
+=over
+
+=item <repository>/<package>
+
+ core/pacman
+ local/pacman
+
+=item <proto>://<path/to/package/file>
+
+ file:///var/cache/pacman/pkg/pacman-4.1.0-1-x86_64.pkg.tar.xz
+
+=back
+
+
+=head1 EXAMPLES
+
+=over
+
+=item Replace I<foo> with I<bar>
+
+ pactrans local/foo baz/bar
+
+Or, if I<bar>'s repository is unknown:
+
+ pacinstall bar --remove foo
+
+=item Install I<foo> and I<bar>:
+
+ pactrans --install foo bar
+
+=back
