@@ -67,6 +67,13 @@ void cleanup(int ret)
 	FREELIST(group);
 	FREELIST(license);
 
+	FREELIST(ownsfile);
+
+	FREELIST(provides);
+	FREELIST(depends);
+	FREELIST(conflicts);
+	FREELIST(replaces);
+
 	exit(ret);
 }
 
@@ -202,6 +209,7 @@ alpm_list_t *filter_deplist(alpm_list_t **pkgs, const char *str, deplist_accesso
 	for(p = matches; p; p = p->next) {
 		*pkgs = alpm_list_remove(*pkgs, p->data, ptr_cmp, NULL);
 	}
+	alpm_dep_free(needle);
 	return matches;
 }
 
