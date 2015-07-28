@@ -18,6 +18,7 @@ int invert = 0, re = 0, exact = 0, or = 0;
 int osep = '\n', isep = '\n';
 alpm_list_t *search_dbs = NULL;
 alpm_list_t *repo = NULL, *name = NULL, *description = NULL, *packager = NULL;
+alpm_list_t *arch = NULL;
 alpm_list_t *group = NULL, *license = NULL;
 alpm_list_t *ownsfile = NULL;
 alpm_list_t *requiredby = NULL;
@@ -36,6 +37,7 @@ enum longopt_flags {
 	FLAG_ROOT,
 	FLAG_VERSION,
 
+	FLAG_ARCH,
 	FLAG_CACHE,
 	FLAG_NAME,
 	FLAG_DESCRIPTION,
@@ -57,6 +59,7 @@ void cleanup(int ret)
 	pu_config_free(config);
 
 	FREELIST(repo);
+	FREELIST(arch);
 	FREELIST(name);
 	FREELIST(description);
 	FREELIST(packager);
@@ -265,6 +268,7 @@ alpm_list_t *filter_pkgs(alpm_handle_t *handle, alpm_list_t *pkgs)
 	match(description, filter_str(&haystack, i, alpm_pkg_get_desc));
 	match(packager, filter_str(&haystack, i, alpm_pkg_get_packager));
 	match(repo, filter_str(&haystack, i, get_dbname));
+	match(arch, filter_str(&haystack, i, alpm_pkg_get_arch));
 	match(group, filter_strlist(&haystack, i, alpm_pkg_get_groups));
 	match(license, filter_strlist(&haystack, i, alpm_pkg_get_licenses));
 	match(ownsfile, filter_filelist(&haystack, i, root, rootlen));
@@ -320,6 +324,7 @@ void usage(int ret)
 
 	hputs(" Package Fields:");
 	hputs("   Note: options specified multiple times will be OR'd");
+	hputs("   --architecture=<val> search package architecture");
 	hputs("   --repo=<val>         search packages in repo <name>");
 	hputs("   --name=<val>         search package names");
 	hputs("   --description=<val>  search package descriptions");
@@ -361,6 +366,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 
 		{ "null"          , optional_argument , NULL    , FLAG_NULL          } ,
 
+		{ "architecture"  , required_argument , NULL    , FLAG_ARCH          } ,
 		{ "repo"          , required_argument , NULL    , FLAG_REPO          } ,
 		{ "packager"      , required_argument , NULL    , FLAG_PACKAGER      } ,
 		{ "name"          , required_argument , NULL    , FLAG_NAME          } ,
@@ -420,6 +426,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 				srch_cache = 1;
 				break;
 
+			case FLAG_ARCH:
+				arch = alpm_list_add(arch, strdup(optarg));
+				break;
 			case FLAG_REPO:
 				repo = alpm_list_add(repo, strdup(optarg));
 				break;
