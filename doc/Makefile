@@ -5,6 +5,7 @@ MAN8DIR     ?= $(MANDIR)/man8
 MAN8EXT     ?= .8
 
 MANPAGES = \
+		   paccheck$(MAN8EXT) \
 		   pacsift$(MAN8EXT) \
 		   pacsync$(MAN8EXT) \
 		   pactrans$(MAN8EXT)

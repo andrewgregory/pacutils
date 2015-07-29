@@ -1,0 +1,90 @@
+=head1 NAME
+
+paccheck - check installed packages
+
+=head1 SYNOPSIS
+
+ paccheck [options] [<package>]...
+ paccheck (--help|--version)
+
+=head1 DESCRIPTION
+
+Check installed packages.  Additional packages may be specified on F<stdin>.
+If no package are provided, all installed packages will be checked.  By default
+only package dependencies and basic file information will checked.
+
+=head1 OPTIONS
+
+=over
+
+=item B<--config>=F<path>
+
+Set an alternate configuration file path.
+
+=item B<--dbpath>=F<path>
+
+Set an alternate database path.
+
+=item B<--root>=F<path>
+
+Set an alternate installation root.
+
+=item B<--null>[=I<sep>]
+
+Set an alternate separator for values parsed from F<stdin>.  By default
+a newline C<\n> is used as the separator.  If B<--null> is used without
+specifying I<sep> C<NUL> will be used.
+
+=item B<--quiet>
+
+Only display messages if a problem is found.
+
+=item B<--recursive>
+
+Recursively perform checks on packages' dependencies as well.
+
+=item B<--depends>
+
+Check that all package dependencies are satisfied.
+
+=item B<--opt-depends>
+
+Check that all package optional dependencies are satisfied.
+
+=item B<--files>
+
+Check package files against the local database.
+
+=item B<--file-properties>
+
+Check package files against MTREE data.
+
+=item B<--md5sum>
+
+Check file md5sums against MTREE data.
+
+=item B<--sha256sum>
+
+Check file sha256sums against MTREE data.
+
+=item B<--backup>
+
+Include backup files in file modification checks.
+
+=item B<--noextract>
+
+Include NoUpgrade files in file modification checks.
+
+=item B<--noupgrade>
+
+Include NoUpgrade files in file modification checks.
+
+=item B<--help>
+
+Display usage information and exit.
+
+=item B<--version>
+
+Display version information and exit.
+
+=back
