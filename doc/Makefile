@@ -8,6 +8,7 @@ MANPAGES = \
 		   paccheck$(MAN8EXT) \
 		   pacfile$(MAN8EXT) \
 		   pacinfo$(MAN8EXT) \
+		   pacini$(MAN8EXT) \
 		   paclog$(MAN8EXT) \
 		   pacreport$(MAN8EXT) \
 		   pacsift$(MAN8EXT) \

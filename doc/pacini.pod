@@ -1,0 +1,43 @@
+=head1 NAME
+
+pacini - query pacman-style configuration files
+
+=head1 SYNOPSIS
+
+ pacini [options] [<file> [<directive>...]]
+ pacini (--section-list|--help|--version)
+
+=head1 DESCRIPTION
+
+Query configuration options from pacman-style INI files.  If no I<directive>s
+are provided, I<file> will be printed in a normalized format.  By default, if
+only a single I<directive> is provided, only its value will be printed without
+the option name.  For directives without a value, the directive name will be
+used as the value.  If I<file> is omitted or C<-> the configuration will be
+read from F<stdin>.
+
+=head1 OPTIONS
+
+=over
+
+=item B<--section>=I<name>
+
+Only display directives listed in section I<name>.
+
+=item B<--section-list>
+
+List configured sections.
+
+=item B<--verbose>
+
+Always show directive names even if only one I<directive> is provided.
+
+=item B<--help>
+
+Display usage information and exit.
+
+=item B<--version>
+
+Display version information and exit.
+
+=back
