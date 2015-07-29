@@ -19,8 +19,7 @@ TESTS += \
 	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $< $(LDLIBS) -o $@
 
 check: tests
-	# resolve test paths because prove does PATH lookup for compiled tests
-	LD_LIBRARY_PATH=../lib $(PROVE) `realpath $(TESTS)`
+	LD_LIBRARY_PATH=../lib $(PROVE) $(TESTS)
 
 tests: $(TESTS)
 
