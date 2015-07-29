@@ -30,6 +30,7 @@ enum longopt_flags {
 	FLAG_INSTALLED,
 	FLAG_LOGFILE,
 	FLAG_PACKAGE,
+	FLAG_ROOT,
 	FLAG_VERSION,
 	FLAG_WARNINGS,
 };
@@ -74,6 +75,7 @@ void usage(int ret)
 	hputs("");
 	hputs("options:");
 	hputs("   --config=<path>     set an alternate configuration file");
+	hputs("   --root=<path>       set an alternate installation root");
 	hputs("   --debug             enable extra debugging messages");
 	hputs("   --logfile=<path>    set an alternate log file");
 	hputs("   --[no-]color        color output");
@@ -139,9 +141,10 @@ void parse_opts(int argc, char **argv)
 
 	const char *short_opts = "";
 	struct option long_opts[] = {
-		{ "color",      no_argument,       &color, 2            },
-		{ "no-color",   no_argument,       &color, 0            },
+		{ "color",      no_argument,       &color, 2            } ,
+		{ "no-color",   no_argument,       &color, 0            } ,
 		{ "config",     required_argument, NULL, FLAG_CONFIG    } ,
+		{ "root",       required_argument, NULL, FLAG_ROOT      } ,
 		{ "logfile",    required_argument, NULL, FLAG_LOGFILE   } ,
 		{ "help",       no_argument,       NULL, FLAG_HELP      } ,
 		{ "version",    no_argument,       NULL, FLAG_VERSION   } ,
@@ -168,10 +171,16 @@ void parse_opts(int argc, char **argv)
 			case FLAG_CONFIG:
 				config_file = optarg;
 				break;
+			case FLAG_ROOT:
+				free(logfile);
+				logfile = malloc(strlen(optarg) + strlen("/var/log/pacman.log") + 1);
+				sprintf(logfile, "%s/var/log/pacman.log", optarg);
+				break;
 			case FLAG_HELP:
 				usage(0);
 				break;
 			case FLAG_LOGFILE:
+				free(logfile);
 				logfile = strdup(optarg);
 				break;
 			case FLAG_VERSION:
