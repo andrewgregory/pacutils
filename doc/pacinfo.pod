@@ -1,0 +1,60 @@
+=head1 NAME
+
+pacinfo - display package information
+
+=head1 SYNOPSIS
+
+ pacinfo [options] (<pkgspec>|<pkgname>)...
+ pacinfo (--help|--version)
+
+=head1 DESCRIPTION
+
+If a I<pkgname> is given, information for all packages matching that name in
+all databases will be displayed.
+
+=head1 OPTIONS
+
+=over
+
+=item B<--config>=F<path>
+
+Set an alternate configuration file path.
+
+=item B<--dbpath>=F<path>
+
+Set an alternate database path.
+
+=item B<--root>=F<path>
+
+Set an alternate installation root.
+
+=item B<--null>[=I<sep>]
+
+Set an alternate separator for values parsed from F<stdin>.  By default
+a newline C<\n> is used as the separator.  If B<--null> is used without
+specifying I<sep> C<NUL> will be used.
+
+=item B<--short>
+
+Display brief information.  Suitable for printing a potentially large number of
+packages:
+
+ pacsift --name libreoffice | pacinfo --short
+
+=item B<--raw>
+
+Display raw numeric size and date values.
+
+=item B<--removable-size>
+
+Include the size of any removable dependencies in installed size.
+
+=item B<--help>
+
+Display usage information and exit.
+
+=item B<--version>
+
+Display version information and exit.
+
+=back
