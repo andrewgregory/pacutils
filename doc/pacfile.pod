@@ -1,0 +1,46 @@
+=head1 NAME
+
+pacfile - display information about package files
+
+=head1 SYNOPSIS
+
+ pacfile [options] <path>...
+ pacfile (--help|--version)
+
+=head1 DESCRIPTION
+
+Display file information from the local package database.
+
+=head1 OPTIONS
+
+=over
+
+=item B<--config>=F<path>
+
+Set an alternate configuration file path.
+
+=item B<--dbpath>=F<path>
+
+Set an alternate database path.
+
+=item B<--root>=F<path>
+
+Set an alternate installation root.
+
+=item B<--package>=I<pkgname>
+
+Limit information to the specified package.  May be specified multiple times.
+
+=item B<--check>
+
+Compare database values to the file system.
+
+=item B<--help>
+
+Display usage information and exit.
+
+=item B<--version>
+
+Display version information and exit.
+
+=back
