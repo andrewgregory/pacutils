@@ -1,0 +1,92 @@
+=head1 NAME
+
+paclog - filter pacman log entries
+
+=head1 SYNOPSIS
+
+ paclog [options] [filters]...
+ paclog [options] --pkglist
+ paclog (--help|--version)
+
+=head1 DESCRIPTION
+
+If input is provided on F<stdin> it will be parsed instead of B<--logfile>.
+Log entries will be displayed if they match I<any> of the provided filters.  To
+display the intersection of multiple filters they can be connected by a pipe:
+
+ paclog --after=2015-01-01 | paclog --warnings
+
+=head1 OPTIONS
+
+=over
+
+=item B<--config>=F<path>
+
+Set an alternate configuration file path.
+
+=item B<--logfile>=F<path>
+
+Set an alternate log file path.
+
+=item B<--root>=F<path>
+
+Set an alternate installation root.
+
+=item B<--[no-]color>
+
+Colorize output.  By default output will be colorized if F<stdout> is
+a terminal.
+
+=item B<--pkglist>
+
+Print the list of installed packages according to the log.
+
+=item B<--help>
+
+Display usage information and exit.
+
+=item B<--version>
+
+Display version information and exit.
+
+=back
+
+=head2 Filters
+
+=over
+
+=item B<--action>=I<action>
+
+Display package operations.  I<action> must be one of C<install>, C<reinstall>,
+C<upgrade>, C<downgrade>, C<remove>, or C<all>.
+
+=item B<--after>=I<date>, B<--before>=I<date>
+
+Display entries after/before I<date>.  If seconds or timezone information is
+included it will be silently ignored, allowing output from C<date -I> to be
+used:
+
+ paclog --after "$(date -Iminutes --date '3 days ago')"
+
+=item B<--caller>=I<name>
+
+Display log entries from I<name>.  May be specified multiple times.
+Case-sensitive.
+
+=item B<--commandline>
+
+Display logged commandline entries.  Identical to C<--grep=^running>.
+
+=item B<--grep>=I<regex>
+
+Display log entries whose message matches I<regex>.
+
+=item B<--package>=I<pkgname>
+
+Display logged actions affecting I<pkgname>.  May be specified multiple times.
+
+=item B<--warnings>
+
+Display errors, warnings, and notes.
+
+=back
