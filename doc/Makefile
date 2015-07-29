@@ -6,6 +6,7 @@ MAN8EXT     ?= .8
 
 MANPAGES = \
 		   pacsift$(MAN8EXT) \
+		   pacsync$(MAN8EXT) \
 		   pactrans$(MAN8EXT)
 
 all: doc

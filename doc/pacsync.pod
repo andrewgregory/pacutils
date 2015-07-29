@@ -1,0 +1,55 @@
+=head1 NAME
+
+pacsync - update sync databases
+
+=head1 SYNOPSIS
+
+ pacsync [options] [<syncdb>]...
+ pacsync (--help|--version)
+
+=head1 DESCRIPTION
+
+Update sync databases.  If no I<syncdb> names are provided all databases will
+by updated.
+
+=head1 OPTIONS
+
+=over
+
+=item B<--config>=F<path>
+
+Set an alternate configuration file path.
+
+=item B<--dbpath>=F<path>
+
+Set an alternate database path.
+
+=item B<--logfile>=F<path>
+
+Set an alternate log file path.
+
+=item B<--root>=F<path>
+
+Set an alternate installation root.
+
+=item B<--debug>
+
+Display additional debugging information.
+
+=item B<--updated>
+
+Return true only if a database was actually updated.
+
+=item B<--force>
+
+Update databases even if already up-to-date.
+
+=item B<--help>
+
+Display usage information and exit.
+
+=item B<--version>
+
+Display version information and exit.
+
+=back

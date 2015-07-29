@@ -23,7 +23,7 @@ enum longopt_flags {
 void usage(int ret)
 {
 	FILE *stream = (ret ? stderr : stdout);
-	hputs("pacsync - synchronize sync databases and packages");
+	hputs("pacsync - synchronize sync databases");
 	hputs("usage:  pacsync [options] [repo]...");
 	hputs("        pacsync (--help|--version)");
 	hputs("options:");
