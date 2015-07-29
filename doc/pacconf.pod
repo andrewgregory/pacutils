@@ -1,0 +1,70 @@
+=head1 NAME
+
+pacconf - query pacman's configuration file
+
+=head1 SYNOPSIS
+
+ pacconf [options] [<directive>...]
+ pacconf (--repo-list|--help|--version)
+
+=head1 DESCRIPTION
+
+Query configuration options from pacman's configuration file.  If no
+I<directive>s are provided, the entire configuration will be printed in
+a normalized format.  By default, if only a single I<directive> is provided,
+only its value will be printed without the option name.  For directives without
+a value, the directive name will be used as the value.
+
+The values displayed are the final values as would be parsed by pacman itself.
+All default values are set, C<Include> directives are processed, C<$arch> and
+C<$repo> variables in repository servers are replaced, and C<Architecture> will
+be replaced if set to C<auto>.
+
+=head1 OPTIONS
+
+=over
+
+=item B<--config>=F<path>
+
+Set an alternate configuration file path.
+
+=item B<--root>=F<path>
+
+Set an alternate installation root.
+
+=item B<--arch>=I<arch>
+
+Set an alternate architecture.
+
+=item B<--repo>=I<name>
+
+Only display directives for repository I<name>.
+
+=item B<--repo-list>
+
+List configured repositories.
+
+=item B<--verbose>
+
+Always show directive names even if only one I<directive> is provided.
+
+=item B<--help>
+
+Display usage information and exit.
+
+=item B<--version>
+
+Display version information and exit.
+
+=back
+
+=head1 EXAMPLES
+
+=over
+
+=item Check if color is enabled:
+
+ color=$(pacconf color)
+ [[ -n $color ]] && ... # print something in color
+
+=back

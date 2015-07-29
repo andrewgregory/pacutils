@@ -6,6 +6,7 @@ MAN8EXT     ?= .8
 
 MANPAGES = \
 		   paccheck$(MAN8EXT) \
+		   pacconf$(MAN8EXT) \
 		   pacfile$(MAN8EXT) \
 		   pacinfo$(MAN8EXT) \
 		   pacini$(MAN8EXT) \
