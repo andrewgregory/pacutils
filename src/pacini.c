@@ -25,11 +25,11 @@ void usage(int ret)
 #define hputs(x) fputs(x"\n", stream)
 	hputs("pacini - query pacman-style configuration file");
 	hputs("usage:  pacini [options] <file> [<directive>...]");
-	hputs("        pacini (--repo-list|--help|--version)");
+	hputs("        pacini (--section-list|--help|--version)");
 	hputs("options:");
-	hputs("  --section=<name>  query options for a specific repo");
+	hputs("  --section=<name>  query options for a specific section");
 	hputs("  --verbose         always show directive names");
-	hputs("  --section-list    list configured repositories");
+	hputs("  --section-list    list configured sections");
 	hputs("  --help            display this help information");
 	hputs("  --version         display version information");
 #undef hputs
