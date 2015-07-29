@@ -1,0 +1,107 @@
+=head1 NAME
+
+pacreport - display a summary of installed packages
+
+=head1 SYNOPSIS
+
+ pacreport [options]
+ pacreport (--help|--version)
+
+=head1 DESCRIPTION
+
+Generate a report of installed packages including:
+
+=over
+
+=item unneeded packages installed explicitly
+
+=item unneeded packages installed as dependencies
+
+=item installed packages not in a repository
+
+=item packages missing from specified groups
+
+=item missing package files
+
+=item unmerged backup files
+
+=item unowned files
+
+=item cache directory sizes
+
+=back
+
+Package sizes include dependencies not needed by other packages.
+
+=head1 OPTIONS
+
+=over
+
+=item B<--config>=F<path>
+
+Set an alternate pacman configuration file path.
+
+=item B<--dbpath>=F<path>
+
+Set an alternate database path.
+
+=item B<--root>=F<path>
+
+Set an alternate installation root.
+
+=item B<--cache-dir>=F<path>
+
+Set an alternate cache directory path.
+
+=item B<--backups>
+
+Search for F<.pac{save,orig,new}> files.  By default only F</etc> is searched;
+pass twice to search outside F</etc>.
+
+=item B<--group>=I<name>
+
+Display any packages in group I<name> that are not currently installed.
+
+=item B<--missing-files>
+
+Check for missing package files.
+
+=item B<--unowned-files>
+
+Check for unowned files.  See F</etc/pacreport.conf> under L<FILES> for more
+information.
+
+=item B<--help>
+
+Display usage information and exit.
+
+=item B<--version>
+
+Display version information and exit.
+
+=back
+
+=head1 FILES
+
+=over
+
+=item F</etc/pacreport.conf>
+
+INI-style configuration file listing paths to ignore when run with
+B<--unowned-files>.  Paths which should always be ignored may be specified with
+C<IgnoreUnowned> in the C<Options> section.  Paths which should only be ignored
+if a particular package is installed can be listed under the section
+C<PkgIgnoreUnowned> using the package name as the option name and the path to
+be ignored as the value.  All options can be specified multiple times.  Paths
+may include shell-style globs.
+
+ [Options]
+ IgnoreUnowned = home/*
+ IgnoreUnowned = proc/*
+ IgnoreUnowned = mnt/*
+
+ [PkgIgnoreUnowned]
+ linux = boot/initramfs-linux.img
+ linux = boot/initramfs-linux-fallback.img
+
+=back
