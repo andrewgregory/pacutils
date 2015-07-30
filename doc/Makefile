@@ -1,41 +1,41 @@
 PREFIX      ?= /usr/local
 DATAROOTDIR ?= $(PREFIX)/share
 MANDIR      ?= $(DATAROOTDIR)/man
-MAN8DIR     ?= $(MANDIR)/man8
-MAN8EXT     ?= .8
+MAN1DIR     ?= $(MANDIR)/man1
+MAN1EXT     ?= .1
 
 MANPAGES = \
-		   paccheck$(MAN8EXT) \
-		   pacconf$(MAN8EXT) \
-		   pacfile$(MAN8EXT) \
-		   pacinfo$(MAN8EXT) \
-		   pacini$(MAN8EXT) \
-		   paclog$(MAN8EXT) \
-		   pacreport$(MAN8EXT) \
-		   pacsift$(MAN8EXT) \
-		   pacsync$(MAN8EXT) \
-		   pactrans$(MAN8EXT)
+		   paccheck$(MAN1EXT) \
+		   pacconf$(MAN1EXT) \
+		   pacfile$(MAN1EXT) \
+		   pacinfo$(MAN1EXT) \
+		   pacini$(MAN1EXT) \
+		   paclog$(MAN1EXT) \
+		   pacreport$(MAN1EXT) \
+		   pacsift$(MAN1EXT) \
+		   pacsync$(MAN1EXT) \
+		   pactrans$(MAN1EXT)
 
 all: doc
 
-%$(MAN8EXT): %.pod
-	pod2man --center $* --release pacutils --section 8  $< $@
+%$(MAN1EXT): %.pod
+	pod2man --center $* --release pacutils --section 1  $< $@
 
-pacinstall$(MAN8EXT): | pactrans$(MAN8EXT)
+pacinstall$(MAN1EXT): | pactrans$(MAN1EXT)
 	ln -fs $| $@
 
-pacremove$(MAN8EXT): | pactrans$(MAN8EXT)
+pacremove$(MAN1EXT): | pactrans$(MAN1EXT)
 	ln -fs $| $@
 
-doc: $(MANPAGES) pacinstall$(MAN8EXT) pacremove$(MAN8EXT)
+doc: $(MANPAGES) pacinstall$(MAN1EXT) pacremove$(MAN1EXT)
 
 install: doc
-	install -d "${DESTDIR}${MAN8DIR}"
-	install -m 644 $(MANPAGES) "${DESTDIR}${MAN8DIR}"
-	cp -d pacinstall$(MAN8EXT) "${DESTDIR}${MAN8DIR}"
-	cp -d pacremove$(MAN8EXT)  "${DESTDIR}${MAN8DIR}"
+	install -d "${DESTDIR}${MAN1DIR}"
+	install -m 644 $(MANPAGES) "${DESTDIR}${MAN1DIR}"
+	cp -d pacinstall$(MAN1EXT) "${DESTDIR}${MAN1DIR}"
+	cp -d pacremove$(MAN1EXT)  "${DESTDIR}${MAN1DIR}"
 
 clean:
-	$(RM) $(MANPAGES) pacinstall$(MAN8EXT) pacremove$(MAN8EXT)
+	$(RM) $(MANPAGES) pacinstall$(MAN1EXT) pacremove$(MAN1EXT)
 
 .PHONY: all doc
