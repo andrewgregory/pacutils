@@ -57,6 +57,10 @@ Only display directives for repository I<name>.
 
 List configured repositories.
 
+=item B<--single>
+
+Display only first value of multi-value options.
+
 =item B<--verbose>
 
 Always show directive names even if only one I<directive> is provided.

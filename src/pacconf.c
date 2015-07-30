@@ -7,7 +7,7 @@ const char *myname = "pacconf", *myver = "0.2";
 pu_config_t *config = NULL;
 alpm_list_t *directives = NULL;
 char sep = '\n', *repo_name = NULL;
-int raw = 0, repo_list = 0, verbose = 0;
+int raw = 0, repo_list = 0, single = 0, verbose = 0;
 
 enum {
 	FLAG_ARCH = 1000,
@@ -17,6 +17,7 @@ enum {
 	FLAG_REPO,
 	FLAG_REPO_LIST,
 	FLAG_ROOT,
+	FLAG_SINGLE,
 	FLAG_NULL,
 	FLAG_VERBOSE,
 	FLAG_VERSION,
@@ -44,6 +45,7 @@ void usage(int ret)
 	hputs("  --repo-list      list configured repositories");
 	hputs("  --repo=<remote>  query options for a specific repo");
 	hputs("  --root=<path>    set an alternate installation root");
+	hputs("  --single         only display the first value for list items");
 	hputs("  --verbose        always show directive names");
 	hputs("  --version        display version information");
 #undef hputs
@@ -66,6 +68,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "repo"      , required_argument , NULL , FLAG_REPO      },
 		{ "repo-list" , no_argument       , NULL , FLAG_REPO_LIST },
 		{ "root"      , required_argument , NULL , FLAG_ROOT      },
+		{ "single"    , no_argument       , NULL , FLAG_SINGLE    },
 		{ "verbose"   , no_argument       , NULL , FLAG_VERBOSE   },
 		{ "version"   , no_argument       , NULL , FLAG_VERSION   },
 		{ 0, 0, 0, 0 },
@@ -103,6 +106,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 			case FLAG_ROOT:
 				free(config->rootdir);
 				config->rootdir = strdup(optarg);
+				break;
+			case FLAG_SINGLE:
+				single = 1;
 				break;
 			case FLAG_VERBOSE:
 				verbose = 1;
@@ -170,6 +176,9 @@ void show_list_str(const char *directive, alpm_list_t *list)
 	alpm_list_t *i;
 	for(i = list; i; i = i->next) {
 		show_str(directive, i->data);
+		if(single) {
+			break;
+		}
 	}
 }
 
