@@ -17,6 +17,7 @@ enum {
 	FLAG_REPO,
 	FLAG_REPO_LIST,
 	FLAG_ROOT,
+	FLAG_NULL,
 	FLAG_VERBOSE,
 	FLAG_VERSION,
 };
@@ -38,6 +39,7 @@ void usage(int ret)
 	hputs("  --arch=<arch>    set an alternate architecture");
 	hputs("  --config=<path>  set an alternate configuration file");
 	hputs("  --help           display this help information");
+	hputs("  --null[=sep]     use <sep> to separate values (default NUL)");
 	hputs("  --raw            display unmodified values");
 	hputs("  --repo-list      list configured repositories");
 	hputs("  --repo=<remote>  query options for a specific repo");
@@ -59,6 +61,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "arch"      , required_argument , NULL , FLAG_ARCH      },
 		{ "config"    , required_argument , NULL , FLAG_CONFIG    },
 		{ "help"      , no_argument       , NULL , FLAG_HELP      },
+		{ "null"      , optional_argument , NULL , FLAG_NULL      },
 		{ "raw"       , no_argument       , NULL , FLAG_RAW       },
 		{ "repo"      , required_argument , NULL , FLAG_REPO      },
 		{ "repo-list" , no_argument       , NULL , FLAG_REPO_LIST },
@@ -84,6 +87,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 				break;
 			case FLAG_HELP:
 				usage(0);
+				break;
+			case FLAG_NULL:
+				sep = optarg ? optarg[0] : '\0';
 				break;
 			case FLAG_RAW:
 				raw = 1;
