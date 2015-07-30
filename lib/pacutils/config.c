@@ -226,6 +226,12 @@ pu_config_t *pu_config_new(void)
   config->usesyslog = PU_CONFIG_BOOL_UNSET;
   config->verbosepkglists = PU_CONFIG_BOOL_UNSET;
 
+  config->siglevel = ALPM_SIG_USE_DEFAULT;
+  config->localfilesiglevel = ALPM_SIG_USE_DEFAULT;
+  config->remotefilesiglevel = ALPM_SIG_USE_DEFAULT;
+
+  config->usedelta = -1.0;
+
   return config;
 }
 

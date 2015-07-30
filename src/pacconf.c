@@ -7,12 +7,13 @@ const char *myname = "pacconf", *myver = "0.2";
 pu_config_t *config = NULL;
 alpm_list_t *directives = NULL;
 char sep = '\n', *repo_name = NULL;
-int repo_list = 0, verbose = 0;
+int raw = 0, repo_list = 0, verbose = 0;
 
 enum {
 	FLAG_ARCH = 1000,
 	FLAG_CONFIG,
 	FLAG_HELP,
+	FLAG_RAW,
 	FLAG_REPO,
 	FLAG_REPO_LIST,
 	FLAG_ROOT,
@@ -37,6 +38,7 @@ void usage(int ret)
 	hputs("  --arch=<arch>    set an alternate architecture");
 	hputs("  --config=<path>  set an alternate configuration file");
 	hputs("  --help           display this help information");
+	hputs("  --raw            display unmodified values");
 	hputs("  --repo-list      list configured repositories");
 	hputs("  --repo=<remote>  query options for a specific repo");
 	hputs("  --root=<path>    set an alternate installation root");
@@ -57,6 +59,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "arch"      , required_argument , NULL , FLAG_ARCH      },
 		{ "config"    , required_argument , NULL , FLAG_CONFIG    },
 		{ "help"      , no_argument       , NULL , FLAG_HELP      },
+		{ "raw"       , no_argument       , NULL , FLAG_RAW       },
 		{ "repo"      , required_argument , NULL , FLAG_REPO      },
 		{ "repo-list" , no_argument       , NULL , FLAG_REPO_LIST },
 		{ "root"      , required_argument , NULL , FLAG_ROOT      },
@@ -82,6 +85,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 			case FLAG_HELP:
 				usage(0);
 				break;
+			case FLAG_RAW:
+				raw = 1;
+				break;
 			case FLAG_REPO:
 				repo_name = optarg;
 				break;
@@ -106,12 +112,11 @@ pu_config_t *parse_opts(int argc, char **argv)
 		}
 	}
 
-	if(!pu_ui_config_load(config, config_file)) {
-		fprintf(stderr, "error: could not parse '%s'\n", config_file);
-		return NULL;
+	if(raw) {
+		return pu_ui_config_parse(config, config_file);
+	} else {
+		return pu_ui_config_load(config, config_file);
 	}
-
-	return config;
 }
 
 void list_repos(void)
@@ -127,6 +132,9 @@ void list_repos(void)
 
 void show_float(const char *directive, float val)
 {
+	if(val == -1.0) {
+		return;
+	}
 	if(verbose) {
 		printf("%s = ", directive);
 	}
@@ -135,7 +143,7 @@ void show_float(const char *directive, float val)
 
 void show_bool(const char *directive, short unsigned int val)
 {
-	if(val) {
+	if(val == PU_CONFIG_BOOL_TRUE) {
 		printf("%s%c", directive, sep);
 	}
 }

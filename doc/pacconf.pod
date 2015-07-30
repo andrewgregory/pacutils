@@ -36,6 +36,13 @@ Set an alternate installation root.
 
 Set an alternate architecture.
 
+=item B<--raw>
+
+Display unmodified values.  C<Include> directives will be processed, but
+defaults will not be set, C<$arch> and C<$repo> variables in repository servers
+will not be replaced, and C<Architecture> will not be replaced if set to
+C<auto>.
+
 =item B<--repo>=I<name>
 
 Only display directives for repository I<name>.
