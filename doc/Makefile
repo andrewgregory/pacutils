@@ -3,6 +3,8 @@ DATAROOTDIR ?= $(PREFIX)/share
 MANDIR      ?= $(DATAROOTDIR)/man
 MAN1DIR     ?= $(MANDIR)/man1
 MAN1EXT     ?= .1
+MAN3DIR     ?= $(MANDIR)/man3
+MAN3EXT     ?= .3
 
 MANPAGES = \
 		   paccheck$(MAN1EXT) \
@@ -20,6 +22,9 @@ all: doc
 
 %$(MAN1EXT): %.pod
 	pod2man --center $* --release pacutils --section 1  $< $@
+
+%$(MAN3EXT): %.pod
+	pod2man --center $* --release pacutils --section 3  $< $@
 
 pacinstall$(MAN1EXT): | pactrans$(MAN1EXT)
 	ln -fs $| $@
