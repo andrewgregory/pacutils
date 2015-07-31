@@ -1,0 +1,76 @@
+=head1 NAME
+
+pacutils-mtree - read mtree data for installed packages
+
+=head1 SYNOPSIS
+
+ #include <pacutils/mtree.h>
+
+ alpm_list_t *pu_mtree_load_pkg_mtree(alpm_handle_t *handle, alpm_pkg_t *pkg);
+ void pu_mtree_free(pu_mtree_t *mtree);
+
+ typedef struct pu_mtree_t {
+   char *path;
+   char *type;
+   uid_t uid;
+   gid_t gid;
+   mode_t mode;
+   off_t size;
+   char *md5digest;
+   char *sha256digest;
+ } pu_mtree_t;
+
+=head1 DESCRIPTION
+
+Package mtree reading functions are provided to fill gaps in libarchive's mtree
+reader, notably C<md5digest> and C<sha256digest> which are currently not read
+by libarchive.  Support is incomplete and should only be used to supplement
+libalpm's native mtree reader.
+
+=over
+
+=item alpm_list_t *pu_mtree_load_pkg_mtree(alpm_handle_t *handle, alpm_pkg_t *pkg);
+
+Returns a list of mtree entries for C<pkg>.
+
+=item void pu_mtree_free(pu_mtree_t *mtree);
+
+Free a C<pu_mtree_t> struct.
+
+=back
+
+=head1 EXAMPLES
+
+=over
+
+=item Print file md5sums for a package:
+
+ alpm_list_t *i, *entries = pu_mtree_load_pkg_mtree(handle, pkg);
+
+ if(entries == NULL) {
+     fprintf(stderr, "error: unable to load mtree data for '%s'\n",
+        alpm_pkg_get_name(pkg));
+     return;
+ }
+
+ for(i = entries; i; i = alpm_list_next(i)) {
+     pu_mtree_t *m = i->data;
+     const char *md5 = m->md5digest;
+     printf("%s: %s\n", m->path,
+         md5 && md5[0] != '\0' ? md5 : "(no md5sum provided)");
+ }
+
+ alpm_list_free_inner(entries, (alpm_list_fn_free) pu_mtree_free);
+ alpm_list_free(entries);
+
+=back
+
+=head1 SEE ALSO
+
+=over
+
+=item alpm_pkg_mtree_open(3), alpm_pkg_mtree_next(3), alpm_pkg_mtree_close(3)
+
+=item mtree(5) - description of C<pu_mtree_t> members
+
+=back

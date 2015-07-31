@@ -16,7 +16,8 @@ MANPAGES = \
 		   pacreport$(MAN1EXT) \
 		   pacsift$(MAN1EXT) \
 		   pacsync$(MAN1EXT) \
-		   pactrans$(MAN1EXT)
+		   pactrans$(MAN1EXT) \
+		   pacutils-mtree$(MAN3EXT)
 
 all: doc
 
