@@ -267,7 +267,8 @@ void print_pkg_info(alpm_pkg_t *pkg) {
 				printd("Requires:       %s\n", alpm_pkg_get_depends(pkg));
 				printd("Conflicts:      %s\n", alpm_pkg_get_conflicts(pkg));
 				printd("Replaces:       %s\n", alpm_pkg_get_replaces(pkg));
-				printo("Download Size:  %s\n", alpm_pkg_get_size(pkg));
+				printo("Package Size:   %s\n", alpm_pkg_get_size(pkg));
+				printo("Download Size:  %s\n", alpm_pkg_download_size(pkg));
 				printo("Installed Size: %s\n",
 						removable_size
 						? pkg_removable_size(handle, pkg)
