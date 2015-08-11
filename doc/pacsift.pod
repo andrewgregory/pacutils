@@ -161,6 +161,22 @@ case-sensitive.
 
 =back
 
+=head2 Date Fields
+
+Date fields may be prefixed with any of the following comparisons: C<=>, C<!=>,
+C<< < >>, C<< <= >>, C<< > >>, C<< >= >>.  If no comparison is provided C<=>
+will be used.  Dates may be provided as seconds since the epoch or any of the
+following C<strptime> formats: C<%Y-%m-%d>, C<%Y-%m-%d %H:%M>,
+C<%Y-%m-%d %H:%M:%S>.
+
+=over
+
+=item B<--install-date>
+
+=item B<--build-date>
+
+=back
+
 =head1 EXAMPLES
 
 =over

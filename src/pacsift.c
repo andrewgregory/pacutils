@@ -26,8 +26,10 @@ alpm_list_t *ownsfile = NULL;
 alpm_list_t *requiredby = NULL;
 alpm_list_t *provides = NULL, *depends = NULL, *conflicts = NULL, *replaces = NULL;
 alpm_list_t *isize = NULL, *size = NULL, *dsize = NULL;
+alpm_list_t *builddate = NULL, *installdate = NULL;
 
 typedef off_t (size_accessor) (alpm_pkg_t* pkg);
+typedef alpm_time_t (date_accessor) (alpm_pkg_t* pkg);
 typedef const char* (str_accessor) (alpm_pkg_t* pkg);
 typedef alpm_list_t* (strlist_accessor) (alpm_pkg_t* pkg);
 typedef alpm_list_t* (deplist_accessor) (alpm_pkg_t* pkg);
@@ -42,10 +44,12 @@ enum longopt_flags {
 	FLAG_VERSION,
 
 	FLAG_ARCH,
+	FLAG_BDATE,
 	FLAG_CACHE,
 	FLAG_NAME,
 	FLAG_DESCRIPTION,
 	FLAG_GROUP,
+	FLAG_IDATE,
 	FLAG_ISIZE,
 	FLAG_DSIZE,
 	FLAG_SIZE,
@@ -71,6 +75,11 @@ enum cmp {
 
 struct size_cmp {
 	off_t bytes;
+	enum cmp cmp;
+};
+
+struct date_cmp {
+	alpm_time_t time;
 	enum cmp cmp;
 };
 
@@ -100,6 +109,9 @@ void cleanup(int ret)
 	FREELIST(size);
 	FREELIST(isize);
 	FREELIST(dsize);
+
+	FREELIST(builddate);
+	FREELIST(installdate);
 
 	exit(ret);
 }
@@ -151,6 +163,62 @@ int parse_size_units(off_t *dest, long double bytes, const char *str)
 	}
 
 	return 1;
+}
+
+struct date_cmp *parse_date(const char *str)
+{
+	struct date_cmp date, *ret;
+	const char *c = str;
+	char *end;
+	size_t len;
+	struct tm stm;
+
+	memset(&stm, 0, sizeof(struct tm));
+	stm.tm_isdst = -1;
+
+	if(c == NULL || *c == '\0') { return NULL; }
+	if((len = strspn(c, "=<>!"))) {
+		if     (strncmp("=",  c, len) == 0) { date.cmp = CMP_EQ; }
+		else if(strncmp(">",  c, len) == 0) { date.cmp = CMP_GT; }
+		else if(strncmp("<",  c, len) == 0) { date.cmp = CMP_LT; }
+		else if(strncmp("==", c, len) == 0) { date.cmp = CMP_EQ; }
+		else if(strncmp("!=", c, len) == 0) { date.cmp = CMP_NE; }
+		else if(strncmp(">=", c, len) == 0) { date.cmp = CMP_GE; }
+		else if(strncmp("<=", c, len) == 0) { date.cmp = CMP_LE; }
+		else {
+			fprintf(stderr, "error: invalid date comparison '%s'\n", str);
+			cleanup(1);
+		}
+		c += len;
+	} else {
+		date.cmp = CMP_EQ;
+	}
+
+	if(strspn(c, "0123456789") == strlen(c)) {
+		errno = 0;
+		date.time = strtoll(c, &end, 10);
+		if(*end || errno) {
+			fprintf(stderr, "error: invalid date '%s'\n", c);
+			cleanup(1);
+		}
+	} else if(*(strptime(c, "%Y-%m-%d", &stm)) == '\0') {
+		date.time = mktime(&stm);
+	} else if(*(strptime(c, "%Y-%m-%d %H:%M", &stm)) == '\0') {
+		date.time = mktime(&stm);
+	} else if(*(strptime(c, "%Y-%m-%d %H:%M:%S", &stm)) == '\0') {
+		date.time = mktime(&stm);
+	} else {
+			fprintf(stderr, "error: invalid date '%s'\n", c);
+			cleanup(1);
+	}
+
+	if((ret = malloc(sizeof(struct date_cmp))) == NULL) {
+		perror("malloc");
+		cleanup(1);
+	}
+
+	memcpy(ret, &date, sizeof(struct date_cmp));
+	return ret;
 }
 
 struct size_cmp *parse_size(const char *str)
@@ -272,6 +340,19 @@ alpm_list_t *filter_filelist(alpm_list_t **pkgs, const char *str,
 	return matches;
 }
 
+int match_date(struct date_cmp *date, alpm_time_t time)
+{
+	switch(date->cmp) {
+		case CMP_EQ: return time == date->time;
+		case CMP_NE: return time != date->time;
+		case CMP_GT: return time >  date->time;
+		case CMP_GE: return time >= date->time;
+		case CMP_LT: return time <  date->time;
+		case CMP_LE: return time <= date->time;
+		default: return 0;
+	}
+}
+
 int match_size(struct size_cmp *size, off_t bytes)
 {
 	switch(size->cmp) {
@@ -283,6 +364,21 @@ int match_size(struct size_cmp *size, off_t bytes)
 		case CMP_LE: return bytes <= size->bytes;
 		default: return 0;
 	}
+}
+
+alpm_list_t *filter_date(alpm_list_t **pkgs, struct date_cmp *date, date_accessor *func)
+{
+	alpm_list_t *p, *matches = NULL;
+	for(p = *pkgs; p; p = p->next) {
+		alpm_time_t time = func(p->data);
+		if(match_date(date, time)) {
+			matches = alpm_list_add(matches, p->data);
+		}
+	}
+	for(p = matches; p; p = p->next) {
+		*pkgs = alpm_list_remove(*pkgs, p->data, ptr_cmp, NULL);
+	}
+	return matches;
 }
 
 alpm_list_t *filter_size(alpm_list_t **pkgs, struct size_cmp *size, size_accessor *func)
@@ -444,6 +540,9 @@ alpm_list_t *filter_pkgs(alpm_handle_t *handle, alpm_list_t *pkgs)
 	match(dsize, filter_size(&haystack, i, alpm_pkg_download_size));
 	match(size, filter_size(&haystack, i, alpm_pkg_get_size));
 
+	match(builddate, filter_date(&haystack, i, alpm_pkg_get_builddate));
+	match(installdate, filter_date(&haystack, i, alpm_pkg_get_installdate));
+
 	match(provides, filter_deplist(&haystack, i, alpm_pkg_get_provides));
 	match(depends, filter_deplist(&haystack, i, alpm_pkg_get_depends));
 	match(conflicts, filter_deplist(&haystack, i, alpm_pkg_get_conflicts));
@@ -514,6 +613,8 @@ void usage(int ret)
 	hputs("                        search package download size");
 	hputs("   --size=<val>         search package size");
 	hputs("   --url=<val>          search package url");
+	hputs("   --build-date=<val>   search package build date");
+	hputs("   --install-date=<val> search package install date");
 #undef hputs
 
 	cleanup(ret);
@@ -564,6 +665,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "download-size" , required_argument , NULL    , FLAG_DSIZE         } ,
 		{ "dsize"         , required_argument , NULL    , FLAG_DSIZE         } ,
 		{ "size"          , required_argument , NULL    , FLAG_SIZE          } ,
+
+		{ "install-date"  , required_argument , NULL    , FLAG_IDATE         } ,
+		{ "build-date"    , required_argument , NULL    , FLAG_BDATE         } ,
 
 		{ 0, 0, 0, 0 },
 	};
@@ -647,6 +751,13 @@ pu_config_t *parse_opts(int argc, char **argv)
 				break;
 			case FLAG_SIZE:
 				size = alpm_list_add(size, parse_size(optarg));
+				break;
+
+			case FLAG_IDATE:
+				installdate = alpm_list_add(installdate, parse_date(optarg));
+				break;
+			case FLAG_BDATE:
+				builddate = alpm_list_add(builddate, parse_date(optarg));
 				break;
 
 			case FLAG_PROVIDES:
