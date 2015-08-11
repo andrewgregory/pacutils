@@ -25,6 +25,7 @@ alpm_list_t *group = NULL, *license = NULL;
 alpm_list_t *ownsfile = NULL;
 alpm_list_t *requiredby = NULL;
 alpm_list_t *provides = NULL, *depends = NULL, *conflicts = NULL, *replaces = NULL;
+alpm_list_t *satisfies = NULL;
 alpm_list_t *isize = NULL, *size = NULL, *dsize = NULL;
 alpm_list_t *builddate = NULL, *installdate = NULL;
 
@@ -61,6 +62,7 @@ enum longopt_flags {
 	FLAG_CONFLICTS,
 	FLAG_REPLACES,
 	FLAG_REPO,
+	FLAG_SATISFIES,
 	FLAG_URL,
 };
 
@@ -101,6 +103,7 @@ void cleanup(int ret)
 	FREELIST(ownsfile);
 
 	FREELIST(provides);
+	FREELIST(satisfies);
 	FREELIST(url);
 	FREELIST(depends);
 	FREELIST(conflicts);
@@ -446,6 +449,17 @@ int depcmp(alpm_depend_t *d, alpm_depend_t *needle)
 	return 1;
 }
 
+alpm_list_t *filter_satisfies(alpm_list_t **pkgs, const char *depstr)
+{
+	alpm_list_t *matches = NULL;
+	alpm_pkg_t *pkg;
+	while((pkg = alpm_find_satisfier(*pkgs, depstr))) {
+		*pkgs = alpm_list_remove(*pkgs, pkg, ptr_cmp, NULL);
+		matches = alpm_list_add(matches, pkg);
+	}
+	return matches;
+}
+
 alpm_list_t *filter_deplist(alpm_list_t **pkgs, const char *str, deplist_accessor *func)
 {
 	alpm_list_t *p, *matches = NULL;
@@ -548,6 +562,8 @@ alpm_list_t *filter_pkgs(alpm_handle_t *handle, alpm_list_t *pkgs)
 	match(conflicts, filter_deplist(&haystack, i, alpm_pkg_get_conflicts));
 	match(replaces, filter_deplist(&haystack, i, alpm_pkg_get_replaces));
 
+	match(satisfies, filter_satisfies(&haystack, i));
+
 	if(invert) {
 		matches = alpm_list_diff(pkgs, haystack, ptr_cmp);
 		alpm_list_free(haystack);
@@ -615,6 +631,7 @@ void usage(int ret)
 	hputs("   --url=<val>          search package url");
 	hputs("   --build-date=<val>   search package build date");
 	hputs("   --install-date=<val> search package install date");
+	hputs("   --satisfies=<val>    find packages satisfying dependency <val>");
 #undef hputs
 
 	cleanup(ret);
@@ -659,6 +676,8 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "depends"       , required_argument , NULL    , FLAG_DEPENDS       } ,
 		{ "conflicts"     , required_argument , NULL    , FLAG_CONFLICTS     } ,
 		{ "replaces"      , required_argument , NULL    , FLAG_REPLACES      } ,
+
+		{ "satisfies"     , required_argument , NULL    , FLAG_SATISFIES     } ,
 
 		{ "installed-size", required_argument , NULL    , FLAG_ISIZE         } ,
 		{ "isize"         , required_argument , NULL    , FLAG_ISIZE         } ,
@@ -771,6 +790,10 @@ pu_config_t *parse_opts(int argc, char **argv)
 				break;
 			case FLAG_CONFLICTS:
 				conflicts = alpm_list_add(conflicts, strdup(optarg));
+				break;
+
+			case FLAG_SATISFIES:
+				satisfies = alpm_list_add(satisfies, strdup(optarg));
 				break;
 
 			case '?':

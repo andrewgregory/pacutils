@@ -177,6 +177,16 @@ C<%Y-%m-%d %H:%M:%S>.
 
 =back
 
+=head2 Other
+
+=over
+
+=item B<--satisfies>=I<dependency>
+
+Search for packages that satisfy I<dependency>.
+
+=back
+
 =head1 EXAMPLES
 
 =over
