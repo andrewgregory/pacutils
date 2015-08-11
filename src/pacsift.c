@@ -20,7 +20,7 @@ int invert = 0, re = 0, exact = 0, or = 0;
 int osep = '\n', isep = '\n';
 alpm_list_t *search_dbs = NULL;
 alpm_list_t *repo = NULL, *name = NULL, *description = NULL, *packager = NULL;
-alpm_list_t *arch = NULL;
+alpm_list_t *arch = NULL, *url = NULL;
 alpm_list_t *group = NULL, *license = NULL;
 alpm_list_t *ownsfile = NULL;
 alpm_list_t *requiredby = NULL;
@@ -57,6 +57,7 @@ enum longopt_flags {
 	FLAG_CONFLICTS,
 	FLAG_REPLACES,
 	FLAG_REPO,
+	FLAG_URL,
 };
 
 enum cmp {
@@ -91,6 +92,7 @@ void cleanup(int ret)
 	FREELIST(ownsfile);
 
 	FREELIST(provides);
+	FREELIST(url);
 	FREELIST(depends);
 	FREELIST(conflicts);
 	FREELIST(replaces);
@@ -436,6 +438,7 @@ alpm_list_t *filter_pkgs(alpm_handle_t *handle, alpm_list_t *pkgs)
 	match(group, filter_strlist(&haystack, i, alpm_pkg_get_groups));
 	match(license, filter_strlist(&haystack, i, alpm_pkg_get_licenses));
 	match(ownsfile, filter_filelist(&haystack, i, root, rootlen));
+	match(url, filter_str(&haystack, i, alpm_pkg_get_url));
 
 	match(isize, filter_size(&haystack, i, alpm_pkg_get_isize));
 	match(dsize, filter_size(&haystack, i, alpm_pkg_download_size));
@@ -510,6 +513,7 @@ void usage(int ret)
 	hputs("   --download-size=<val>");
 	hputs("                        search package download size");
 	hputs("   --size=<val>         search package size");
+	hputs("   --url=<val>          search package url");
 #undef hputs
 
 	cleanup(ret);
@@ -548,6 +552,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "owns-file"     , required_argument , NULL    , FLAG_OWNSFILE      } ,
 		{ "group"         , required_argument , NULL    , FLAG_GROUP         } ,
 		{ "license"       , required_argument , NULL    , FLAG_LICENSE       } ,
+		{ "url"           , required_argument , NULL    , FLAG_URL           } ,
 
 		{ "provides"      , required_argument , NULL    , FLAG_PROVIDES      } ,
 		{ "depends"       , required_argument , NULL    , FLAG_DEPENDS       } ,
@@ -629,6 +634,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 				break;
 			case FLAG_LICENSE:
 				license = alpm_list_add(license, strdup(optarg));
+				break;
+			case FLAG_URL:
+				url = alpm_list_add(url, strdup(optarg));
 				break;
 
 			case FLAG_ISIZE:

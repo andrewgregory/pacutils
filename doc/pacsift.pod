@@ -117,6 +117,8 @@ for the owner of installed files:
 
 =item B<--license>=I<val>
 
+=item B<--url>=I<val>
+
 =back
 
 =head2 Dependency Fields
