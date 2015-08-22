@@ -83,6 +83,10 @@ pu_log_parser_t *pu_log_parser_new(FILE *stream) {
 	return parser;
 }
 
+void pu_log_parser_free(pu_log_parser_t *p) {
+	if(p) { free(p); }
+}
+
 pu_log_entry_t *pu_log_parser_next(pu_log_parser_t *parser) {
 	char *p;
 	pu_log_entry_t *entry = calloc(sizeof(pu_log_entry_t), 1);
