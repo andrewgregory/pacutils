@@ -230,6 +230,74 @@ void cmp_size(struct archive_entry *entry, struct stat *st)
 	putchar('\n');
 }
 
+void cmp_sha256sum(alpm_handle_t *handle, alpm_pkg_t *pkg, const char *path)
+{
+	alpm_list_t *i, *entries = pu_mtree_load_pkg_mtree(handle, pkg);
+
+	for(i = entries; i; i = alpm_list_next(i)) {
+		pu_mtree_t *m = i->data;
+		char *sha = NULL;
+		if(strcmp(m->path, path) != 0) { continue; }
+
+		if(checkfs) {
+			char rpath[PATH_MAX];
+			snprintf(rpath, PATH_MAX, "%s%s", alpm_option_get_root(handle), path);
+			if((sha = alpm_compute_sha256sum(rpath)) == NULL) {
+				pu_ui_warn("%s: '%s' read error (%s)",
+						alpm_pkg_get_name(pkg), rpath, strerror(errno));
+			}
+		}
+
+		printf("sha256: %s", m->sha256digest);
+
+		if(sha) {
+			if(strcmp(sha, m->sha256digest) != 0) {
+				printf(" (%s on filesystem)", sha);
+			}
+			free(sha);
+		}
+	}
+
+	alpm_list_free_inner(entries, (alpm_list_fn_free) pu_mtree_free);
+	alpm_list_free(entries);
+
+	putchar('\n');
+}
+
+void cmp_md5sum(alpm_handle_t *handle, alpm_pkg_t *pkg, const char *path)
+{
+	alpm_list_t *i, *entries = pu_mtree_load_pkg_mtree(handle, pkg);
+
+	for(i = entries; i; i = alpm_list_next(i)) {
+		pu_mtree_t *m = i->data;
+		char *md5 = NULL;
+		if(strcmp(m->path, path) != 0) { continue; }
+
+		if(checkfs) {
+			char rpath[PATH_MAX];
+			snprintf(rpath, PATH_MAX, "%s%s", alpm_option_get_root(handle), path);
+			if((md5 = alpm_compute_md5sum(rpath)) == NULL) {
+				pu_ui_warn("%s: '%s' read error (%s)",
+						alpm_pkg_get_name(pkg), rpath, strerror(errno));
+			}
+		}
+
+		printf("md5sum: %s", m->md5digest);
+
+		if(md5) {
+			if(strcmp(md5, m->md5digest) != 0) {
+				printf(" (%s on filesystem)", md5);
+			}
+			free(md5);
+		}
+	}
+
+	alpm_list_free_inner(entries, (alpm_list_fn_free) pu_mtree_free);
+	alpm_list_free(entries);
+
+	putchar('\n');
+}
+
 int main(int argc, char **argv)
 {
 	pu_config_t *config = NULL;
@@ -353,6 +421,9 @@ int main(int argc, char **argv)
 						cmp_uid(entry, st);
 						cmp_gid(entry, st);
 						cmp_size(entry, st);
+
+						cmp_sha256sum(handle, p->data, ppath);
+						cmp_md5sum(handle, p->data, ppath);
 
 						break;
 					}
