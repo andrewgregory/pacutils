@@ -9,9 +9,11 @@ alpm_handle_t *handle = NULL;
 alpm_loglevel_t log_level = ALPM_LOG_ERROR | ALPM_LOG_WARNING;
 alpm_transflag_t trans_flags = 0;
 int force = 0, ret_updated = 0;
+const char *dbext = NULL;
 
 enum longopt_flags {
 	FLAG_CONFIG = 1000,
+	FLAG_DBEXT,
 	FLAG_DBPATH,
 	FLAG_DEBUG,
 	FLAG_HELP,
@@ -28,6 +30,7 @@ void usage(int ret)
 	hputs("        pacsync (--help|--version)");
 	hputs("options:");
 	hputs("   --config=<path>    set an alternate configuration file");
+	hputs("   --dbext=<ext>      set an alternate sync database extension");
 	hputs("   --dbpath=<path>    set an alternate database location");
 	hputs("   --force            sync repos even if already up-to-date");
 	hputs("   --debug            enable extra debugging messages");
@@ -53,6 +56,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 	char *short_opts = "";
 	struct option long_opts[] = {
 		{ "config"       , required_argument , NULL         , FLAG_CONFIG   } ,
+		{ "dbext"        , required_argument , NULL         , FLAG_DBEXT    } ,
 		{ "dbpath"       , required_argument , NULL         , FLAG_DBPATH   } ,
 		{ "debug"        , no_argument       , NULL         , FLAG_DEBUG    } ,
 		{ "force"        , no_argument       , &force       , 1             } ,
@@ -75,6 +79,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 				break;
 			case FLAG_CONFIG:
 				config_file = optarg;
+				break;
+			case FLAG_DBEXT:
+				dbext = optarg;
 				break;
 			case FLAG_DBPATH:
 				free(config->dbpath);
@@ -126,6 +133,13 @@ int main(int argc, char **argv)
 
 	if(!(handle = pu_initialize_handle_from_config(config))) {
 		fprintf(stderr, "error: failed to initialize alpm.\n");
+		ret = 1;
+		goto cleanup;
+	}
+
+	if(dbext && alpm_option_set_dbext(handle, dbext) != 0) {
+		fprintf(stderr, "error: unable to set database file extension (%s)\n",
+				alpm_strerror(alpm_errno(handle)));
 		ret = 1;
 		goto cleanup;
 	}

@@ -8,6 +8,9 @@ BINDIR      ?= ${EXEC_PREFIX}/bin
 INCLUDEDIR  ?= ${PREFIX}/include
 LIBDIR      ?= ${EXEC_PREFIX}/lib
 
+FILESDBEXT ?= .files
+CFLAGS     += -DFILESDBEXT=\"$(FILESDBEXT)\"
+
 OBJECTS = \
 		  paccheck \
 		  pacconf \

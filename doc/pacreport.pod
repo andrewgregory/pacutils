@@ -41,6 +41,10 @@ Package sizes include dependencies not needed by other packages.
 
 Set an alternate pacman configuration file path.
 
+=item B<--dbext>=I<extension>
+
+Set an alternate sync database extension.
+
 =item B<--dbpath>=F<path>
 
 Set an alternate database path.

@@ -9,6 +9,10 @@
 
 #include <pacutils.h>
 
+#ifndef FILESDBEXT
+#define FILESDBEXT ".files"
+#endif
+
 const char *myname = "pacsift", *myver = "0.1";
 
 pu_config_t *config = NULL;
@@ -18,6 +22,7 @@ alpm_loglevel_t log_level = ALPM_LOG_ERROR | ALPM_LOG_WARNING;
 int srch_cache = 0, srch_local = 0, srch_sync = 0;
 int invert = 0, re = 0, exact = 0, or = 0;
 int osep = '\n', isep = '\n';
+char *dbext = NULL;
 alpm_list_t *search_dbs = NULL;
 alpm_list_t *repo = NULL, *name = NULL, *description = NULL, *packager = NULL;
 alpm_list_t *arch = NULL, *url = NULL;
@@ -37,6 +42,7 @@ typedef alpm_list_t* (deplist_accessor) (alpm_pkg_t* pkg);
 
 enum longopt_flags {
 	FLAG_CONFIG = 1000,
+	FLAG_DBEXT,
 	FLAG_DBPATH,
 	FLAG_DEBUG,
 	FLAG_HELP,
@@ -584,6 +590,7 @@ void usage(int ret)
 	hputs("        pacsift (--help|--version)");
 	hputs("options:");
 	hputs("   --config=<path>      set an alternate configuration file");
+	hputs("   --dbext=<ext>        set an alternate sync database extension");
 	hputs("   --dbpath=<path>      set an alternate database location");
 	hputs("   --root=<path>        set an alternate installation root");
 	hputs("   --null[=sep]         use <sep> to separate values (default NUL)");
@@ -646,6 +653,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 	char *short_opts = "QS";
 	struct option long_opts[] = {
 		{ "config"        , required_argument , NULL    , FLAG_CONFIG        } ,
+		{ "dbext"         , required_argument , NULL    , FLAG_DBEXT         } ,
 		{ "dbpath"        , required_argument , NULL    , FLAG_DBPATH        } ,
 		{ "debug"         , no_argument       , NULL    , FLAG_DEBUG         } ,
 		{ "help"          , no_argument       , NULL    , FLAG_HELP          } ,
@@ -703,6 +711,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 				break;
 			case FLAG_CONFIG:
 				config_file = optarg;
+				break;
+			case FLAG_DBEXT:
+				dbext = optarg;
 				break;
 			case FLAG_DBPATH:
 				free(config->dbpath);
@@ -834,6 +845,17 @@ int main(int argc, char **argv)
 
 	if(!(handle = pu_initialize_handle_from_config(config))) {
 		fprintf(stderr, "error: failed to initialize alpm.\n");
+		ret = 1;
+		goto cleanup;
+	}
+
+	if(ownsfile && dbext == NULL) {
+		dbext = FILESDBEXT;
+	}
+
+	if(dbext && alpm_option_set_dbext(handle, dbext) != 0) {
+		fprintf(stderr, "error: unable to set database file extension (%s)\n",
+				alpm_strerror(alpm_errno(handle)));
 		ret = 1;
 		goto cleanup;
 	}

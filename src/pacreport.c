@@ -18,11 +18,13 @@ pu_config_t *config = NULL;
 alpm_handle_t *handle;
 alpm_list_t *groups = NULL, *ignore = NULL, *pkg_ignore = NULL;
 int missing_files = 0, backup_files = 0, orphan_files = 0;
+char *dbext = NULL;
 
 enum longopt_flags {
 	FLAG_BACKUPS = 1000,
 	FLAG_CACHEDIR,
 	FLAG_CONFIG,
+	FLAG_DBEXT,
 	FLAG_DBPATH,
 	FLAG_GROUP,
 	FLAG_HELP,
@@ -583,6 +585,7 @@ void usage(int ret)
 	hputs("   --root=<path>      set an alternate installation root");
 	hputs("   --cachedir=<path>  set an alternate cache location");
 	hputs("   --config=<path>    set an alternate pacman configuration file");
+	hputs("   --dbext=<ext>      set an alternate sync database extension");
 	hputs("   --dbpath=<path>    set an alternate database location");
 	hputs("");
 	hputs("   --backups          list .pac{save,orig,new} files");
@@ -606,6 +609,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 	struct option long_opts[] = {
 		{ "cachedir"      , required_argument , NULL       , FLAG_CACHEDIR      } ,
 		{ "config"        , required_argument , NULL       , FLAG_CONFIG        } ,
+		{ "dbext"         , required_argument , NULL       , FLAG_DBEXT         } ,
 		{ "dbpath"        , required_argument , NULL       , FLAG_DBPATH        } ,
 		{ "root"          , required_argument , NULL       , FLAG_ROOT          } ,
 
@@ -647,6 +651,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 			case FLAG_CACHEDIR:
 				FREELIST(config->cachedirs);
 				config->cachedirs = alpm_list_add(NULL, strdup(optarg));
+				break;
+			case FLAG_DBEXT:
+				dbext = optarg;
 				break;
 			case FLAG_DBPATH:
 				free(config->dbpath);
@@ -718,6 +725,12 @@ int main(int argc, char **argv)
 
 	if(!(handle = pu_initialize_handle_from_config(config))) {
 		fprintf(stderr, "error: failed to initialize alpm.\n");
+		ret = 1;
+		goto cleanup;
+	}
+	if(dbext && alpm_option_set_dbext(handle, dbext) != 0) {
+		fprintf(stderr, "error: unable to set database file extension (%s)\n",
+				alpm_strerror(alpm_errno(handle)));
 		ret = 1;
 		goto cleanup;
 	}

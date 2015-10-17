@@ -25,6 +25,10 @@ C<pacman -Qs> and C<pacman -Ss>:
 
 Set an alternate configuration file path.
 
+=item B<--dbext>=I<extension>
+
+Set an alternate sync database extension.
+
 =item B<--dbpath>=F<path>
 
 Set an alternate database path.
