@@ -192,26 +192,26 @@ struct date_cmp *parse_date(const char *str)
 			fprintf(stderr, "error: invalid date comparison '%s'\n", str);
 			cleanup(1);
 		}
-		c += len;
+		str += len;
 	} else {
 		date.cmp = CMP_EQ;
 	}
 
-	if(strspn(c, "0123456789") == strlen(c)) {
+	if(strspn(str, "0123456789") == strlen(str)) {
 		errno = 0;
-		date.time = strtoll(c, &end, 10);
+		date.time = strtoll(str, &end, 10);
 		if(*end || errno) {
-			fprintf(stderr, "error: invalid date '%s'\n", c);
+			fprintf(stderr, "error: invalid date '%s'\n", str);
 			cleanup(1);
 		}
-	} else if(*(strptime(c, "%Y-%m-%d", &stm)) == '\0') {
+	} else if((c = strptime(str, "%Y-%m-%d", &stm)) && *c == '\0') {
 		date.time = mktime(&stm);
-	} else if(*(strptime(c, "%Y-%m-%d %H:%M", &stm)) == '\0') {
+	} else if((c = strptime(str, "%Y-%m-%d %H:%M", &stm)) && *c == '\0') {
 		date.time = mktime(&stm);
-	} else if(*(strptime(c, "%Y-%m-%d %H:%M:%S", &stm)) == '\0') {
+	} else if((c = strptime(str, "%Y-%m-%d %H:%M:%S", &stm)) && *c == '\0') {
 		date.time = mktime(&stm);
 	} else {
-			fprintf(stderr, "error: invalid date '%s'\n", c);
+			fprintf(stderr, "error: invalid date '%s'\n", str);
 			cleanup(1);
 	}
 
