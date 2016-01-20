@@ -278,7 +278,7 @@ void dump_config(void)
 	show_list_str("IgnorePkg", config->ignorepkgs);
 	show_list_str("IgnoreGroup", config->ignoregroups);
 	show_list_str("NoUpgrade", config->noupgrade);
-	show_list_str("NoExtract", config->noupgrade);
+	show_list_str("NoExtract", config->noextract);
 
 	show_str("Architecture", config->architecture);
 	show_str("XferCommand", config->xfercommand);
