@@ -29,6 +29,10 @@
 #include "config.h"
 #include "util.h"
 
+#ifndef DBEXT
+#define DBEXT ".db"
+#endif
+
 struct _pu_config_setting {
   char *name;
   pu_config_option_t type;
@@ -320,6 +324,8 @@ alpm_handle_t *pu_initialize_handle_from_config(pu_config_t *config)
   alpm_option_set_default_siglevel(handle, config->siglevel);
   alpm_option_set_local_file_siglevel(handle, config->localfilesiglevel);
   alpm_option_set_remote_file_siglevel(handle, config->remotefilesiglevel);
+
+  alpm_option_set_dbext(handle, DBEXT);
 
   return handle;
 }

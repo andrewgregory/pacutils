@@ -7,6 +7,9 @@ BINDIR      = ${EXEC_PREFIX}/bin
 INCLUDEDIR  = ${PREFIX}/include
 LIBDIR      = ${EXEC_PREFIX}/lib
 
+DBEXT      ?= .db
+CFLAGS     += -DDBEXT=\"$(DBEXT)\"
+
 HEADERS = \
 		  pacutils.h \
 		  pacutils/config.h \
