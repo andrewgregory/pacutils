@@ -471,7 +471,7 @@ static int _pu_glob(alpm_list_t **dest, const char *pattern)
 
   for(gindex = 0; gindex < gbuf.gl_pathc; gindex++) {
     char *dup = strdup(gbuf.gl_pathv[gindex]);
-    if(dup == NULL || _pu_list_append(&items, dup) == NULL) {
+    if(dup == NULL || alpm_list_append(&items, dup) == NULL) {
       free(dup);
       FREELIST(items);
       globfree(&gbuf);
@@ -500,7 +500,7 @@ static int _pu_glob(alpm_list_t **dest, const char *pattern)
   char *v, *ctx; \
   for(v = strtok_r(str, " ", &ctx); v; v = strtok_r(NULL, " ", &ctx)) { \
     char *dup = strdup(v); \
-    if(dup == NULL || _pu_list_append(dest, dup) == NULL) { \
+    if(dup == NULL || alpm_list_append(dest, dup) == NULL) { \
       reader->status = PU_CONFIG_READER_STATUS_ERROR; \
       reader->error = 1; \
       return -1; \
@@ -567,7 +567,7 @@ int pu_config_reader_next(pu_config_reader_t *reader)
         _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
       }
       r->siglevel = ALPM_SIG_USE_DEFAULT;
-      if(_pu_list_append(&config->repos, r) == NULL) {
+      if(alpm_list_append(&config->repos, r) == NULL) {
         _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
         return -1;
       }

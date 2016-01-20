@@ -29,7 +29,6 @@
 char *pu_basename(char *path);
 char *pu_hr_size(off_t bytes, char *dest);
 
-alpm_list_t *_pu_list_append(alpm_list_t **list, void *data);
 void *_pu_list_shift(alpm_list_t **list);
 
 #endif /* PACUTILS_UTIL_H */

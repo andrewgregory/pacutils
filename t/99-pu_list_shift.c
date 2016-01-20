@@ -8,9 +8,9 @@ int main(void) {
     alpm_list_t *l = NULL;
     char *c, *data1 = "foo", *data2 = "bar", *data3 = "baz";
 
-    _pu_list_append(&l, data1);
-    _pu_list_append(&l, data2);
-    _pu_list_append(&l, data3);
+    alpm_list_append(&l, data1);
+    alpm_list_append(&l, data2);
+    alpm_list_append(&l, data3);
 
     tap_plan(4);
 

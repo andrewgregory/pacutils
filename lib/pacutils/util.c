@@ -50,26 +50,6 @@ char *pu_hr_size(off_t bytes, char *dest)
   return dest;
 }
 
-alpm_list_t *_pu_list_append(alpm_list_t **list, void *data)
-{
-  alpm_list_t *l = *list, *new = malloc(sizeof(alpm_list_t));
-  if(new == NULL) { return NULL; }
-
-  new->next = NULL;
-  new->data = data;
-
-  if(l == NULL) {
-    l = *list = new;
-    new->prev = new;
-  } else {
-    l->prev->next = new;
-    new->prev = l->prev;
-    l->prev = new;
-  }
-
-  return new;
-}
-
 void *_pu_list_shift(alpm_list_t **list)
 {
   alpm_list_t *l = *list;
