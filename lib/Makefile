@@ -8,7 +8,8 @@ INCLUDEDIR  = ${PREFIX}/include
 LIBDIR      = ${EXEC_PREFIX}/lib
 
 DBEXT      ?= .db
-CFLAGS     += -DDBEXT=\"$(DBEXT)\"
+HOOKDIR    ?= /etc/pacman.d/hooks/
+CFLAGS     += -DDBEXT=\"$(DBEXT)\" -DHOOKDIR=\"$(HOOKDIR)\"
 
 HEADERS = \
 		  pacutils.h \

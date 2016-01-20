@@ -33,6 +33,10 @@
 #define DBEXT ".db"
 #endif
 
+#ifndef HOOKDIR
+#define HOOKDIR "/etc/pacman.d/hooks/"
+#endif
+
 struct _pu_config_setting {
   char *name;
   pu_config_option_t type;
@@ -58,6 +62,7 @@ struct _pu_config_setting {
   {"RemoteFileSigLevel", PU_CONFIG_OPTION_REMOTE_SIGLEVEL},
 
   {"HoldPkg",         PU_CONFIG_OPTION_HOLDPKGS},
+  {"HookDir",         PU_CONFIG_OPTION_HOOKDIRS},
   {"IgnorePkg",       PU_CONFIG_OPTION_IGNOREPKGS},
   {"IgnoreGroup",     PU_CONFIG_OPTION_IGNOREGROUPS},
   {"NoUpgrade",       PU_CONFIG_OPTION_NOUPGRADE},
@@ -270,6 +275,7 @@ void pu_config_free(pu_config_t *config)
   free(config->xfercommand);
 
   FREELIST(config->holdpkgs);
+  FREELIST(config->hookdirs);
   FREELIST(config->ignorepkgs);
   FREELIST(config->ignoregroups);
   FREELIST(config->noupgrade);
@@ -327,6 +333,14 @@ alpm_handle_t *pu_initialize_handle_from_config(pu_config_t *config)
 
   alpm_option_set_dbext(handle, DBEXT);
 
+  /* add hook directories 1-by-1 to avoid overwriting the system directory */
+  if(config->hookdirs != NULL) {
+    alpm_list_t *i;
+    for(i = config->hookdirs; i; i = alpm_list_next(i)) {
+      alpm_option_add_hookdir(handle, i->data);
+    }
+  }
+
   return handle;
 }
 
@@ -367,6 +381,7 @@ int pu_config_resolve(pu_config_t *config)
   SETDEFAULT(config->gpgdir, strdup("/etc/pacman.d/gnupg/"));
   SETDEFAULT(config->cachedirs,
       alpm_list_add(NULL, strdup("/var/cache/pacman/pkg")));
+  SETDEFAULT(config->hookdirs, alpm_list_add(NULL, strdup(HOOKDIR)));
   SETDEFAULT(config->cleanmethod, PU_CONFIG_CLEANMETHOD_KEEP_INSTALLED);
 
   if(!config->architecture || strcmp(config->architecture, "auto") == 0) {
@@ -438,6 +453,7 @@ void pu_config_merge(pu_config_t *dest, pu_config_t *src)
 
   MERGELIST(dest->cachedirs, src->cachedirs);
   MERGELIST(dest->holdpkgs, src->holdpkgs);
+  MERGELIST(dest->hookdirs, src->hookdirs);
   MERGELIST(dest->noextract, src->noextract);
   MERGELIST(dest->noupgrade, src->noupgrade);
   MERGELIST(dest->ignorepkgs, src->ignorepkgs);
@@ -710,6 +726,9 @@ int pu_config_reader_next(pu_config_reader_t *reader)
           break;
         case PU_CONFIG_OPTION_HOLDPKGS:
           APPENDLIST(&config->holdpkgs, mini->value);
+          break;
+        case PU_CONFIG_OPTION_HOOKDIRS:
+          APPENDLIST(&config->hookdirs, mini->value);
           break;
         case PU_CONFIG_OPTION_IGNOREPKGS:
           APPENDLIST(&config->ignorepkgs, mini->value);

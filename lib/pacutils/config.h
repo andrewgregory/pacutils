@@ -46,6 +46,7 @@ typedef enum pu_config_option_t {
   PU_CONFIG_OPTION_LOCAL_SIGLEVEL,
   PU_CONFIG_OPTION_REMOTE_SIGLEVEL,
 
+  PU_CONFIG_OPTION_HOOKDIRS,
   PU_CONFIG_OPTION_HOLDPKGS,
   PU_CONFIG_OPTION_IGNOREPKGS,
   PU_CONFIG_OPTION_IGNOREGROUPS,
@@ -100,6 +101,7 @@ typedef struct pu_config_t {
 
   alpm_list_t *cachedirs;
   alpm_list_t *holdpkgs;
+  alpm_list_t *hookdirs;
   alpm_list_t *ignoregroups;
   alpm_list_t *ignorepkgs;
   alpm_list_t *noextract;

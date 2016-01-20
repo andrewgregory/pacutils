@@ -17,7 +17,7 @@ alpm_list_t *spec = NULL, *add = NULL, *rem = NULL, *files = NULL;
 alpm_list_t **list = &spec;
 alpm_list_t *ignore_pkg = NULL, *ignore_group = NULL;
 int printonly = 0, noconfirm = 0, sysupgrade = 0, downgrade = 0, dbsync = 0;
-int isep = '\n';
+int nohooks = 0, isep = '\n';
 char *dbext = NULL;
 
 enum longopt_flags {
@@ -36,6 +36,8 @@ enum longopt_flags {
 	FLAG_DOWNGRADE,
 	FLAG_FILE,
 	FLAG_HELP,
+	FLAG_HOOKDIR,
+	FLAG_NOHOOKS,
 	FLAG_IGNORE_PKG,
 	FLAG_IGNORE_GROUP,
 	FLAG_LOGFILE,
@@ -89,11 +91,13 @@ void usage(int ret)
 	hputs("   --dbext=<ext>      set an alternate sync database extension");
 	hputs("   --dbpath=<path>    set an alternate database location");
 	hputs("   --debug            enable extra debugging messages");
+	hputs("   --hookdir=<path>   add additional user hook directory");
 	hputs("   --logfile=<path>   set an alternate log file");
 	hputs("   --print-only       display transaction information and exit");
 	hputs("   --no-confirm       assume default responses to all prompts");
 	hputs("   --no-deps          ignore dependency version restrictions");
 	hputs("                      (pass twice to ignore dependencies altogether)");
+	hputs("   --no-hooks         do not run transaction hooks");
 	hputs("   --no-scriptlet     do not run package install scripts");
 	hputs("   --null=[sep]       parse stdin as <sep> separated values (default NUL)");
 	hputs("   --root=<path>      set an alternate installation root");
@@ -142,6 +146,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "dbpath"        , required_argument , NULL       , FLAG_DBPATH       } ,
 		{ "dbsync"        , no_argument       , NULL       , FLAG_DBSYNC       } ,
 		{ "debug"         , optional_argument , NULL       , FLAG_DEBUG        } ,
+		{ "hookdir"       , required_argument , NULL       , FLAG_HOOKDIR      } ,
 		{ "logfile"       , required_argument , NULL       , FLAG_LOGFILE      } ,
 		{ "print-only"    , no_argument       , NULL       , FLAG_PRINT        } ,
 		{ "null"          , optional_argument , NULL       , FLAG_NULL         } ,
@@ -149,6 +154,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "noconfirm"     , no_argument       , NULL       , FLAG_NOCONFIRM    } ,
 		{ "no-deps"       , no_argument       , NULL       , FLAG_NODEPS       } ,
 		{ "no-scriptlet"  , no_argument       , NULL       , FLAG_NOSCRIPTLET  } ,
+		{ "no-hooks"      , no_argument       , NULL       , FLAG_NOHOOKS      } ,
 		{ "root"          , required_argument , NULL       , FLAG_ROOT         } ,
 		{ "sysupgrade"    , no_argument       , NULL       , FLAG_SYSUPGRADE   } ,
 		{ "downgrade"     , no_argument       , NULL       , FLAG_DOWNGRADE    } ,
@@ -238,6 +244,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 				log_level |= ALPM_LOG_DEBUG;
 				log_level |= ALPM_LOG_FUNCTION;
 				break;
+			case FLAG_HOOKDIR:
+				config->hookdirs = alpm_list_add(config->hookdirs, strdup(optarg));
+				break;
 			case FLAG_LOGFILE:
 				free(config->logfile);
 				config->logfile = strdup(optarg);
@@ -258,6 +267,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 				break;
 			case FLAG_NULL:
 				isep = optarg ? optarg[0] : '\0';
+				break;
+			case FLAG_NOHOOKS:
+				nohooks = 1;
 				break;
 			case FLAG_NOSCRIPTLET:
 				trans_flags |= ALPM_TRANS_FLAG_NOSCRIPTLET;
@@ -482,6 +494,10 @@ int main(int argc, char **argv)
 				alpm_strerror(alpm_errno(handle)));
 		ret = 1;
 		goto cleanup;
+	}
+
+	if(nohooks) {
+		alpm_option_set_hookdirs(handle, NULL);
 	}
 
 	alpm_option_set_questioncb(handle, pu_ui_cb_question);

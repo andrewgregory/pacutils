@@ -271,6 +271,7 @@ void dump_config(void)
 	show_str("RootDir", config->rootdir);
 	show_str("DBPath", config->dbpath);
 	show_list_str("CacheDir", config->cachedirs);
+	show_list_str("HookDir", config->hookdirs);
 	show_str("GPGDir", config->gpgdir);
 	show_str("LogFile", config->logfile);
 
@@ -364,6 +365,8 @@ int list_directives(alpm_list_t *directives)
 			show_str("DBPath", config->dbpath);
 		} else if(strcasecmp(i->data, "CacheDir") == 0) {
 			show_list_str("CacheDir", config->cachedirs);
+		} else if(strcasecmp(i->data, "HookDir") == 0) {
+			show_list_str("HookDir", config->hookdirs);
 		} else if(strcasecmp(i->data, "GPGDir") == 0) {
 			show_str("GPGDir", config->gpgdir);
 		} else if(strcasecmp(i->data, "LogFile") == 0) {

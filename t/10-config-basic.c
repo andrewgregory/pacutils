@@ -15,6 +15,8 @@ char buf[] =
     "DBPath = /dbpath1/ \n"
     "DBPath = /dbpath2/ \n"
     "CacheDir=/cachedir\n"
+    "HookDir=/hookdir1\n"
+    "HookDir=/hookdir2\n"
     "GPGDir =gpgdir\n"
     "GPGDir =gpgdir2\n"
     "LogFile= /logfile #this is a comment\n"
@@ -103,7 +105,7 @@ int main(void) {
     pu_config_reader_t *reader = pu_config_reader_new(config, "mockfile.ini");
     pu_repo_t *repo;
 
-	tap_plan(36);
+	tap_plan(39);
 
     if(config == NULL || reader == NULL) {
         tap_bail("error initializing reader (%s)", strerror(errno));
@@ -152,6 +154,11 @@ int main(void) {
     i = config->cachedirs;
     is_str_list(i, "/cachedir", "CacheDir");
     is_list_exhausted(i, "cachedir");
+
+    i = config->hookdirs;
+    is_str_list(i, "/hookdir1", "HookDir");
+    is_str_list(i, "/hookdir2", "HookDir");
+    is_list_exhausted(i, "hookdir");
 
     i = config->holdpkgs;
     is_str_list(i, "holdpkga", "HoldPkg a");
