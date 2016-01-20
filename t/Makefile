@@ -15,7 +15,7 @@ TESTS += \
 		 99-pu_list_append.t \
 		 99-pu_list_shift.t
 
-%.t: %.c
+%.t: %.c ../lib/libpacutils.so
 	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $< $(LDLIBS) -o $@
 
 check: tests
