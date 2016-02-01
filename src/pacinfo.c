@@ -262,6 +262,7 @@ void print_pkg_info(alpm_pkg_t *pkg) {
 				break;
 			case 2:
 				printf("Name:           %s\n", alpm_pkg_get_name(pkg));
+				printf("Base:           %s\n", alpm_pkg_get_base(pkg));
 				printf("Repository:     %s\n", alpm_db_get_name(db));
 				printf("File:           %s\n", alpm_pkg_get_filename(pkg));
 				printf("Version:        %s\n", alpm_pkg_get_version(pkg));
