@@ -105,6 +105,8 @@ used I<val> will be used as an extended case-insensitive regular expression.
 
 =item B<--name>=I<val>
 
+=item B<--base>=I<val>
+
 =item B<--description>=I<val>
 
 =item B<--packager>=I<val>

@@ -25,7 +25,7 @@ int osep = '\n', isep = '\n';
 char *dbext = NULL;
 alpm_list_t *search_dbs = NULL;
 alpm_list_t *repo = NULL, *name = NULL, *description = NULL, *packager = NULL;
-alpm_list_t *arch = NULL, *url = NULL;
+alpm_list_t *base = NULL, *arch = NULL, *url = NULL;
 alpm_list_t *group = NULL, *license = NULL;
 alpm_list_t *ownsfile = NULL;
 alpm_list_t *requiredby = NULL;
@@ -51,6 +51,7 @@ enum longopt_flags {
 	FLAG_VERSION,
 
 	FLAG_ARCH,
+	FLAG_BASE,
 	FLAG_BDATE,
 	FLAG_CACHE,
 	FLAG_NAME,
@@ -100,6 +101,7 @@ void cleanup(int ret)
 	FREELIST(repo);
 	FREELIST(arch);
 	FREELIST(name);
+	FREELIST(base);
 	FREELIST(description);
 	FREELIST(packager);
 
@@ -547,6 +549,7 @@ alpm_list_t *filter_pkgs(alpm_handle_t *handle, alpm_list_t *pkgs)
 	const size_t rootlen = strlen(root);
 
 	match(name, filter_str(&haystack, i, alpm_pkg_get_name));
+	match(base, filter_str(&haystack, i, alpm_pkg_get_base));
 	match(description, filter_str(&haystack, i, alpm_pkg_get_desc));
 	match(packager, filter_str(&haystack, i, alpm_pkg_get_packager));
 	match(repo, filter_str(&haystack, i, get_dbname));
@@ -621,6 +624,7 @@ void usage(int ret)
 	hputs("   --architecture=<val> search package architecture");
 	hputs("   --repo=<val>         search packages in repo <name>");
 	hputs("   --name=<val>         search package names");
+	hputs("   --base=<val>         search package bases");
 	hputs("   --description=<val>  search package descriptions");
 	hputs("   --packager=<val>     search package packager field");
 	hputs("   --group=<val>        search package group field");
@@ -674,6 +678,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "repo"          , required_argument , NULL    , FLAG_REPO          } ,
 		{ "packager"      , required_argument , NULL    , FLAG_PACKAGER      } ,
 		{ "name"          , required_argument , NULL    , FLAG_NAME          } ,
+		{ "base"          , required_argument , NULL    , FLAG_BASE          } ,
 		{ "description"   , required_argument , NULL    , FLAG_DESCRIPTION   } ,
 		{ "owns-file"     , required_argument , NULL    , FLAG_OWNSFILE      } ,
 		{ "group"         , required_argument , NULL    , FLAG_GROUP         } ,
@@ -753,6 +758,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 				break;
 			case FLAG_NAME:
 				name = alpm_list_add(name, strdup(optarg));
+				break;
+			case FLAG_BASE:
+				base = alpm_list_add(base, strdup(optarg));
 				break;
 			case FLAG_PACKAGER:
 				packager = alpm_list_add(packager, strdup(optarg));
