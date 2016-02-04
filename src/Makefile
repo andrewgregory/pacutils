@@ -40,6 +40,6 @@ install: all
 	cp -d          pacremove  "${DESTDIR}${BINDIR}/pacremove"
 
 clean:
-	$(RM) $(OBJECTS)
+	$(RM) $(OBJECTS) pacinstall pacremove
 
 .PHONY: all clean install
