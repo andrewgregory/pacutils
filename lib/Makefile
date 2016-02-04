@@ -1,15 +1,29 @@
 CFLAGS += -Wall -fPIC -shared -g
 LDLIBS += -lalpm
 
-PREFIX      = /usr/local
-EXEC_PREFIX = ${PREFIX}
-BINDIR      = ${EXEC_PREFIX}/bin
-INCLUDEDIR  = ${PREFIX}/include
-LIBDIR      = ${EXEC_PREFIX}/lib
+PREFIX        = /usr/local
+EXEC_PREFIX   = ${PREFIX}
+BINDIR        = ${EXEC_PREFIX}/bin
+INCLUDEDIR    = ${PREFIX}/include
+LIBDIR        = ${EXEC_PREFIX}/lib
+LOCALSTATEDIR = ${PREFIX}/var
+SYSCONFDIR    = ${PREFIX}/etc
 
-DBEXT      ?= .db
-HOOKDIR    ?= /etc/pacman.d/hooks/
-CFLAGS     += -DDBEXT=\"$(DBEXT)\" -DHOOKDIR=\"$(HOOKDIR)\"
+CACHEDIR   = ${LOCALSTATEDIR}/cache/pacman/pkg
+DBEXT      = .db
+DBPATH     = ${LOCALSTATEDIR}/lib/pacman
+GPGDIR     = ${SYSCONFDIR}/pacman.d/gnupg
+HOOKDIR    = ${SYSCONFDIR}/pacman.d/hooks
+LOGFILE    = ${LOCALSTATEDIR}/log/pacman.log
+ROOTDIR    = /
+CFLAGS     += \
+			  -DCACHEDIR=\"$(CACHEDIR)\" \
+			  -DDBEXT=\"$(DBEXT)\" \
+			  -DDBPATH=\"$(DBPATH)\" \
+			  -DGPGDIR=\"$(GPGDIR)\" \
+			  -DHOOKDIR=\"$(HOOKDIR)\" \
+			  -DLOGFILE=\"$(LOGFILE)\" \
+			  -DROOTDIR=\"$(ROOTDIR)\"
 
 HEADERS = \
 		  pacutils.h \

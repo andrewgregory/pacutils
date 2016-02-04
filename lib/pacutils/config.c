@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2015 Andrew Gregory <andrew.gregory.8@gmail.com>
+ * Copyright 2012-2016 Andrew Gregory <andrew.gregory.8@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -27,15 +27,8 @@
 #include "../../ext/mini.c/mini.h"
 
 #include "config.h"
+#include "config-defaults.h"
 #include "util.h"
-
-#ifndef DBEXT
-#define DBEXT ".db"
-#endif
-
-#ifndef HOOKDIR
-#define HOOKDIR "/etc/pacman.d/hooks/"
-#endif
 
 struct _pu_config_setting {
   char *name;
@@ -369,18 +362,15 @@ int pu_config_resolve(pu_config_t *config)
 
 #define SETDEFAULT(opt, val) if(!opt) { opt = val; if(!opt) { return -1; } }
   if(config->rootdir) {
-    SETDEFAULT(config->dbpath,
-        _pu_strjoin("/", config->rootdir, "var/lib/pacman/", NULL));
-    SETDEFAULT(config->logfile,
-        _pu_strjoin("/", config->rootdir, "var/log/pacman.log", NULL));
+    SETDEFAULT(config->dbpath, _pu_strjoin("/", config->rootdir, DBPATH, NULL));
+    SETDEFAULT(config->logfile, _pu_strjoin("/", config->rootdir, LOGFILE, NULL));
   } else {
-    SETDEFAULT(config->rootdir, strdup("/"));
-    SETDEFAULT(config->dbpath, strdup("/var/lib/pacman/"));
-    SETDEFAULT(config->logfile, strdup("/var/log/pacman.log"));
+    SETDEFAULT(config->rootdir, strdup(ROOTDIR));
+    SETDEFAULT(config->dbpath, strdup(DBPATH));
+    SETDEFAULT(config->logfile, strdup(LOGFILE));
   }
-  SETDEFAULT(config->gpgdir, strdup("/etc/pacman.d/gnupg/"));
-  SETDEFAULT(config->cachedirs,
-      alpm_list_add(NULL, strdup("/var/cache/pacman/pkg")));
+  SETDEFAULT(config->gpgdir, strdup(GPGDIR));
+  SETDEFAULT(config->cachedirs, alpm_list_add(NULL, strdup(CACHEDIR)));
   SETDEFAULT(config->hookdirs, alpm_list_add(NULL, strdup(HOOKDIR)));
   SETDEFAULT(config->cleanmethod, PU_CONFIG_CLEANMETHOD_KEEP_INSTALLED);
 
