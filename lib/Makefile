@@ -31,7 +31,7 @@ SOURCES = \
 all: libpacutils.so
 
 libpacutils.so: ${SOURCES}
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^ ${LDLIBS}
 
 install: libpacutils.so
 	install -d "${DESTDIR}${INCLUDEDIR}/pacutils"
