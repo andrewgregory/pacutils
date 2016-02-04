@@ -47,7 +47,7 @@ specifying I<sep> C<NUL> will be used.
 
 Return packages that B<DO NOT> match the provided search terms.
 
-=item B<--or>
+=item B<--any>
 
 Return the union of matched packages rather than the intersection.
 
@@ -73,7 +73,7 @@ Display version information and exit.
 
 Filters limit the initial set of packages to be searched.  They may not be used
 if packages are provided on F<stdin> and they are not affected by B<--invert>
-or B<--or>.
+or B<--any>.
 
 =over
 

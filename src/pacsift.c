@@ -20,7 +20,7 @@ alpm_handle_t *handle = NULL;
 alpm_loglevel_t log_level = ALPM_LOG_ERROR | ALPM_LOG_WARNING;
 
 int srch_cache = 0, srch_local = 0, srch_sync = 0;
-int invert = 0, re = 0, exact = 0, or = 0;
+int invert = 0, re = 0, exact = 0, any = 0;
 int osep = '\n', isep = '\n';
 char *dbext = NULL;
 alpm_list_t *search_dbs = NULL;
@@ -535,7 +535,7 @@ alpm_list_t *filter_strlist(alpm_list_t **pkgs, const char *str, strlist_accesso
 			void *i = lp->data; \
 			matches = alpm_list_join(matches, filter); \
 		} \
-		if(!or) { \
+		if(!any) { \
 			alpm_list_free(haystack); \
 			haystack = matches; \
 			matches = NULL; \
@@ -578,7 +578,7 @@ alpm_list_t *filter_pkgs(alpm_handle_t *handle, alpm_list_t *pkgs)
 		alpm_list_free(haystack);
 		return matches;
 	} else {
-		return or ? matches : haystack;
+		return any ? matches : haystack;
 	}
 }
 
@@ -601,14 +601,14 @@ void usage(int ret)
 	hputs("   --version            display version information");
 
 	hputs("   --invert             display packages which DO NOT match search criteria");
-	hputs("   --or                 OR search terms instead of AND");
+	hputs("   --any                display packages matching any search criteria");
 
 	hputs("   --exact              match search terms exactly");
 	hputs("   --regex              use regular expressions for matching");
 	hputs("                        (does not affect dependency matching)");
 
 	hputs(" Filters:");
-	hputs("   Note: filters are unaffected by --invert and --or");
+	hputs("   Note: filters are unaffected by --invert and --any");
 	hputs("   --cache              search packages in cache (EXPERIMENTAL)");
 	hputs("   --local              search installed packages");
 	hputs("   --sync               search packages in all sync repositories");
@@ -670,7 +670,8 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "invert"        , no_argument       , &invert , 1                  } ,
 		{ "regex"         , no_argument       , &re     , 1                  } ,
 		{ "exact"         , no_argument       , &exact  , 1                  } ,
-		{ "or"            , no_argument       , &or     , 1                  } ,
+		{ "or"            , no_argument       , &any    , 1                  } ,
+		{ "any"           , no_argument       , &any    , 1                  } ,
 
 		{ "null"          , optional_argument , NULL    , FLAG_NULL          } ,
 
