@@ -300,7 +300,7 @@ int ptr_cmp(const void *p1, const void *p2)
 void _regcomp(regex_t *preg, const char *regex, int cflags)
 {
 	int err;
-	if((err = regcomp(preg, regex, REG_EXTENDED | REG_ICASE | REG_NOSUB)) != 0) {
+	if((err = regcomp(preg, regex, cflags)) != 0) {
 		char errstr[100];
 		regerror(err, preg, errstr, 100);
 		fprintf(stderr, "error: invalid regex '%s' (%s)\n", regex,  errstr);

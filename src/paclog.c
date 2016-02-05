@@ -292,12 +292,12 @@ int fprint_entry_color(FILE *stream, pu_log_entry_t *entry)
 	}
 
 	if(entry->caller) {
-		ret = printf("[%s%s%s] [%s%s%s] %s%s%s\n",
+		ret = fprintf(stream, "[%s%s%s] [%s%s%s] %s%s%s\n",
 				palette.timestamp, timestamp,     palette.reset,
 				palette.caller,    entry->caller, palette.reset,
 				message_color,     message,       palette.reset);
 	} else {
-		ret = printf("[%s%s%s] %s%s%s\n",
+		ret = fprintf(stream, "[%s%s%s] %s%s%s\n",
 				palette.timestamp, timestamp, palette.reset,
 				message_color,     message,   palette.reset);
 	}
