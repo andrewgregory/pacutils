@@ -1,4 +1,4 @@
-CFLAGS += -Wall -fPIC -shared -g
+CFLAGS += -Wall -g
 LDLIBS += -lalpm
 
 PREFIX        = /usr/local
@@ -45,7 +45,7 @@ SOURCES = \
 all: libpacutils.so
 
 libpacutils.so: ${SOURCES}
-	$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ $^ ${LDLIBS}
+	$(CC) $(CPPFLAGS) -shared -fPIC $(CFLAGS) -o $@ $^ $(LDLIBS)
 
 install: libpacutils.so
 	install -d "${DESTDIR}${INCLUDEDIR}/pacutils"
