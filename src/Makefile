@@ -8,8 +8,8 @@ BINDIR      ?= ${EXEC_PREFIX}/bin
 INCLUDEDIR  ?= ${PREFIX}/include
 LIBDIR      ?= ${EXEC_PREFIX}/lib
 
-FILESDBEXT ?= .files
-CFLAGS     += -DFILESDBEXT=\"$(FILESDBEXT)\"
+FILESDBEXT = .files
+CPPFLAGS   += -DFILESDBEXT=\"$(FILESDBEXT)\"
 
 OBJECTS = \
 		  paccheck \

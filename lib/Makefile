@@ -16,7 +16,7 @@ GPGDIR     = ${SYSCONFDIR}/pacman.d/gnupg
 HOOKDIR    = ${SYSCONFDIR}/pacman.d/hooks
 LOGFILE    = ${LOCALSTATEDIR}/log/pacman.log
 ROOTDIR    = /
-CFLAGS     += \
+CPPFLAGS   += \
 			  -DCACHEDIR=\"$(CACHEDIR)\" \
 			  -DDBEXT=\"$(DBEXT)\" \
 			  -DDBPATH=\"$(DBPATH)\" \
@@ -45,7 +45,7 @@ SOURCES = \
 all: libpacutils.so
 
 libpacutils.so: ${SOURCES}
-	$(CC) $(CFLAGS) -o $@ $^ ${LDLIBS}
+	$(CC) $(CPPFLAGS) $(CFLAGS) -o $@ $^ ${LDLIBS}
 
 install: libpacutils.so
 	install -d "${DESTDIR}${INCLUDEDIR}/pacutils"
