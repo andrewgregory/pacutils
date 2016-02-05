@@ -1,4 +1,4 @@
-CFLAGS += -Wall -g
+CFLAGS += -Wall -Wextra -Werror -g
 LDLIBS += -lalpm
 
 PREFIX        = /usr/local

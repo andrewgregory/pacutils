@@ -1,4 +1,4 @@
-CFLAGS += -Wall -I../lib -g
+CFLAGS += -Wall -Wextra -Werror -I../lib -g
 LDFLAGS += -L../lib
 LDLIBS += -lpacutils -lalpm -larchive
 
