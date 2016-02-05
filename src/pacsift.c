@@ -318,7 +318,7 @@ alpm_list_t *filter_filelist(alpm_list_t **pkgs, const char *str,
 		_regcomp(&preg, str, REG_EXTENDED | REG_ICASE | REG_NOSUB);
 		for(p = *pkgs; p; p = p->next) {
 			alpm_filelist_t *files = alpm_pkg_get_files(p->data);
-			int i;
+			size_t i;
 			for(i = 0; i < files->count; ++i) {
 				if(regexec(&preg, files->files[i].name, 0, NULL, 0) == 0) {
 					matches = alpm_list_add(matches, p->data);
@@ -336,7 +336,7 @@ alpm_list_t *filter_filelist(alpm_list_t **pkgs, const char *str,
 	} else {
 		for(p = *pkgs; p; p = p->next) {
 			alpm_filelist_t *files = alpm_pkg_get_files(p->data);
-			int i;
+			size_t i;
 			for(i = 0; i < files->count; ++i) {
 				if(strcasestr(files->files[i].name, str)) {
 					matches = alpm_list_add(matches, p->data);

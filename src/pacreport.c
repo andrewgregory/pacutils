@@ -314,7 +314,7 @@ void print_missing_files(alpm_handle_t *handle)
 
 	for(p = pkgs; p; p = p->next) {
 		alpm_filelist_t *files = alpm_pkg_get_files(p->data);
-		int i;
+		size_t i;
 		for(i = 0; i < files->count; ++i) {
 			strncpy(tail, files->files[i].name, max);
 			if(access(path, F_OK) != 0) {

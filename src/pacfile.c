@@ -218,7 +218,7 @@ void cmp_gid(struct archive_entry *entry, struct stat *st)
 void cmp_size(struct archive_entry *entry, struct stat *st)
 {
 	/* FIXME directories and symlinks always show a discrepancy */
-	size_t psize = archive_entry_size(entry);
+	int64_t psize = archive_entry_size(entry);
 	char hr_size[20];
 
 	printf("size:   %s", pu_hr_size(psize, hr_size));
