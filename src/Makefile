@@ -25,7 +25,7 @@ OBJECTS = \
 
 all: $(OBJECTS) pacinstall pacremove
 
-pacsift: CFLAGS += -lm
+pacsift: LDLIBS += -lm
 
 pacremove: | pactrans
 	ln -fs $| $@
