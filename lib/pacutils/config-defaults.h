@@ -34,6 +34,10 @@
 #define LOCALSTATEDIR PREFIX "/var"
 #endif
 
+#ifndef SYSCONFDIR
+#define SYSCONFDIR PREFIX "/etc"
+#endif
+
 #ifndef CACHEDIR
 #define CACHEDIR LOCALSTATEDIR "/cache/pacman/pkg"
 #endif
@@ -47,11 +51,11 @@
 #endif
 
 #ifndef GPGDIR
-#define GPGDIR LOCALSTATEDIR "/etc/pacman.d/gnupg"
+#define GPGDIR SYSCONFDIR "/pacman.d/gnupg"
 #endif
 
 #ifndef HOOKDIR
-#define HOOKDIR LOCALSTATEDIR "/etc/pacman.d/hooks"
+#define HOOKDIR SYSCONFDIR "/pacman.d/hooks"
 #endif
 
 #ifndef LOGFILE
