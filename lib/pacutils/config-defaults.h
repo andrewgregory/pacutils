@@ -20,8 +20,6 @@
  * IN THE SOFTWARE.
  */
 
-#include <alpm.h>
-
 #ifndef PACUTILS_CONFIG_DEFAULTS_H
 #define PACUTILS_CONFIG_DEFAULTS_H
 
