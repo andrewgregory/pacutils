@@ -1,21 +1,25 @@
-CFLAGS += -Wall -Wextra -Werror -g
+-include ../configure.mk
+-include configure.mk
+
+CFLAGS ?= -Wall -Wextra -Werror -g
 LDLIBS += -lalpm
 
-PREFIX        = /usr/local
-EXEC_PREFIX   = ${PREFIX}
-BINDIR        = ${EXEC_PREFIX}/bin
-INCLUDEDIR    = ${PREFIX}/include
-LIBDIR        = ${EXEC_PREFIX}/lib
-LOCALSTATEDIR = ${PREFIX}/var
-SYSCONFDIR    = ${PREFIX}/etc
+PREFIX        ?= /usr/local
+EXEC_PREFIX   ?= ${PREFIX}
+BINDIR        ?= ${EXEC_PREFIX}/bin
+INCLUDEDIR    ?= ${PREFIX}/include
+LIBDIR        ?= ${EXEC_PREFIX}/lib
+LOCALSTATEDIR ?= ${PREFIX}/var
+SYSCONFDIR    ?= ${PREFIX}/etc
 
-CACHEDIR   = ${LOCALSTATEDIR}/cache/pacman/pkg
-DBEXT      = .db
-DBPATH     = ${LOCALSTATEDIR}/lib/pacman
-GPGDIR     = ${SYSCONFDIR}/pacman.d/gnupg
-HOOKDIR    = ${SYSCONFDIR}/pacman.d/hooks
-LOGFILE    = ${LOCALSTATEDIR}/log/pacman.log
-ROOTDIR    = /
+CACHEDIR   ?= ${LOCALSTATEDIR}/cache/pacman/pkg
+DBEXT      ?= .db
+DBPATH     ?= ${LOCALSTATEDIR}/lib/pacman
+GPGDIR     ?= ${SYSCONFDIR}/pacman.d/gnupg
+HOOKDIR    ?= ${SYSCONFDIR}/pacman.d/hooks
+LOGFILE    ?= ${LOCALSTATEDIR}/log/pacman.log
+ROOTDIR    ?= /
+
 CPPFLAGS   += \
 			  -DCACHEDIR=\"$(CACHEDIR)\" \
 			  -DDBEXT=\"$(DBEXT)\" \

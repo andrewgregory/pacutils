@@ -1,4 +1,7 @@
-CFLAGS += -Wall -Wextra -Werror -I../lib -g
+-include ../configure.mk
+-include configure.mk
+
+CFLAGS ?= -Wall -Wextra -Werror -I../lib -g
 LDFLAGS += -L../lib
 LDLIBS += -lpacutils -lalpm -larchive
 
@@ -8,7 +11,8 @@ BINDIR      ?= ${EXEC_PREFIX}/bin
 INCLUDEDIR  ?= ${PREFIX}/include
 LIBDIR      ?= ${EXEC_PREFIX}/lib
 
-FILESDBEXT = .files
+FILESDBEXT ?= .files
+
 CPPFLAGS   += -DFILESDBEXT=\"$(FILESDBEXT)\"
 
 OBJECTS = \

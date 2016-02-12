@@ -1,3 +1,6 @@
+-include ../configure.mk
+-include configure.mk
+
 PREFIX      ?= /usr/local
 DATAROOTDIR ?= $(PREFIX)/share
 MANDIR      ?= $(DATAROOTDIR)/man

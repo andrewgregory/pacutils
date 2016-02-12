@@ -19,3 +19,6 @@
 # Editor Files
 *.swp
 *.orig
+
+# site-specific configuration
+configure.mk
