@@ -139,25 +139,23 @@ int pu_log_command(alpm_handle_t *handle, const char *caller, int argc, char **a
 {
 	int i;
 	char *cmd;
-	size_t cmdlen = strlen("Running");
+	size_t cmdlen = 0;
 
 	for(i = 0; i < argc; ++i) {
 		cmdlen += strlen(argv[i]) + 1;
 	}
 
-	cmd = malloc(cmdlen + 2);
+	cmd = malloc(cmdlen + 1);
 	if(!cmd) {
 		return -1;
 	}
 
-	strcpy(cmd, "Running");
 	for(i = 0; i < argc; ++i) {
 		strcat(cmd, " ");
 		strcat(cmd, argv[i]);
 	}
-	strcat(cmd, "\n");
 
-	alpm_logaction(handle, caller, cmd);
+	alpm_logaction(handle, caller, "Running%s\n", cmd);
 
 	free(cmd);
 
