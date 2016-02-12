@@ -57,6 +57,23 @@ install: libpacutils.so
 	install -d "${DESTDIR}${LIBDIR}"
 	install -m 644 libpacutils.so "${DESTDIR}${LIBDIR}/libpacutils.so"
 
+configure.mk:
+	printf '' > $@
+	printf '%s = %s\n' 'PREFIX' '$(PREFIX)' >> $@
+	printf '%s = %s\n' 'EXEC_PREFIX' '$(EXEC_PREFIX)' >> $@
+	printf '%s = %s\n' 'BINDIR' '$(BINDIR)' >> $@
+	printf '%s = %s\n' 'INCLUDEDIR' '$(INCLUDEDIR)' >> $@
+	printf '%s = %s\n' 'LIBDIR' '$(LIBDIR)' >> $@
+	printf '%s = %s\n' 'LOCALSTATEDIR' '$(LOCALSTATEDIR)' >> $@
+	printf '%s = %s\n' 'SYSCONFDIR' '$(SYSCONFDIR)' >> $@
+	printf '%s = %s\n' 'CACHEDIR' '$(CACHEDIR)' >> $@
+	printf '%s = %s\n' 'DBEXT' '$(DBEXT)' >> $@
+	printf '%s = %s\n' 'DBPATH' '$(DBPATH)' >> $@
+	printf '%s = %s\n' 'GPGDIR' '$(GPGDIR)' >> $@
+	printf '%s = %s\n' 'HOOKDIR' '$(HOOKDIR)' >> $@
+	printf '%s = %s\n' 'LOGFILE' '$(LOGFILE)' >> $@
+	printf '%s = %s\n' 'ROOTDIR' '$(ROOTDIR)' >> $@
+
 clean:
 	$(RM) *.o *.so*
 
