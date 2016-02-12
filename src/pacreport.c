@@ -7,6 +7,7 @@
 #include <ctype.h>
 #include <math.h>
 #include <fnmatch.h>
+#include <fcntl.h>
 
 #include <pacutils.h>
 
@@ -354,32 +355,37 @@ cleanup:
 	return ret;
 }
 
-off_t get_cache_size(alpm_handle_t *handle, const char *path,
+off_t get_cache_size(alpm_handle_t *handle, int fd, const char *path,
 		off_t *uninstalled)
 {
 	off_t bytes = 0;
-	DIR *d = opendir(path);
 	struct dirent *de;
-	char de_path[PATH_MAX];
+	int dirfd;
+	DIR *d;
 
-	strncpy(de_path, path, PATH_MAX);
-	size_t plen = strlen(path);
-	char *tail = de_path + plen;
-	size_t max = PATH_MAX - plen;
+	if((dirfd = openat(fd, path, O_RDONLY | O_DIRECTORY)) < 0) {
+		warn("unable to open cachedir '%s' (%s)\n", path, strerror(errno));
+		return 0;
+	}
+	if((d = fdopendir(dirfd)) == NULL) {
+		warn("unable to open cachedir '%s' (%s)\n", path, strerror(errno));
+		close(dirfd);
+		return 0;
+	}
 
 	for(de = readdir(d); de; de = readdir(d)) {
+		struct stat buf;
 		if(de->d_name[0] == '.'
 				&& (de->d_name[1] == '\0' || strcmp("..", de->d_name) == 0)) {
 			continue;
 		}
-		strncpy(tail, de->d_name, max);
-		struct stat buf;
-		if(stat(de_path, &buf) != 0) {
+		if(fstatat(dirfd, de->d_name, &buf, AT_SYMLINK_NOFOLLOW) != 0) {
+			warn("unable to stat '%s' (%s)\n", de->d_name, strerror(errno));
 			continue;
 		}
 
 		if(S_ISDIR(buf.st_mode)) {
-			bytes += get_cache_size(handle, de_path, uninstalled);
+			bytes += get_cache_size(handle, dirfd, de->d_name, uninstalled);
 		} else {
 			bytes += buf.st_size;
 			if(uninstalled && !is_cache_file_installed(handle, de->d_name)) {
@@ -387,6 +393,7 @@ off_t get_cache_size(alpm_handle_t *handle, const char *path,
 			}
 		}
 	}
+
 	closedir(d);
 	return bytes;
 }
@@ -407,7 +414,7 @@ void print_cache_sizes(alpm_handle_t *handle)
 	for(c = cache_dirs; c; c = c->next) {
 		off_t uninstalled = 0;
 		char size[10], usize[10];
-		pu_hr_size(get_cache_size(handle, c->data, &uninstalled), size);
+		pu_hr_size(get_cache_size(handle, AT_FDCWD, c->data, &uninstalled), size);
 		pu_hr_size(uninstalled, usize);
 		printf("  %*s %s (%s not installed)\n",
 				(int) pathlen, (char*) c->data, size, usize);
