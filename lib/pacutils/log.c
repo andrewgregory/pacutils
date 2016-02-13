@@ -117,7 +117,7 @@ void pu_log_parser_free(pu_log_parser_t *p) {
 }
 
 pu_log_entry_t *pu_log_parser_next(pu_log_parser_t *parser) {
-	char *p;
+	char *p, *c;
 	pu_log_entry_t *entry = calloc(sizeof(pu_log_entry_t), 1);
 
 	if(entry == NULL) { errno = ENOMEM; return NULL; }
@@ -135,7 +135,8 @@ pu_log_entry_t *pu_log_parser_next(pu_log_parser_t *parser) {
 
 	entry->timestamp.tm_isdst = -1;
 
-	if(sscanf(p, "%*1[ ][%m[^]]]%*1[ ]", &entry->caller) > 0) {
+	if(p[0] == ' ' && p[1] == '[' && (c = strstr(p + 2, "] "))) {
+		entry->caller = strndup(p + 2, c - (p + 2));
 		p += strlen(entry->caller) + 4;
 	} else {
 		/* old style entries without caller information */
