@@ -520,7 +520,7 @@ int pu_config_reader_next(pu_config_reader_t *reader)
 
   reader->status = PU_CONFIG_READER_STATUS_OK;
 
-#define _PU_ERR(r, s) { r->status = s; r->error = 1; return -1; }
+#define PU_ERR(r, s) { r->status = s; r->error = 1; return -1; }
 
   if(mini_next(mini) == NULL) {
     if(mini->eof) {
@@ -537,7 +537,7 @@ int pu_config_reader_next(pu_config_reader_t *reader)
         reader->file = _pu_list_shift(&reader->_parent->_includes);
         reader->_includes = NULL;
         if(reader->_mini == mini_init(reader->file)) {
-          _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
+          PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
         }
       } else {
         /* switch back to the parent */
@@ -550,7 +550,7 @@ int pu_config_reader_next(pu_config_reader_t *reader)
       }
       return pu_config_reader_next(reader);
     } else {
-      _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
+      PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
     }
   }
 
@@ -561,7 +561,7 @@ int pu_config_reader_next(pu_config_reader_t *reader)
   if(!mini->key) {
     free(reader->section);
     if((reader->section = strdup(mini->section)) == NULL) {
-      _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
+      PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
     }
 
     if(strcmp(reader->section, "options") == 0) {
@@ -569,11 +569,11 @@ int pu_config_reader_next(pu_config_reader_t *reader)
     } else {
       pu_repo_t *r = pu_repo_new();
       if(r == NULL || (r->name = strdup(reader->section)) == NULL) {
-        _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
+        PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
       }
       r->siglevel = ALPM_SIG_USE_DEFAULT;
       if(alpm_list_append(&config->repos, r) == NULL) {
-        _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
+        PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
       }
       reader->repo = r;
     }
@@ -587,7 +587,7 @@ int pu_config_reader_next(pu_config_reader_t *reader)
 
     if(s->type == PU_CONFIG_OPTION_INCLUDE) {
       if(_pu_glob(&reader->_includes, mini->value) != 0) {
-        _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
+        PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
       } else if(reader->_includes == NULL) {
         return pu_config_reader_next(reader);
       } else {
@@ -599,7 +599,7 @@ int pu_config_reader_next(pu_config_reader_t *reader)
           free(file);
           free(p);
           mini_free(newmini);
-          _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
+          PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
         }
 
         memcpy(p, reader, sizeof(pu_config_reader_t));
@@ -670,7 +670,7 @@ int pu_config_reader_next(pu_config_reader_t *reader)
         case PU_CONFIG_OPTION_XFERCOMMAND:
           free(config->xfercommand);
           if((config->xfercommand = strdup(mini->value)) == NULL) {
-            _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
+            PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
           }
           break;
         case PU_CONFIG_OPTION_CLEANMETHOD:
@@ -767,7 +767,7 @@ int pu_config_reader_next(pu_config_reader_t *reader)
     }
   }
 
-#undef _PU_ERR
+#undef PU_ERR
 
   return  0;
 }
