@@ -746,7 +746,7 @@ int pu_config_reader_next(pu_config_reader_t *reader)
           config->usesyslog = 1;
           break;
         case PU_CONFIG_OPTION_USEDELTA:
-          config->usedelta = 0.7;
+          config->usedelta = 0.7f;
           break;
         case PU_CONFIG_OPTION_TOTALDOWNLOAD:
           config->totaldownload = 1;
