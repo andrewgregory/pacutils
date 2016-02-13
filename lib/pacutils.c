@@ -94,11 +94,6 @@ alpm_pkg_t *pu_find_pkgspec(alpm_handle_t *handle, const char *pkgspec)
 	return NULL;
 }
 
-/**
- * @brief print unique identifier for a package
- *
- * @param pkg
- */
 void pu_fprint_pkgspec(FILE *stream, alpm_pkg_t *pkg)
 {
 	const char *c;
