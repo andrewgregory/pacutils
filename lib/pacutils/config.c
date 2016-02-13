@@ -160,8 +160,7 @@ static int _pu_parse_cleanmethod(pu_config_t *config, char *val)
   return ret;
 }
 
-static int _pu_parse_siglevel(char *val,
-    alpm_siglevel_t *level, alpm_siglevel_t *mask)
+static int _pu_parse_siglevel(char *val, int *level, int *mask)
 {
   char *v, *ctx;
   int ret = 0;
