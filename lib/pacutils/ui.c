@@ -29,6 +29,7 @@
 
 #define PU_MAX_REFRESH_MS 200
 
+__attribute__((format (printf, 1, 2)))
 void pu_ui_warn(const char *fmt, ...)
 {
   va_list args;
@@ -39,6 +40,7 @@ void pu_ui_warn(const char *fmt, ...)
   va_end(args);
 }
 
+__attribute__((format (printf, 1, 2)))
 void pu_ui_error(const char *fmt, ...)
 {
   va_list args;
@@ -109,6 +111,7 @@ void pu_ui_cb_progress(alpm_progress_t event, const char *pkgname, int percent,
   percent_last = percent;
 }
 
+__attribute__((format (printf, 2, 3)))
 int pu_ui_confirm(int def, const char *prompt, ...)
 {
   va_list args;
