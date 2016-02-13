@@ -1,7 +1,7 @@
 -include ../configure.mk
 -include configure.mk
 
-CFLAGS ?= -Wall -Wextra -Werror -g
+CFLAGS ?= -Wall -Wextra -Wpedantic -Werror -g
 LDLIBS += -lalpm
 
 PREFIX        ?= /usr/local

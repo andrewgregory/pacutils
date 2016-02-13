@@ -1,7 +1,7 @@
 -include ../configure.mk
 -include configure.mk
 
-CFLAGS ?= -Wall -Wextra -Werror -I../lib -g
+CFLAGS ?= -Wall -Wextra -Wpedantic -Werror -I../lib -g
 LDFLAGS += -L../lib
 LDLIBS += -lpacutils -lalpm -larchive
 
