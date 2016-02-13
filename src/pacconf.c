@@ -1,4 +1,5 @@
 #include <getopt.h>
+#include <strings.h>
 
 #include <pacutils.h>
 

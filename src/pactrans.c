@@ -1,6 +1,7 @@
 #include <getopt.h>
 #include <errno.h>
 #include <limits.h>
+#include <strings.h>
 
 #include <pacutils.h>
 
