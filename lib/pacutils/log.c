@@ -1,5 +1,4 @@
-#define _XOPEN_SOURCE
-#define _XOPEN_SOURCE_EXTENDED
+#define _XOPEN_SOURCE 700 /* strptime/strndup */
 
 #include <errno.h>
 #include <stdio.h>
@@ -19,47 +18,77 @@ void pu_log_action_free(pu_log_action_t *action)
 	free(action);
 }
 
+static const char *_pu_strrstr(const char *haystack, const char *start, const char *needle)
+{
+	ssize_t nlen = strlen(needle);
+	if(start - haystack < nlen) { return NULL; }
+	for(start -= nlen; start > haystack; start--) {
+		if(memcmp(start, needle, nlen) == 0) { return start; }
+	}
+	return NULL;
+}
+
 pu_log_action_t *pu_log_action_parse(char *message)
 {
-	char operation[20], *version = NULL;
-	pu_log_action_t *a = calloc(sizeof(pu_log_action_t), 1);
+	pu_log_action_t *a;
+	size_t mlen = strlen(message);
 
-	if(sscanf(message, "%20s %ms (%m[^)])", operation, &a->target, &version) == 3) {
-		if(strcmp(operation, "installed") == 0) {
-			a->operation = PU_LOG_OPERATION_INSTALL;
-			a->new_version = version;
-		} else if(strcmp(operation, "reinstalled") == 0) {
-			a->operation = PU_LOG_OPERATION_REINSTALL;
-			a->new_version = version;
-			a->old_version = strdup(a->new_version);
-		} else if(strcmp(operation, "upgraded") == 0) {
-			a->operation = PU_LOG_OPERATION_UPGRADE;
-			if(sscanf(version, "%ms -> %ms", &a->old_version, &a->new_version) == 2) {
-				free(version);
-			} else {
-				goto error;
-			}
-		} else if(strcmp(operation, "downgraded") == 0) {
-			a->operation = PU_LOG_OPERATION_DOWNGRADE;
-			if(sscanf(version, "%ms -> %ms", &a->old_version, &a->new_version) == 2) {
-				free(version);
-			} else {
-				goto error;
-			}
-		} else if(strcmp(operation, "removed") == 0) {
-			a->operation = PU_LOG_OPERATION_REMOVE;
-			a->old_version = version;
-		} else {
-			goto error;
-		}
+	if(mlen <= 10) { errno = EINVAL; return NULL; }
+	if(message[mlen - 1] == '\n') { mlen--; }
+	if(message[mlen - 1] != ')') { errno = EINVAL; return NULL; }
+
+	if((a = calloc(sizeof(pu_log_action_t), 1)) == NULL) { return NULL; }
+
+#define PU_STARTSWITH(n) (mlen >= sizeof(n) && memcmp(message, n, sizeof(n) - 1) == 0)
+	if(PU_STARTSWITH("upgraded ")) {
+		const char *pkg = message + sizeof("upgraded ") - 1;
+		const char *sep = _pu_strrstr(message, message + mlen, " -> ");
+		const char *op = _pu_strrstr(message, sep, " (");
+		if(pkg[0] == '\0' || sep == NULL || op == NULL) { errno = EINVAL; goto error; }
+		a->operation = PU_LOG_OPERATION_UPGRADE;
+		if((a->target = strndup(pkg, op - pkg)) == NULL) { goto error; }
+		if((a->old_version = strndup(op + 2, sep - op - 2)) == NULL) { goto error; }
+		if((a->new_version = strndup(sep + 4, mlen - (sep + 4 - message))) == NULL) { goto error; }
+	} else if(PU_STARTSWITH("downgraded ")) {
+		const char *pkg = message + sizeof("downgraded ") - 1;
+		const char *sep = _pu_strrstr(message, message + mlen, " -> ");
+		const char *op = _pu_strrstr(message, sep, " (");
+		if(pkg[0] == '\0' || sep == NULL || op == NULL) { errno = EINVAL; goto error; }
+		a->operation = PU_LOG_OPERATION_DOWNGRADE;
+		if((a->target = strndup(pkg, op - pkg)) == NULL) { goto error; }
+		if((a->old_version = strndup(op + 2, sep - op - 2)) == NULL) { goto error; }
+		if((a->new_version = strndup(sep + 4, mlen - (sep + 4 - message))) == NULL) { goto error; }
+	} else if(PU_STARTSWITH("installed ")) {
+		const char *pkg = message + sizeof("installed ") - 1;
+		const char *op = _pu_strrstr(message, message + mlen, " (");
+		if(pkg[0] == '\0' || op == NULL) { errno = EINVAL; goto error; }
+		a->operation = PU_LOG_OPERATION_INSTALL;
+		if((a->target = strndup(pkg, op - pkg)) == NULL) { goto error; }
+		if((a->new_version = strndup(op + 2, mlen - (op + 2 - message))) == NULL) { goto error; }
+	} else if(PU_STARTSWITH("reinstalled ")) {
+		const char *pkg = message + sizeof("reinstalled ") - 1;
+		const char *op = _pu_strrstr(message, message + mlen, " (");
+		if(pkg[0] == '\0' || op == NULL) { errno = EINVAL; goto error; }
+		a->operation = PU_LOG_OPERATION_REINSTALL;
+		if((a->target = strndup(pkg, op - pkg)) == NULL) { goto error; }
+		if((a->old_version = strndup(op + 2, mlen - (op + 2 - message))) == NULL) { goto error; }
+		if((a->new_version = strdup(a->old_version)) == NULL) { goto error; }
+	} else if(PU_STARTSWITH("uninstalled ")) {
+		const char *pkg = message + sizeof("uninstalled ") - 1;
+		const char *op = _pu_strrstr(message, message + mlen, " (");
+		if(pkg[0] == '\0' || op == NULL) { errno = EINVAL; goto error; }
+		a->operation = PU_LOG_OPERATION_REMOVE;
+		if((a->target = strndup(pkg, op - pkg)) == NULL) { goto error; }
+		if((a->old_version = strndup(op + 2, mlen - (op + 2 - message))) == NULL) { goto error; }
 	} else {
+		errno = EINVAL;
 		goto error;
 	}
+#undef PU_STARTSWITH
 
 	return a;
 
 error:
-	free(version);
 	pu_log_action_free(a);
 	return NULL;
 }
