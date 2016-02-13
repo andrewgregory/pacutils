@@ -144,7 +144,7 @@ static char *_pu_strreplace(const char *str,
   return newstr;
 }
 
-int _pu_parse_cleanmethod(pu_config_t *config, char *val)
+static int _pu_parse_cleanmethod(pu_config_t *config, char *val)
 {
   char *v, *ctx;
   int ret = 0;
@@ -160,7 +160,7 @@ int _pu_parse_cleanmethod(pu_config_t *config, char *val)
   return ret;
 }
 
-int _pu_parse_siglevel(char *val,
+static int _pu_parse_siglevel(char *val,
     alpm_siglevel_t *level, alpm_siglevel_t *mask)
 {
   char *v, *ctx;
