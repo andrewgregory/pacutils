@@ -103,9 +103,9 @@ void pu_fprint_pkgspec(FILE *stream, alpm_pkg_t *pkg)
 			if(strstr(c, "://")) {
 				fprintf(stream, "%s", alpm_pkg_get_filename(pkg));
 			} else {
-				c = realpath(c, NULL);
-				fprintf(stream, "file://%s", c);
-				free((char*) c);
+				char *real = realpath(c, NULL);
+				fprintf(stream, "file://%s", real);
+				free(real);
 			}
 			break;
 		case ALPM_PKG_FROM_LOCALDB:
