@@ -35,6 +35,7 @@ enum longopt_flags {
 	FLAG_WARNINGS,
 };
 
+#define ESC "\x1B" /* "\e" */
 struct {
 	const char *timestamp;
 	const char *caller;
@@ -50,20 +51,20 @@ struct {
 
 	const char *reset;
 } palette = {
-	.timestamp = "\e[33m",       // yellow
-	.caller    = "\e[34m",       // blue
+	.timestamp = ESC"[33m",       // yellow
+	.caller    = ESC"[34m",       // blue
 
-	.message   = "\e[0m",        // normal
-	.warning   = "\e[37;41m",    // white on red
-	.error     = "\e[37;41m",    // white on red
-	.note      = "\e[34m",       // blue
+	.message   = ESC"[0m",        // normal
+	.warning   = ESC"[37;41m",    // white on red
+	.error     = ESC"[37;41m",    // white on red
+	.note      = ESC"[34m",       // blue
 
-	.transaction = "\e[35m",
+	.transaction = ESC"[35m",
 
-	.action    = "\e[36m",       // cyan
-	.install   = "\e[32m",       // green
-	.uninstall = "\e[31m",       // red
-	.reset     = "\e[0m",
+	.action    = ESC"[36m",       // cyan
+	.install   = ESC"[32m",       // green
+	.uninstall = ESC"[31m",       // red
+	.reset     = ESC"[0m",
 };
 
 void usage(int ret)
