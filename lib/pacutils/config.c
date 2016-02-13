@@ -575,7 +575,6 @@ int pu_config_reader_next(pu_config_reader_t *reader)
       r->siglevel = ALPM_SIG_USE_DEFAULT;
       if(alpm_list_append(&config->repos, r) == NULL) {
         _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
-        return -1;
       }
       reader->repo = r;
     }
