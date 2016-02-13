@@ -4,8 +4,6 @@
 #include <sys/time.h>
 #include <sys/utsname.h>
 
-#define PU_MAX_REFRESH_MS 200
-
 char *pu_version(void)
 {
 	return "0.1";
