@@ -1,7 +1,8 @@
 -include ../configure.mk
 -include configure.mk
 
-CFLAGS ?= -Wall -Wextra -Wpedantic -Werror -I../lib -g
+CC     = clang
+CFLAGS ?= -Wall -Wextra -Wpedantic -Weverything -Werror -I../lib -g
 LDFLAGS += -L../lib
 LDLIBS += -lpacutils -lalpm -larchive
 
