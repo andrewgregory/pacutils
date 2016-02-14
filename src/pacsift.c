@@ -31,9 +31,7 @@
 
 #include <pacutils.h>
 
-#ifndef FILESDBEXT
-#define FILESDBEXT ".files"
-#endif
+#include "config-defaults.h"
 
 const char *myname = "pacsift", *myver = "0.1";
 
@@ -672,7 +670,7 @@ void usage(int ret)
 
 pu_config_t *parse_opts(int argc, char **argv)
 {
-	char *config_file = "/etc/pacman.conf";
+	char *config_file = PACMANCONF;
 	pu_config_t *config = NULL;
 	int c;
 

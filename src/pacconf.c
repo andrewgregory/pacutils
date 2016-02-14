@@ -25,6 +25,8 @@
 
 #include <pacutils.h>
 
+#include "config-defaults.h"
+
 const char *myname = "pacconf", *myver = "0.2";
 
 pu_config_t *config = NULL;
@@ -78,7 +80,7 @@ void usage(int ret)
 
 pu_config_t *parse_opts(int argc, char **argv)
 {
-	char *config_file = "/etc/pacman.conf";
+	char *config_file = PACMANCONF;
 	int c;
 
 	char *short_opts = "";

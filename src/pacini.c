@@ -27,6 +27,8 @@
 
 #include <pacutils.h>
 
+#include "config-defaults.h"
+
 #include "../ext/mini.c/mini.c"
 
 const char *myname = "pacini", *myver = "0.1";

@@ -28,6 +28,8 @@
 
 #include <pacutils.h>
 
+#include "config-defaults.h"
+
 int checkfs = 0;
 alpm_list_t *pkgnames = NULL;
 
@@ -61,7 +63,7 @@ void usage(int ret)
 
 pu_config_t *parse_opts(int argc, char **argv)
 {
-	char *config_file = "/etc/pacman.conf";
+	char *config_file = PACMANCONF;
 	pu_config_t *config = NULL;
 	int c;
 

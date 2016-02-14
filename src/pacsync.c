@@ -24,6 +24,8 @@
 
 #include <pacutils.h>
 
+#include "config-defaults.h"
+
 #define LOG_PREFIX "PACSYNC"
 
 pu_config_t *config = NULL;
@@ -72,7 +74,7 @@ void version(void)
 
 pu_config_t *parse_opts(int argc, char **argv)
 {
-	char *config_file = "/etc/pacman.conf";
+	char *config_file = PACMANCONF;
 	int c;
 
 	char *short_opts = "";

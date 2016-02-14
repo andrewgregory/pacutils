@@ -32,6 +32,8 @@
 #include <pacutils.h>
 #include <pacutils/log.h>
 
+#include "config-defaults.h"
+
 const char *myname = "paclog", *myver = "0.2";
 
 char *logfile = NULL;
@@ -159,7 +161,7 @@ int parse_time(char *string, time_t *dest)
 
 void parse_opts(int argc, char **argv)
 {
-	char *config_file = "/etc/pacman.conf";
+	char *config_file = PACMANCONF;
 	int c;
 
 	const char *short_opts = "";

@@ -33,6 +33,8 @@
 
 #include <pacutils.h>
 
+#include "config-defaults.h"
+
 #include "../ext/mini.c/mini.c"
 
 const char *myname = "pacreport", *myver = "1.0";
@@ -630,7 +632,7 @@ void usage(int ret)
 
 pu_config_t *parse_opts(int argc, char **argv)
 {
-	char *config_file = "/etc/pacman.conf";
+	char *config_file = PACMANCONF;
 	int c;
 
 	char *short_opts = "";
@@ -765,7 +767,7 @@ int main(int argc, char **argv)
 	}
 	pu_register_syncdbs(handle, config->repos);
 
-	parse_config("/etc/pacreport.conf");
+	parse_config(SYSCONFDIR "/pacreport.conf");
 
 	if(backup_files || orphan_files) {
 		scan_filesystem(handle, backup_files, orphan_files);
