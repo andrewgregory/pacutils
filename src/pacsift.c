@@ -33,7 +33,7 @@
 
 #include "config-defaults.h"
 
-const char *myname = "pacsift", *myver = "0.1";
+const char *myname = "pacsift", *myver = BUILDVER;
 
 pu_config_t *config = NULL;
 alpm_handle_t *handle = NULL;

@@ -20,15 +20,16 @@
  * IN THE SOFTWARE.
  */
 
-#include "pacutils.h"
-
 #include <glob.h>
 #include <sys/time.h>
 #include <sys/utsname.h>
 
+#include "pacutils.h"
+#include "pacutils/config-defaults.h"
+
 char *pu_version(void)
 {
-	return "0.1";
+	return BUILDVER;
 }
 
 void pu_print_version(const char *progname, const char *progver)

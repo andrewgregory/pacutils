@@ -29,7 +29,7 @@
 
 #include "config-defaults.h"
 
-const char *myname, *myver = "0.1";
+const char *myname, *myver = BUILDVER;
 #define LOG_PREFIX "PACTRANS"
 
 pu_config_t *config = NULL;

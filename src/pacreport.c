@@ -37,7 +37,7 @@
 
 #include "../ext/mini.c/mini.c"
 
-const char *myname = "pacreport", *myver = "1.0";
+const char *myname = "pacreport", *myver = BUILDVER;
 
 pu_config_t *config = NULL;
 alpm_handle_t *handle;

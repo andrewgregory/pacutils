@@ -26,6 +26,7 @@
 
 #include "config-defaults.h"
 
+const char *myname = "pacsync", *myver = BUILDVER;
 #define LOG_PREFIX "PACSYNC"
 
 pu_config_t *config = NULL;
@@ -65,12 +66,6 @@ void usage(int ret)
 	exit(ret);
 }
 #undef hputs
-
-void version(void)
-{
-	printf("pacsync v0.1 - libalpm %s\n", alpm_version());
-	exit(0);
-}
 
 pu_config_t *parse_opts(int argc, char **argv)
 {
@@ -123,7 +118,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 				config->logfile = strdup(optarg);
 				break;
 			case FLAG_VERSION:
-				version();
+				pu_print_version(myname, myver);
 				break;
 			case '?':
 				usage(1);

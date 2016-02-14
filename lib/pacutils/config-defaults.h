@@ -23,6 +23,8 @@
 #ifndef PACUTILS_CONFIG_DEFAULTS_H
 #define PACUTILS_CONFIG_DEFAULTS_H
 
+#define BUILDVER "0.3.0"
+
 /* duplicates default configuration settings from lib/Makefile in order to
  * allow compilation without make and to provide defaults for analyzers */
 

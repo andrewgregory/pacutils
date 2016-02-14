@@ -31,7 +31,7 @@
 
 #include "../ext/mini.c/mini.c"
 
-const char *myname = "pacini", *myver = "0.1";
+const char *myname = "pacini", *myver = BUILDVER;
 
 mini_t *ini = NULL;
 alpm_list_t *directives = NULL;

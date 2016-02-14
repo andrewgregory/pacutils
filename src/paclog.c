@@ -34,7 +34,7 @@
 
 #include "config-defaults.h"
 
-const char *myname = "paclog", *myver = "0.2";
+const char *myname = "paclog", *myver = BUILDVER;
 
 char *logfile = NULL;
 

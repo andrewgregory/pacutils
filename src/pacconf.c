@@ -27,7 +27,7 @@
 
 #include "config-defaults.h"
 
-const char *myname = "pacconf", *myver = "0.2";
+const char *myname = "pacconf", *myver = BUILDVER;
 
 pu_config_t *config = NULL;
 alpm_list_t *directives = NULL;

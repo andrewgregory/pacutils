@@ -32,7 +32,7 @@
 
 #include "config-defaults.h"
 
-const char *myname = "paccheck", *myver = "0.1.0";
+const char *myname = "paccheck", *myver = BUILDVER;
 
 enum longopt_flags {
 	FLAG_ADD = 1000,

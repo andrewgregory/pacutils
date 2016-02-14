@@ -30,6 +30,8 @@
 
 #include "config-defaults.h"
 
+const char *myname = "pacfile", *myver = BUILDVER;
+
 int checkfs = 0;
 alpm_list_t *pkgnames = NULL;
 
@@ -105,7 +107,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 				config->rootdir = strdup(optarg);
 				break;
 			case FLAG_VERSION:
-				pu_print_version("pacfile", "0.1");
+				pu_print_version(myname, myver);
 				exit(0);
 				break;
 			case FLAG_PACKAGE:

@@ -28,7 +28,7 @@
 
 #include "config-defaults.h"
 
-const char *myname = "pacinfo", *myver = "0.1";
+const char *myname = "pacinfo", *myver = BUILDVER;
 
 pu_config_t *config = NULL;
 alpm_handle_t *handle = NULL;

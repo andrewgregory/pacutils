@@ -20,6 +20,9 @@
  * IN THE SOFTWARE.
  */
 
+#ifndef PACUTILS_H
+#define PACUTILS_H
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -33,9 +36,6 @@
 #include "pacutils/mtree.h"
 #include "pacutils/ui.h"
 #include "pacutils/util.h"
-
-#ifndef PACUTILS_H
-#define PACUTILS_H
 
 char *pu_version(void);
 void pu_print_version(const char *progname, const char *progver);
