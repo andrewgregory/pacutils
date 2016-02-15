@@ -537,7 +537,7 @@ int pu_config_reader_next(pu_config_reader_t *reader)
         /* switch to the next included file */
         reader->file = _pu_list_shift(&reader->_parent->_includes);
         reader->_includes = NULL;
-        if(reader->_mini == mini_init(reader->file)) {
+        if((reader->_mini = mini_init(reader->file)) == NULL) {
           _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
         }
       } else {
