@@ -93,7 +93,7 @@ alpm_pkg_t *pu_find_pkgspec(alpm_handle_t *handle, const char *pkgspec)
 		alpm_db_t *db = NULL;
 		size_t dblen = c - pkgspec;
 
-		if(dblen == strlen("local") && strncmp(pkgspec, "local", dblen) == 0) {
+		if(dblen == strlen("local") && memcmp(pkgspec, "local", dblen) == 0) {
 			db = alpm_get_localdb(handle);
 		} else {
 			alpm_list_t *i;
