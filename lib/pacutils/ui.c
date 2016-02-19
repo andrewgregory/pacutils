@@ -119,6 +119,7 @@ int pu_ui_confirm(int def, const char *prompt, ...)
   fputs("\n:: ", stdout);
   vprintf(prompt, args);
   fputs(def ? " [Y/n]" : " [y/N]", stdout);
+  fflush(stdout);
   va_end(args);
   while(1) {
     int c = getchar();
