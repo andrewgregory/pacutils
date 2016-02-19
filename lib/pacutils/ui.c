@@ -123,9 +123,8 @@ int pu_ui_confirm(int def, const char *prompt, ...)
   va_end(args);
   while(1) {
     int c = getchar();
-    if(c != '\n') {
-      while(getchar() != '\n');
-    }
+    if(c == EOF) { return def; }
+    if(c != '\n') { while(getchar() != '\n'); }
 
     switch(c) {
       case '\n':
