@@ -147,21 +147,21 @@ void pu_fprint_pkgspec(FILE *stream, alpm_pkg_t *pkg)
 int pu_log_command(alpm_handle_t *handle, const char *caller, int argc, char **argv)
 {
 	int i;
-	char *cmd;
+	char *cmd, *c;
 	size_t cmdlen = 0;
 
 	for(i = 0; i < argc; ++i) {
 		cmdlen += strlen(argv[i]) + 1;
 	}
 
-	cmd = malloc(cmdlen + 1);
+	cmd = c = malloc(cmdlen + 1);
 	if(!cmd) {
 		return -1;
 	}
 
 	for(i = 0; i < argc; ++i) {
-		strcat(cmd, " ");
-		strcat(cmd, argv[i]);
+		c = stpcpy(c, " ");
+		c = stpcpy(c, argv[i]);
 	}
 
 	alpm_logaction(handle, caller, "Running%s\n", cmd);
