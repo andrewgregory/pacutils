@@ -88,3 +88,12 @@ Display usage information and exit.
 Display version information and exit.
 
 =back
+
+=head1 CAVEATS
+
+B<paccheck> determines whether or not to read packages from F<stdin> based on
+a naive check using L<isatty(3)>.  If B<paccheck> is called in an environment,
+such as a shell function or script being used in a pipe, where F<stdin> is not
+connected to a terminal but does not contain packages to check, B<paccheck>
+should be called with F<stdin> closed.  For POSIX-compatible shells, this can
+be done with C<< <&- >>.

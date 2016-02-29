@@ -12,6 +12,9 @@ pacsift - query and filter packages
 By default the intersection of matched packages are returned.  If a field is
 provided multiple times the union of matches will be used for that field.
 
+If F<stdin> is not connected to a terminal, packages to filter will be read
+from F<stdin>.
+
 Combine with B<pacinfo> to display brief package information similar to
 C<pacman -Qs> and C<pacman -Ss>:
 
@@ -209,4 +212,17 @@ Search for packages that satisfy I<dependency>.
 
  pacsift --description pacman --description alpm
 
+=item Find packages with both C<pacman> and C<alpm> in their description:
+
+ pacsift --description pacman | pacsift --description alpm
+
 =back
+
+=head1 CAVEATS
+
+B<pacsift> determines whether or not to read packages from F<stdin> based on
+a naive check using L<isatty(3)>.  If B<pacsift> is called in an environment,
+such as a shell function or script being used in a pipe, where F<stdin> is not
+connected to a terminal but does not contain packages to filter, B<pacsift>
+should be called with F<stdin> closed.  For POSIX-compatible shells, this can
+be done with C<< <&- >>.

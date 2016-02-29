@@ -90,3 +90,12 @@ Display logged actions affecting I<pkgname>.  May be specified multiple times.
 Display errors, warnings, and notes.
 
 =back
+
+=head1 CAVEATS
+
+B<paclog> determines whether or not to read the log file from F<stdin> based on
+a naive check using L<isatty(3)>.  If B<paclog> is called in an environment,
+such as a shell function or script being used in a pipe, where F<stdin> is not
+connected to a terminal but does not a log file to parse, B<paclog> should be
+called with F<stdin> closed.  For POSIX-compatible shells, this can be done
+with C<< <&- >>.
