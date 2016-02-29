@@ -1,9 +1,11 @@
 -include ../configure.mk
 -include configure.mk
 
-CFLAGS ?= -Wall -Wextra -Wpedantic -Werror -I../lib -g
-LDFLAGS += -L../lib
-LDLIBS += -lpacutils -lalpm -larchive
+CFLAGS ?= -Wall -Wextra -Wpedantic -Werror -g
+
+override CPPFLAGS += -I../lib
+override LDFLAGS  += -L../lib
+override LDLIBS   += -lpacutils -lalpm -larchive
 
 PREFIX      ?= /usr/local
 EXEC_PREFIX ?= ${PREFIX}
@@ -15,7 +17,9 @@ SYSCONFDIR  ?= ${PREFIX}/etc
 FILESDBEXT ?= .files
 PACMANCONF ?= ${SYSCONFDIR}/pacman.conf
 
-CPPFLAGS   += -DFILESDBEXT=\"$(FILESDBEXT)\" -DPACMANCONF=\"$(PACMANCONF)\"
+override CPPFLAGS += \
+					 -DFILESDBEXT=\"$(FILESDBEXT)\" \
+					 -DPACMANCONF=\"$(PACMANCONF)\"
 
 OBJECTS = \
 		  paccheck \

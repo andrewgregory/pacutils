@@ -2,7 +2,8 @@
 -include configure.mk
 
 CFLAGS ?= -Wall -Wextra -Wpedantic -Werror -g
-LDLIBS += -lalpm
+
+override LDLIBS += -lalpm
 
 PREFIX        ?= /usr/local
 EXEC_PREFIX   ?= ${PREFIX}
@@ -20,14 +21,14 @@ HOOKDIR    ?= ${SYSCONFDIR}/pacman.d/hooks
 LOGFILE    ?= ${LOCALSTATEDIR}/log/pacman.log
 ROOTDIR    ?= /
 
-CPPFLAGS   += \
-			  -DCACHEDIR=\"$(CACHEDIR)\" \
-			  -DDBEXT=\"$(DBEXT)\" \
-			  -DDBPATH=\"$(DBPATH)\" \
-			  -DGPGDIR=\"$(GPGDIR)\" \
-			  -DHOOKDIR=\"$(HOOKDIR)\" \
-			  -DLOGFILE=\"$(LOGFILE)\" \
-			  -DROOTDIR=\"$(ROOTDIR)\"
+override CPPFLAGS   += \
+					   -DCACHEDIR=\"$(CACHEDIR)\" \
+					   -DDBEXT=\"$(DBEXT)\" \
+					   -DDBPATH=\"$(DBPATH)\" \
+					   -DGPGDIR=\"$(GPGDIR)\" \
+					   -DHOOKDIR=\"$(HOOKDIR)\" \
+					   -DLOGFILE=\"$(LOGFILE)\" \
+					   -DROOTDIR=\"$(ROOTDIR)\"
 
 HEADERS = \
 		  pacutils.h \
