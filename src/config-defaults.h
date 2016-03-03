@@ -23,7 +23,13 @@
 #ifndef CONFIG_DEFAULTS_H
 #define CONFIG_DEFAULTS_H
 
-#define BUILDVER "0.3.0"
+#define BASEVER "0.3.0"
+
+#ifdef GITVER
+#define BUILDVER BASEVER "+" GITVER
+#else
+#define BUILDVER BASEVER
+#endif
 
 /* duplicates default configuration settings from lib/Makefile in order to
  * allow compilation without make and to provide defaults for analyzers */

@@ -30,6 +30,14 @@ override CPPFLAGS   += \
 					   -DLOGFILE=\"$(LOGFILE)\" \
 					   -DROOTDIR=\"$(ROOTDIR)\"
 
+GITTAG = $(shell git describe --abbrev=0 2>/dev/null)
+ifneq ($(GITTAG),)
+GITVER = $(subst $(GITTAG)-,,$(shell git describe --dirty))
+ifneq ($(GITTAG),$(GITVER))
+override CPPFLAGS += -DGITVER=\"$(GITVER)\"
+endif
+endif
+
 HEADERS = \
 		  pacutils.h \
 		  pacutils/config.h \

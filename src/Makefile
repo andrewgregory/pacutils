@@ -21,6 +21,14 @@ override CPPFLAGS += \
 					 -DFILESDBEXT=\"$(FILESDBEXT)\" \
 					 -DPACMANCONF=\"$(PACMANCONF)\"
 
+GITTAG = $(shell git describe --abbrev=0 2>/dev/null)
+ifneq ($(GITTAG),)
+GITVER = $(subst $(GITTAG)-,,$(shell git describe --dirty))
+ifneq ($(GITTAG),$(GITVER))
+override CPPFLAGS += -DGITVER=\"$(GITVER)\"
+endif
+endif
+
 OBJECTS = \
 		  paccheck \
 		  pacconf \
