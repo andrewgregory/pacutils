@@ -332,7 +332,6 @@ alpm_list_t *filter_filelist(alpm_list_t **pkgs, const char *str,
 		const char *root, const size_t rootlen)
 {
 	alpm_list_t *p, *matches = NULL;
-	if(strncmp(str, root, rootlen) == 0) { str += rootlen; }
 	if(re) {
 		regex_t preg;
 		_regcomp(&preg, str, REG_EXTENDED | REG_ICASE | REG_NOSUB);
@@ -348,6 +347,7 @@ alpm_list_t *filter_filelist(alpm_list_t **pkgs, const char *str,
 		}
 		regfree(&preg);
 	} else if (exact) {
+		if(strncmp(str, root, rootlen) == 0) { str += rootlen; }
 		for(p = *pkgs; p; p = p->next) {
 			if(alpm_filelist_contains(alpm_pkg_get_files(p->data), str)) {
 				matches = alpm_list_add(matches, p->data);

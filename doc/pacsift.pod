@@ -116,13 +116,15 @@ used I<val> will be used as an extended case-insensitive regular expression.
 
 =item B<--group>=I<val>
 
-=item B<--owns-file>=I<val>
+=item B<--owns-file>=I<path>
 
 File paths must match the package database; no attempt is made to resolve the
-provided path.  May be used with B<realpath> or B<which> to more easily search
-for the owner of installed files:
+provided path.  B<Note:> when used with B<--exact> the installation root will
+be removed from I<path> if present, otherwise I<path> will be used exactly as
+provided.  May be used with B<realpath> or B<which> to more easily search for
+the owner of installed files:
 
- pacsift --local --owns-file="$(which pacsift)"
+ pacsift --local --exact --owns-file="$(which pacsift)"
 
 =item B<--license>=I<val>
 
