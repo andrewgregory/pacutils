@@ -83,12 +83,12 @@ or B<--any>.
 =item B<--local>
 
 Search locally installed packages.  Similar to:
- pacsift --repo=local
+ pacsift --repo=local | pacsift ...
 
 =item B<--sync>
 
 Search packages in sync databases.  Similar to:
- pacsift --invert --repo=local
+ pacsift --invert --repo=local | pacsift ...
 
 =item B<--cache> (B<EXPERIMENTAL>)
 
