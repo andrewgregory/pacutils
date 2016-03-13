@@ -477,14 +477,60 @@ int depcmp(alpm_depend_t *d, alpm_depend_t *needle)
 	return 1;
 }
 
+static int _pu_pkg_satisfies(alpm_pkg_t *pkg, alpm_depend_t *dep)
+{
+	alpm_list_t *i;
+	if(strcmp(alpm_pkg_get_name(pkg), dep->name) == 0) {
+		int cmp = alpm_pkg_vercmp(alpm_pkg_get_version(pkg), dep->version);
+
+		if(dep->mod == ALPM_DEP_MOD_ANY) { return 1; }
+
+		switch(dep->mod) {
+			case ALPM_DEP_MOD_EQ: return cmp == 0;
+			case ALPM_DEP_MOD_GE: return cmp >= 0;
+			case ALPM_DEP_MOD_GT: return cmp > 0;
+			case ALPM_DEP_MOD_LE: return cmp <= 0;
+			case ALPM_DEP_MOD_LT: return cmp < 0;
+			case ALPM_DEP_MOD_ANY: return 1;
+		}
+		return 0;
+	}
+	for(i = alpm_pkg_get_provides(pkg); i; i = i->next) {
+		alpm_depend_t *p = i->data;
+		if(p->name_hash == dep->name_hash && strcmp(p->name, dep->name) == 0) {
+			int cmp;
+
+			if(dep->mod == ALPM_DEP_MOD_ANY) { return 1; }
+			if(p->version == NULL) { return dep->mod == ALPM_DEP_MOD_ANY; }
+
+			cmp = alpm_pkg_vercmp(p->version, dep->version);
+			switch(dep->mod) {
+				case ALPM_DEP_MOD_EQ: return cmp == 0;
+				case ALPM_DEP_MOD_GE: return cmp >= 0;
+				case ALPM_DEP_MOD_GT: return cmp > 0;
+				case ALPM_DEP_MOD_LE: return cmp <= 0;
+				case ALPM_DEP_MOD_LT: return cmp < 0;
+				case ALPM_DEP_MOD_ANY: return 1;
+			}
+			return 0;
+		}
+	}
+	return 0;
+}
+
 alpm_list_t *filter_satisfies(alpm_list_t **pkgs, const char *depstr)
 {
-	alpm_list_t *matches = NULL;
-	alpm_pkg_t *pkg;
-	while((pkg = alpm_find_satisfier(*pkgs, depstr))) {
-		*pkgs = alpm_list_remove(*pkgs, pkg, ptr_cmp, NULL);
-		matches = alpm_list_add(matches, pkg);
+	alpm_list_t *p, *matches = NULL;
+	alpm_depend_t *needle = alpm_dep_from_string(depstr);
+	for(p = *pkgs; p; p = p->next) {
+		if(_pu_pkg_satisfies(p->data, needle)) {
+			matches = alpm_list_add(matches, p->data);
+		}
 	}
+	for(p = matches; p; p = p->next) {
+		*pkgs = alpm_list_remove(*pkgs, p->data, ptr_cmp, NULL);
+	}
+	alpm_dep_free(needle);
 	return matches;
 }
 
