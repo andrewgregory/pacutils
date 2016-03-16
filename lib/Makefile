@@ -28,7 +28,9 @@ override CPPFLAGS   += \
 					   -DGPGDIR=\"$(GPGDIR)\" \
 					   -DHOOKDIR=\"$(HOOKDIR)\" \
 					   -DLOGFILE=\"$(LOGFILE)\" \
-					   -DROOTDIR=\"$(ROOTDIR)\"
+					   -DROOTDIR=\"$(ROOTDIR)\" \
+					   -DLOCALSTATEDIR=\"$(LOCALSTATEDIR)\" \
+					   -DSYSCONFDIR=\"$(SYSCONFDIR)\"
 
 GITTAG = $(shell git describe --abbrev=0 2>/dev/null)
 ifneq ($(GITTAG),)
