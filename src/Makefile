@@ -19,7 +19,8 @@ PACMANCONF ?= ${SYSCONFDIR}/pacman.conf
 
 override CPPFLAGS += \
 					 -DFILESDBEXT=\"$(FILESDBEXT)\" \
-					 -DPACMANCONF=\"$(PACMANCONF)\"
+					 -DPACMANCONF=\"$(PACMANCONF)\" \
+					 -DSYSCONFDIR=\"$(SYSCONFDIR)\"
 
 GITTAG = $(shell git describe --abbrev=0 2>/dev/null)
 ifneq ($(GITTAG),)
