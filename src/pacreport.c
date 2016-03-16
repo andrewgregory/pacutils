@@ -719,7 +719,7 @@ void parse_config(const char *path)
 {
 	mini_t *mini = mini_init(path);
 	if(mini == NULL) {
-		die("failed to initialize ini parser (%s)\n", strerror(errno));
+		die("failed to initialize ini parser for '%s' (%s)\n", path, strerror(errno));
 	}
 	while(mini_next(mini)) {
 		if(mini->key) {
