@@ -313,7 +313,7 @@ const char *get_dbname(alpm_pkg_t *pkg)
 
 int ptr_cmp(const void *p1, const void *p2)
 {
-	return p2 != p1;
+	return p1 < p2 ? -1 : p1 > p2;
 }
 
 /* regcmp wrapper with error handling */
