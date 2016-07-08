@@ -24,6 +24,17 @@
 
 #include "util.h"
 
+char *_pu_list_append_str(alpm_list_t **list, const char *str)
+{
+  char *copy;
+  if((copy = strdup(str)) && alpm_list_append(list, copy)) {
+    return copy;
+  } else {
+    free(copy);
+    return NULL;
+  }
+}
+
 char *pu_basename(char *path)
 {
   char *c;
