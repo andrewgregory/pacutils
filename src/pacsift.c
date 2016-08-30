@@ -941,21 +941,22 @@ int main(int argc, char **argv)
 			for(i = alpm_option_get_cachedirs(handle); i; i = i->next) {
 				const char *path = i->data;
 				DIR *dir = opendir(path);
-				struct dirent entry, *result;
+				struct dirent *entry;
 				if(!dir) {
 					fprintf(stderr, "warning: could not open cache dir '%s' (%s)\n",
 							path, strerror(errno));
 					continue;
 				}
-				while(readdir_r(dir, &entry, &result) == 0 && result != NULL) {
-					if(strcmp(".", entry.d_name) == 0 || strcmp("..", entry.d_name) == 0) {
+				errno = 0;
+				while((entry = readdir(dir))) {
+					if(strcmp(".", entry->d_name) == 0 || strcmp("..", entry->d_name) == 0) {
 						continue;
 					}
-					size_t path_len = strlen(path) + strlen(entry.d_name);
+					size_t path_len = strlen(path) + strlen(entry->d_name);
 					char *filename = malloc(path_len + 1);
 					int needfiles = ownsfile ? 1 : 0;
 					alpm_pkg_t *pkg = NULL;
-					sprintf(filename, "%s%s", path, entry.d_name);
+					sprintf(filename, "%s%s", path, entry->d_name);
 					if(alpm_pkg_load(handle, filename, needfiles, 0, &pkg) == 0) {
 						haystack = alpm_list_add(haystack, pkg);
 					} else {
@@ -963,6 +964,10 @@ int main(int argc, char **argv)
 								filename, alpm_strerror(alpm_errno(handle)));
 					}
 					free(filename);
+				}
+				if(errno != 0) {
+					fprintf(stderr, "warning: could not read cache dir '%s' (%s)\n",
+							path, strerror(errno));
 				}
 				closedir(dir);
 			}
