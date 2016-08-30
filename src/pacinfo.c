@@ -49,6 +49,10 @@ enum longopt_flags {
 	FLAG_VERSION,
 };
 
+void prints(const char *field, const char *val) {
+	if(val) { printf(field, val); }
+}
+
 void printt(const char *field, alpm_time_t t) {
 		char time_buf[50];
 		struct tm ltime;
@@ -64,7 +68,7 @@ void printt(const char *field, alpm_time_t t) {
 
 void printl(const char *field, alpm_list_t *values) {
 	while(values) {
-		printf(field, values->data);
+		prints(field, values->data);
 		values = values->next;
 	}
 }
@@ -281,18 +285,17 @@ void print_pkg_info(alpm_pkg_t *pkg) {
 						}
 					}
 				}
-				fputs("\n    ", stdout);
-				fputs(alpm_pkg_get_desc(pkg), stdout);
+				prints("\n    %s", alpm_pkg_get_desc(pkg));
 				break;
 			case 2:
-				printf("Name:           %s\n", alpm_pkg_get_name(pkg));
-				printf("Base:           %s\n", alpm_pkg_get_base(pkg));
-				printf("Repository:     %s\n", alpm_db_get_name(db));
-				printf("File:           %s\n", alpm_pkg_get_filename(pkg));
-				printf("Version:        %s\n", alpm_pkg_get_version(pkg));
-				printf("Description:    %s\n", alpm_pkg_get_desc(pkg));
-				printf("Architecture:   %s\n", alpm_pkg_get_arch(pkg));
-				printf("URL:            %s\n", alpm_pkg_get_url(pkg));
+				prints("Name:           %s\n", alpm_pkg_get_name(pkg));
+				prints("Base:           %s\n", alpm_pkg_get_base(pkg));
+				prints("Repository:     %s\n", alpm_db_get_name(db));
+				prints("File:           %s\n", alpm_pkg_get_filename(pkg));
+				prints("Version:        %s\n", alpm_pkg_get_version(pkg));
+				prints("Description:    %s\n", alpm_pkg_get_desc(pkg));
+				prints("Architecture:   %s\n", alpm_pkg_get_arch(pkg));
+				prints("URL:            %s\n", alpm_pkg_get_url(pkg));
 				printl("Licenses:       %s\n", alpm_pkg_get_licenses(pkg));
 				printl("Groups:         %s\n", alpm_pkg_get_groups(pkg));
 				printd("Provides:       %s\n", alpm_pkg_get_provides(pkg));
@@ -305,11 +308,11 @@ void print_pkg_info(alpm_pkg_t *pkg) {
 						removable_size
 						? pkg_removable_size(handle, pkg)
 						: alpm_pkg_get_isize(pkg));
-				printf("Packager:       %s\n", alpm_pkg_get_packager(pkg));
+				prints("Packager:       %s\n", alpm_pkg_get_packager(pkg));
 				printt("Build Date:     %s\n", alpm_pkg_get_builddate(pkg));
 				printt("Install Date:   %s\n", alpm_pkg_get_installdate(pkg));
-				printf("MD5 Sum:        %s\n", alpm_pkg_get_md5sum(pkg));
-				printf("SHA-256 Sum:    %s\n", alpm_pkg_get_sha256sum(pkg));
+				prints("MD5 Sum:        %s\n", alpm_pkg_get_md5sum(pkg));
+				prints("SHA-256 Sum:    %s\n", alpm_pkg_get_sha256sum(pkg));
 
 				/*printd("Required For:   ",      alpm_pkg_get_provides(pkg));*/
 				/*printd("Optional For:   ",      alpm_pkg_get_provides(pkg));*/
