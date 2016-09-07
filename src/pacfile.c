@@ -256,7 +256,8 @@ void cmp_size(struct archive_entry *entry, struct stat *st)
 	putchar('\n');
 }
 
-void cmp_sha256sum(alpm_handle_t *handle, alpm_pkg_t *pkg, const char *path)
+void cmp_sha256sum(struct stat *st,
+		alpm_handle_t *handle, alpm_pkg_t *pkg, const char *path)
 {
 	alpm_list_t *i, *entries = pu_mtree_load_pkg_mtree(handle, pkg);
 
@@ -265,7 +266,7 @@ void cmp_sha256sum(alpm_handle_t *handle, alpm_pkg_t *pkg, const char *path)
 		char *sha = NULL;
 		if(strcmp(m->path, path) != 0) { continue; }
 
-		if(checkfs) {
+		if(checkfs && S_ISREG(st->st_mode)) {
 			char rpath[PATH_MAX];
 			snprintf(rpath, PATH_MAX, "%s%s", alpm_option_get_root(handle), path);
 			if((sha = alpm_compute_sha256sum(rpath)) == NULL) {
@@ -290,7 +291,8 @@ void cmp_sha256sum(alpm_handle_t *handle, alpm_pkg_t *pkg, const char *path)
 	putchar('\n');
 }
 
-void cmp_md5sum(alpm_handle_t *handle, alpm_pkg_t *pkg, const char *path)
+void cmp_md5sum(struct stat *st,
+		alpm_handle_t *handle, alpm_pkg_t *pkg, const char *path)
 {
 	alpm_list_t *i, *entries = pu_mtree_load_pkg_mtree(handle, pkg);
 
@@ -299,7 +301,7 @@ void cmp_md5sum(alpm_handle_t *handle, alpm_pkg_t *pkg, const char *path)
 		char *md5 = NULL;
 		if(strcmp(m->path, path) != 0) { continue; }
 
-		if(checkfs) {
+		if(checkfs && S_ISREG(st->st_mode)) {
 			char rpath[PATH_MAX];
 			snprintf(rpath, PATH_MAX, "%s%s", alpm_option_get_root(handle), path);
 			if((md5 = alpm_compute_md5sum(rpath)) == NULL) {
@@ -448,8 +450,10 @@ int main(int argc, char **argv)
 						cmp_gid(entry, st);
 						cmp_size(entry, st);
 
-						cmp_sha256sum(handle, p->data, ppath);
-						cmp_md5sum(handle, p->data, ppath);
+						if(archive_entry_filetype(entry) == AE_IFREG) {
+							cmp_sha256sum(st, handle, p->data, ppath);
+							cmp_md5sum(st, handle, p->data, ppath);
+						}
 
 						break;
 					}
