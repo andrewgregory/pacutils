@@ -32,12 +32,13 @@ const char *myname = "pacconf", *myver = BUILDVER;
 pu_config_t *config = NULL;
 alpm_list_t *directives = NULL;
 char sep = '\n', *repo_name = NULL;
-int raw = 0, repo_list = 0, single = 0, verbose = 0;
+int options = 0, raw = 0, repo_list = 0, single = 0, verbose = 0;
 
 enum {
 	FLAG_ARCH = 1000,
 	FLAG_CONFIG,
 	FLAG_HELP,
+	FLAG_OPTIONS,
 	FLAG_RAW,
 	FLAG_REPO,
 	FLAG_REPO_LIST,
@@ -66,6 +67,7 @@ void usage(int ret)
 	hputs("  --config=<path>  set an alternate configuration file");
 	hputs("  --help           display this help information");
 	hputs("  --null[=sep]     use <sep> to separate values (default NUL)");
+	hputs("  --options        display all global options");
 	hputs("  --raw            display unmodified values");
 	hputs("  --repo-list      list configured repositories");
 	hputs("  --repo=<remote>  query options for a specific repo");
@@ -90,6 +92,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "help"      , no_argument       , NULL , FLAG_HELP      },
 		{ "null"      , optional_argument , NULL , FLAG_NULL      },
 		{ "raw"       , no_argument       , NULL , FLAG_RAW       },
+		{ "options"   , no_argument       , NULL , FLAG_OPTIONS   },
 		{ "repo"      , required_argument , NULL , FLAG_REPO      },
 		{ "repo-list" , no_argument       , NULL , FLAG_REPO_LIST },
 		{ "root"      , required_argument , NULL , FLAG_ROOT      },
@@ -118,6 +121,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 				break;
 			case FLAG_NULL:
 				sep = optarg ? optarg[0] : '\0';
+				break;
+			case FLAG_OPTIONS:
+				options = 1;
 				break;
 			case FLAG_RAW:
 				raw = 1;
@@ -287,12 +293,8 @@ void dump_repo(pu_repo_t *repo)
 	show_list_str("Server", repo->servers);
 }
 
-void dump_config(void)
+void dump_options(void)
 {
-	alpm_list_t *i;
-
-	printf("[options]%c", sep);
-
 	show_str("RootDir", config->rootdir);
 	show_str("DBPath", config->dbpath);
 	show_list_str("CacheDir", config->cachedirs);
@@ -323,6 +325,14 @@ void dump_config(void)
 	show_siglevel("SigLevel", config->siglevel, 0);
 	show_siglevel("LocalFileSigLevel", config->localfilesiglevel, 1);
 	show_siglevel("RemoteFileSigLevel", config->remotefilesiglevel, 1);
+}
+
+void dump_config(void)
+{
+	alpm_list_t *i;
+
+	printf("[options]%c", sep);
+	dump_options();
 
 	for(i = config->repos; i; i = i->next) {
 		pu_repo_t *repo = i->data;
@@ -476,6 +486,8 @@ int main(int argc, char **argv)
 		list_repos();
 	} else if(repo_name) {
 		ret = list_repo_directives(directives);
+	} else if(options) {
+		dump_options();
 	} else {
 		ret = list_directives(directives);
 	}

@@ -42,6 +42,10 @@ Set an alternate separator for values parsed from F<stdin>.  By default
 a newline C<\n> is used as the separator.  If B<--null> is used without
 specifying I<sep> C<NUL> will be used.
 
+=item B<--options>
+
+Only display global settings from the C<[options]> section.
+
 =item B<--raw>
 
 Display unmodified values.  C<Include> directives will be processed, but
