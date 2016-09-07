@@ -243,7 +243,6 @@ void cmp_gid(struct archive_entry *entry, struct stat *st)
 
 void cmp_size(struct archive_entry *entry, struct stat *st)
 {
-	/* FIXME directories and symlinks always show a discrepancy */
 	int64_t psize = archive_entry_size(entry);
 	char hr_size[20];
 
@@ -448,9 +447,9 @@ int main(int argc, char **argv)
 						cmp_mtime(entry, st);
 						cmp_uid(entry, st);
 						cmp_gid(entry, st);
-						cmp_size(entry, st);
 
 						if(archive_entry_filetype(entry) == AE_IFREG) {
+							cmp_size(entry, st);
 							cmp_sha256sum(st, handle, p->data, ppath);
 							cmp_md5sum(st, handle, p->data, ppath);
 						}
