@@ -420,10 +420,12 @@ int main(int argc, char **argv)
 				}
 			}
 
-			if(commandline && strncasecmp(e->message, "running ", 8) == 0) {
+#define is_alpm(c) (c == NULL || (strcmp(c, "ALPM") != 0 && strcmp(c, "ALPM-SCRIPTLET") != 0))
+			if(commandline && strncasecmp(e->message, "running ", 8) == 0 && is_alpm(e->caller)) {
 				print_entry(stdout, e);
 				continue;
 			}
+#undef is_alpm
 
 			if(warnings) {
 				if(strncmp(e->message, "error: ", 7) == 0

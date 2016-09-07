@@ -75,7 +75,7 @@ Case-sensitive.
 
 =item B<--commandline>
 
-Display logged commandline entries.  Identical to C<--grep=^running>.
+Display pacman-style logged commandline entries.
 
 =item B<--grep>=I<regex>
 
