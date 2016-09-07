@@ -44,7 +44,8 @@ specifying I<sep> C<NUL> will be used.
 
 =item B<--options>
 
-Only display global settings from the C<[options]> section.
+Only display global settings from the C<[options]> section.  The C<[options]>
+header itself is not printed.
 
 =item B<--raw>
 
@@ -55,7 +56,8 @@ C<auto>.
 
 =item B<--repo>=I<name>
 
-Only display directives for repository I<name>.
+Only display directives for repository I<name>.  The repository header is not
+printed.
 
 =item B<--repo-list>
 
