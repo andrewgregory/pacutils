@@ -41,7 +41,7 @@ int main(void) {
     }
     while(pu_config_reader_next(reader) != -1);
 
-	tap_plan(13);
+    tap_plan(13);
 
     tap_ok(reader->eof, "eof reached");
     tap_ok(!reader->error, "no error");
