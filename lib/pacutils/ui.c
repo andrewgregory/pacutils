@@ -176,24 +176,34 @@ void pu_ui_cb_question(alpm_question_t *question)
 void pu_ui_cb_download(const char *filename, off_t xfered, off_t total)
 {
   static struct timeval last_update = {0, 0};
-  int percent;
+  char end = '\r';
 
-  if(xfered > 0 && xfered < total) {
+  if(xfered < 0) {
+    /* invalid xfer size, nothing we can do with this */
+    return;
+  } else if(xfered == 0) {
+    /* new download is starting, always print the initial status */
+    gettimeofday(&last_update, NULL);
+  } else if(xfered != total) {
+    /* mid-download, check if enough time has elapsed to update the status */
     struct timeval now;
     gettimeofday(&now, NULL);
     if(_pu_ui_time_diff(&now, &last_update) < PU_MAX_REFRESH_MS) {
       return;
     }
     last_update = now;
+  } else {
+    /* download is done, wrap to the next line */
+    end = '\n';
   }
 
-  percent = 100 * xfered / total;
-  printf("downloading %s (%ld/%ld) %d%%", filename, xfered, total, percent);
-
-  if(xfered == total) {
-    putchar('\n');
+  if(total <= 0) {
+    /* server has not provided a valid total download size */
+    printf("downloading %s (%lld)%c", filename, (long long)xfered, end);
   } else {
-    putchar('\r');
+    int percent = 100 * xfered / total;
+    printf("downloading %s (%lld/%lld) %d%%%c",
+        filename, (long long)xfered, (long long)total, percent, end);
   }
 
   fflush(stdout);
