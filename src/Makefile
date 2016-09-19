@@ -1,8 +1,11 @@
 -include ../configure.mk
 -include configure.mk
 
+ALPM_CFLAGS ?= $(shell pkg-config libalpm --cflags)
+
 CFLAGS ?= -Wall -Wextra -Wpedantic -Werror -g
 
+override CFLAGS   += $(ALPM_CFLAGS)
 override CPPFLAGS += -I../lib
 override LDFLAGS  += -L../lib
 override LDLIBS   += -lpacutils -lalpm -larchive
