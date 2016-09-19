@@ -21,6 +21,7 @@
  */
 
 #include <getopt.h>
+#include <inttypes.h>
 #include <errno.h>
 #include <stdio.h>
 
@@ -58,9 +59,13 @@ void printt(const char *field, alpm_time_t t) {
 		struct tm ltime;
 		if(t) {
 			if(raw) {
-				snprintf(time_buf, 50, "%lu", t);
+				snprintf(time_buf, 50, PRId64, t);
+			} else if(sizeof(time_t) < sizeof(alpm_time_t) && (time_t)t != t) {
+				/* time does not fit into a time_t, print it raw */
+				snprintf(time_buf, 50, PRId64, t);
 			} else {
-				strftime(time_buf, 50, "%F %T", localtime_r(&t, &ltime));
+				time_t tt = (time_t)t;
+				strftime(time_buf, 50, "%F %T", localtime_r(&tt, &ltime));
 			}
 			printf(field, time_buf);
 		}
