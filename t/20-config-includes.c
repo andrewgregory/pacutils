@@ -19,7 +19,10 @@ char mockfile2[] =
     "[included repo]\n"
     "Server = included_server1\n";
 
+/* TODO: remove this horrible hack */
+int mock_called = 0;
 FILE *fopen(const char *path, const char *mode) {
+    mock_called = 1;
     if(strcmp(path, "mockfile1.ini") == 0) {
         return fmemopen(mockfile1, strlen(mockfile1), mode);
     } else if(strcmp(path, "mockfile2.ini") == 0) {
@@ -34,6 +37,11 @@ int main(void) {
     pu_config_t *config = pu_config_new();
     pu_config_reader_t *reader = pu_config_reader_new(config, "mockfile1.ini");
     pu_repo_t *repo;
+
+    if(!mock_called) {
+        tap_skip_all("unable to call mocked fopen");
+        return 0;
+    }
 
     if(config == NULL || reader == NULL) {
         tap_bail("error initializing reader (%s)", strerror(errno));
