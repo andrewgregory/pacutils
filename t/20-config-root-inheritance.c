@@ -5,23 +5,11 @@
 
 #include "tap.h"
 
-char *mockfile;
-
-FILE *fopen(const char *path, const char *mode) {
-    if(strcmp(path, "mockfile.ini") == 0) {
-        return fmemopen(mockfile, strlen(mockfile), mode);
-    } else {
-        tap_diag("attempted to open non-mocked file '%s'", path);
-        return NULL;
-    }
-}
-
 /* 5 tests */
 #define CHECK(r, d, l, g, config_text) do { \
     pu_config_t *config = pu_config_new(); \
-    pu_config_reader_t *reader; \
-    mockfile = config_text; \
-    reader = pu_config_reader_new(config, "mockfile.ini"); \
+    FILE *f = fmemopen(config_text, strlen(config_text), "r"); \
+    pu_config_reader_t *reader = pu_config_reader_finit(config, f); \
     if(config == NULL || reader == NULL) { \
         tap_bail("error initializing reader (%s)", strerror(errno)); \
         return 1; \
@@ -36,6 +24,7 @@ FILE *fopen(const char *path, const char *mode) {
     tap_is_str(config->gpgdir, g, "GPGDir == %s", g); \
     pu_config_reader_free(reader); \
     pu_config_free(config); \
+    fclose(f); \
 } while(0)
 
 int main(void) {

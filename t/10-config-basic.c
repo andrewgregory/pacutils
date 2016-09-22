@@ -45,15 +45,6 @@ char buf[] =
     "Server = $repo:$arch\n"
     "";
 
-FILE *fopen(const char *path, const char *mode) {
-    if(strcmp(path, "mockfile.ini") == 0) {
-        return fmemopen(buf, strlen(buf), mode);
-    } else {
-        tap_diag("attempted to open non-mocked file '%s'", path);
-        return NULL;
-    }
-}
-
 #define is_list_exhausted(l, name) do { \
         tap_ok(l == NULL, name " exhausted"); \
         if(l) { \
@@ -64,7 +55,6 @@ FILE *fopen(const char *path, const char *mode) {
             } \
         } \
     } while(0)
-
 
 #define is_str_list(l, str, desc) do { \
     if(l) { \
@@ -102,7 +92,8 @@ FILE *fopen(const char *path, const char *mode) {
 int main(void) {
     alpm_list_t *i;
     pu_config_t *config = pu_config_new();
-    pu_config_reader_t *reader = pu_config_reader_new(config, "mockfile.ini");
+    FILE *f = fmemopen(buf, strlen(buf), "r");
+    pu_config_reader_t *reader = pu_config_reader_finit(config, f);
     pu_repo_t *repo;
 
 	tap_plan(39);
@@ -175,5 +166,7 @@ int main(void) {
     tap_is_str(repo->name, "core", "repo->name == 'core'");
     tap_is_str(repo->servers->data, "core:i686", "[core] server");
 
-	return 0;
+    fclose(f);
+
+    return 0;
 }

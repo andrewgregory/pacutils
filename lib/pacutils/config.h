@@ -153,6 +153,7 @@ void pu_config_free(pu_config_t *config);
 alpm_handle_t *pu_initialize_handle_from_config(pu_config_t *config);
 
 pu_config_reader_t *pu_config_reader_new(pu_config_t *config, const char *file);
+pu_config_reader_t *pu_config_reader_finit(pu_config_t *config, FILE *stream);
 int pu_config_reader_next(pu_config_reader_t *reader);
 void pu_config_reader_free(pu_config_reader_t *reader);
 

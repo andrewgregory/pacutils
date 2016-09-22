@@ -790,6 +790,17 @@ pu_config_reader_t *pu_config_reader_new(pu_config_t *config, const char *file)
   return reader;
 }
 
+pu_config_reader_t *pu_config_reader_finit(pu_config_t *config, FILE *stream)
+{
+  pu_config_reader_t *reader = calloc(sizeof(pu_config_reader_t), 1);
+  if(reader == NULL) { return NULL; }
+  if((reader->_mini = mini_finit(stream)) == NULL) {
+    pu_config_reader_free(reader); return NULL;
+  }
+  reader->config = config;
+  return reader;
+}
+
 void pu_config_reader_free(pu_config_reader_t *reader)
 {
   if(!reader) { return; }
