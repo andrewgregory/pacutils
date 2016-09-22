@@ -90,7 +90,7 @@ void printd(const char *field, alpm_list_t *values) {
 void printo(const char *field, off_t size) {
 	char hrsize[50];
 	if(raw) {
-		snprintf(hrsize, 50, "%lu", size);
+		snprintf(hrsize, 50, "%lld", (long long)size);
 	} else {
 		pu_hr_size(size, hrsize);
 	}
