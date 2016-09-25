@@ -37,6 +37,7 @@ alpm_handle_t *handle = NULL;
 int level = 2, removable_size = 0, raw = 0;
 int isep = '\n';
 char *dbext = NULL;
+alpm_loglevel_t log_level = ALPM_LOG_ERROR | ALPM_LOG_WARNING;
 
 enum longopt_flags {
 	FLAG_CONFIG = 1000,
@@ -232,6 +233,8 @@ pu_config_t *parse_opts(int argc, char **argv)
 				config->dbpath = strdup(optarg);
 				break;
 			case FLAG_DEBUG:
+				log_level |= ALPM_LOG_DEBUG;
+				log_level |= ALPM_LOG_FUNCTION;
 				break;
 			case FLAG_REMOVABLE:
 				removable_size = 1;
@@ -363,6 +366,13 @@ void print_pkgspec_info(const char *pkgspec) {
 	alpm_list_free(pkgs);
 }
 
+void cb_log(alpm_loglevel_t level, const char *fmt, va_list args)
+{
+	if(level & log_level) {
+		vprintf(fmt, args);
+	}
+}
+
 int main(int argc, char **argv) {
 	int ret = 0;
 
@@ -382,6 +392,8 @@ int main(int argc, char **argv) {
 		ret = 1;
 		goto cleanup;
 	}
+
+	alpm_option_set_logcb(handle, cb_log);
 
 	pu_register_syncdbs(handle, config->repos);
 
