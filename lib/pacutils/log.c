@@ -95,8 +95,8 @@ pu_log_action_t *pu_log_action_parse(char *message)
 		if((a->target = strndup(pkg, op - pkg)) == NULL) { goto error; }
 		if((a->old_version = strndup(op + 2, mlen - (op + 2 - message))) == NULL) { goto error; }
 		if((a->new_version = strdup(a->old_version)) == NULL) { goto error; }
-	} else if(PU_STARTSWITH("uninstalled ")) {
-		const char *pkg = message + sizeof("uninstalled ") - 1;
+	} else if(PU_STARTSWITH("removed ")) {
+		const char *pkg = message + sizeof("removed ") - 1;
 		const char *op = _pu_strrstr(message, message + mlen, " (");
 		if(pkg[0] == '\0' || op == NULL) { errno = EINVAL; goto error; }
 		a->operation = PU_LOG_OPERATION_REMOVE;
