@@ -179,6 +179,13 @@ instance to find the intersection of filters instead:
 
  paclog --caller ALPM | paclog --after "$(date -I --date '3 days ago')"
 
+=item pacrepairdb
+
+Attempt to repair broken entries in libalpm's database by reinstalling affected
+packages from the cache:
+
+ paccheck --files --db-files --list-broken | pacrepairdb
+
 =item pacreport
 
 Generate a report of installed packages including:

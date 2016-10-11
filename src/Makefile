@@ -40,6 +40,7 @@ OBJECTS = \
 		  pacinfo \
 		  pacini \
 		  paclog \
+		  pacrepairdb \
 		  pacreport \
 		  pacsift \
 		  pacsync \

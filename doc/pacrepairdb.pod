@@ -1,0 +1,102 @@
+=head1 NAME
+
+pacrepairdb - fix corrupted database entries
+
+=head1 SYNOPSIS
+
+ pacrepairdb [options] <package>...
+ pacrepairdb (--help|--version)
+
+=head1 DESCRIPTION
+
+Attempt to broken package entries in libalpm's database.  Any missing essential
+files will be created and the packages will be reinstalled from the cache.
+
+If F<stdin> is not connected to a terminal, package names will be read from
+F<stdin>.
+
+=head1 OPTIONS
+
+=over
+
+=item B<--cachedir>=F<path>
+
+Set an alternate cache directory path.
+
+=item B<--config>=F<path>
+
+Set an alternate configuration file path.
+
+=item B<--dbonly>
+
+Make the changes to the database without actually extracting or removing any
+packages.
+
+=item B<--dbpath>=F<path>
+
+Set an alternate database path.
+
+=item B<--debug>
+
+Display additional debugging information.
+
+=item B<--hookdir>
+
+Add additional user hook directories.
+
+=item B<--logfile>=F<path>
+
+Set an alternate log file path.
+
+=item B<--no-confirm>
+
+Assume default responses to all prompts.
+
+=item B<--no-scriptlet>
+
+Do not run package install scripts.
+
+=item B<--no-hooks>
+
+Do not run transaction hooks.
+
+=item B<--print-only>
+
+Display the packages to be repaired and the cache packages to be used and exit.
+
+=item B<--root>=F<path>
+
+Set an alternate installation root.
+
+=item B<--verbose>
+
+Display additional progress information.
+
+=item B<--help>
+
+Display usage information and exit.
+
+=item B<--version>
+
+Display version information and exit.
+
+=back
+
+=head1 CAVEATS
+
+B<pacrepairdb> expects all of the packages being repaired to be cached.  Cached
+packages that match the name and version of an installed package are assumed to
+be the same package.  No attempt is made to validate cached packages.  If
+a cache contains a package that does not match the installed package, but
+nonetheless has the same name and version, B<pacrepairdb> will blindly install
+it, worsening any database problems.
+
+B<pacrepairdb> does not check for leftover orphaned files.  It is the user's
+responsibility locate and handle orphaned files.
+
+B<pacrepairdb> determines whether or not to read package names from F<stdin>
+based on a naive check using L<isatty(3)>.  If B<pacrepairdb> is called in an
+environment, such as a shell function or script being used in a pipe, where
+F<stdin> is not connected to a terminal but does not contain package names to
+repair, B<pacrepairdb> should be called with F<stdin> closed.  For
+POSIX-compatible shells, this can be done with C<< <&- >>.

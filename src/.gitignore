@@ -6,6 +6,7 @@ pacini
 pacinstall
 paclog
 pacremove
+pacrepairdb
 pacreport
 pacsift
 pacsync
