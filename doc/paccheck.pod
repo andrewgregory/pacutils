@@ -73,12 +73,16 @@ Check file sha256sums against MTREE data.
 
 =item B<--require-mtree>
 
-Treat missing MTREE data as an error for B<--db-files> and
+Treat missing MTREE data as an error for B<--db-files> and/or
 B<--file-properties>.
 
 =item B<--db-files>
 
 Include database files in B<--files> and B<--file-properties> checks.
+B<--files> will test for the existence of F<desc>, F<files>, and F<mtree> (with
+B<--require-mtree>) files in the package database entry.  B<--file-properties>
+will check F<install> and F<changelog> files in the package database where
+applicable.
 
 =item B<--backup>
 
