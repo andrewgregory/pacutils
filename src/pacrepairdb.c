@@ -86,7 +86,7 @@ void usage(int ret) {
 }
 
 pu_config_t *parse_opts(int argc, char **argv) {
-	char *config_file = "/etc/pacman.conf";
+	char *config_file = PACMANCONF;
 	pu_config_t *config = NULL;
 	int c;
 
@@ -113,7 +113,6 @@ pu_config_t *parse_opts(int argc, char **argv) {
 
 		{ 0, 0, 0, 0 },
 	};
-
 
 	if((config = pu_config_new()) == NULL) {
 		perror("malloc");
