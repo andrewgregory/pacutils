@@ -164,6 +164,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "file"          , no_argument       , NULL       , FLAG_FILE         } ,
 		{ "remove"        , no_argument       , NULL       , FLAG_REMOVE       } ,
 
+		{ "cache-dir"     , required_argument , NULL       , FLAG_CACHEDIR     } ,
 		{ "cachedir"      , required_argument , NULL       , FLAG_CACHEDIR     } ,
 		{ "config"        , required_argument , NULL       , FLAG_CONFIG       } ,
 		{ "dbonly"        , no_argument       , NULL       , FLAG_DBONLY       } ,
