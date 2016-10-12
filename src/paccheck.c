@@ -44,6 +44,7 @@ enum longopt_flags {
 	FLAG_FILES,
 	FLAG_FILE_PROPERTIES,
 	FLAG_HELP,
+	FLAG_LIST_BROKEN,
 	FLAG_MD5SUM,
 	FLAG_SHA256SUM,
 	FLAG_NOEXTRACT,
@@ -70,7 +71,7 @@ pu_config_t *config = NULL;
 alpm_handle_t *handle = NULL;
 alpm_db_t *localdb = NULL;
 alpm_list_t *pkgcache = NULL, *packages = NULL;
-int checks = 0, recursive = 0, quiet = 0;
+int checks = 0, recursive = 0, list_broken = 0, quiet = 0;
 int include_db_files = 0, require_mtree = 0;
 int skip_backups = 1, skip_noextract = 1, skip_noupgrade = 1;
 int isep = '\n';
@@ -87,6 +88,7 @@ void usage(int ret)
 	hputs("   --dbpath=<path>    set an alternate database location");
 	hputs("   --root=<path>      set an alternate installation root");
 	hputs("   --null[=<sep>]     parse stdin as <sep> separated values (default NUL)");
+	hputs("   --list-broken      only print packages that fail checks");
 	hputs("   --quiet            only display error messages");
 	hputs("   --help             display this help information");
 	hputs("   --version          display version information");
@@ -137,6 +139,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "file-properties", no_argument      , NULL       , FLAG_FILE_PROPERTIES } ,
 		{ "mtree"         , no_argument       , NULL       , FLAG_FILE_PROPERTIES } ,
 		{ "require-mtree" , no_argument       , NULL       , FLAG_REQUIRE_MTREE } ,
+		{ "list-broken"   , no_argument       , NULL       , FLAG_LIST_BROKEN  } ,
 		{ "md5sum"        , no_argument       , NULL       , FLAG_MD5SUM       } ,
 		{ "sha256sum"     , no_argument       , NULL       , FLAG_SHA256SUM    } ,
 
@@ -216,6 +219,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 			case FLAG_BACKUP:
 				skip_backups = 0;
 				break;
+			case FLAG_LIST_BROKEN:
+				list_broken = 1;
+				break;
 			case FLAG_NOEXTRACT:
 				skip_noextract = 0;
 				break;
@@ -251,6 +257,16 @@ static int match_backup(alpm_pkg_t *pkg, const char *path)
 	return 0;
 }
 
+static void eprintf(const char *fmt, ...)
+{
+	if(!list_broken) {
+		va_list args;
+		va_start(args, fmt);
+		vfprintf(stdout, fmt, args);
+		va_end(args);
+	}
+}
+
 static int check_depends(alpm_pkg_t *p)
 {
 	int ret = 0;
@@ -258,14 +274,14 @@ static int check_depends(alpm_pkg_t *p)
 	for(i = alpm_pkg_get_depends(p); i; i = alpm_list_next(i)) {
 		char *depstring = alpm_dep_compute_string(i->data);
 		if(!alpm_find_satisfier(pkgcache, depstring)) {
-			printf("%s: unsatisfied dependency '%s'\n",
+			eprintf("%s: unsatisfied dependency '%s'\n",
 					alpm_pkg_get_name(p), depstring);
 			ret = 1;
 		}
 		free(depstring);
 	}
 	if(!quiet && !ret) {
-		printf("%s: all dependencies satisfied\n", alpm_pkg_get_name(p));
+		eprintf("%s: all dependencies satisfied\n", alpm_pkg_get_name(p));
 	}
 	return ret;
 }
@@ -277,7 +293,7 @@ static int check_opt_depends(alpm_pkg_t *p)
 	for(i = alpm_pkg_get_optdepends(p); i; i = alpm_list_next(i)) {
 		char *depstring = alpm_dep_compute_string(i->data);
 		if(!alpm_find_satisfier(pkgcache, depstring)) {
-			printf("%s: unsatisfied optional dependency '%s'\n",
+			eprintf("%s: unsatisfied optional dependency '%s'\n",
 					alpm_pkg_get_name(p), depstring);
 			ret = 1;
 		}
@@ -285,7 +301,7 @@ static int check_opt_depends(alpm_pkg_t *p)
 		i = alpm_list_next(i);
 	}
 	if(!quiet && !ret) {
-		printf("%s: all optional dependencies satisfied\n",
+		eprintf("%s: all optional dependencies satisfied\n",
 				alpm_pkg_get_name(p));
 	}
 	return ret;
@@ -296,16 +312,16 @@ static int check_file(const char *pkgname, const char *path, int isdir)
 	struct stat buf;
 	if(lstat(path, &buf) != 0) {
 		if(errno == ENOENT) {
-			printf("%s: '%s' missing file\n", pkgname, path);
+			eprintf("%s: '%s' missing file\n", pkgname, path);
 		} else {
-			printf("%s: '%s' read error (%s)\n", pkgname, path, strerror(errno));
+			pu_ui_warn("%s: '%s' read error (%s)", pkgname, path, strerror(errno));
 		}
 		return 1;
 	} else if(isdir && !S_ISDIR(buf.st_mode)) {
-		printf("%s: '%s' type mismatch (expected directory)\n", pkgname, path);
+		eprintf("%s: '%s' type mismatch (expected directory)\n", pkgname, path);
 		return 1;
 	} else if(!isdir && S_ISDIR(buf.st_mode)) {
-		printf("%s: '%s' type mismatch (expected file)\n", pkgname, path);
+		eprintf("%s: '%s' type mismatch (expected file)\n", pkgname, path);
 		return 1;
 	}
 	return 0;
@@ -326,16 +342,16 @@ static int check_db_files(alpm_pkg_t *pkg)
 {
 	const char *pkgname = alpm_pkg_get_name(pkg);
 	char *dbpath;
-	int ret;
+	int ret = 0;
 
 	if((dbpath = get_db_path(pkg, "desc")) == NULL) {
-		printf("%s: '%s' read error (%s)\n", pkgname, dbpath, strerror(errno));
+		pu_ui_warn("%s: '%s' read error (%s)", pkgname, dbpath, strerror(errno));
 	} else if(check_file(pkgname, dbpath, 0) != 0) {
 		ret = 1;
 	}
 
 	if((dbpath = get_db_path(pkg, "files")) == NULL) {
-		printf("%s: '%s' read error (%s)\n", pkgname, dbpath, strerror(errno));
+		pu_ui_warn("%s: '%s' read error (%s)", pkgname, dbpath, strerror(errno));
 	} else if(check_file(pkgname, dbpath, 0) != 0) {
 		ret = 1;
 	}
@@ -343,7 +359,7 @@ static int check_db_files(alpm_pkg_t *pkg)
 	if(!require_mtree) { return ret; }
 
 	if((dbpath = get_db_path(pkg, "mtree")) == NULL) {
-		printf("%s: '%s' read error (%s)\n", pkgname, dbpath, strerror(errno));
+		pu_ui_warn("%s: '%s' read error (%s)", pkgname, dbpath, strerror(errno));
 	} else if(check_file(pkgname, dbpath, 0) != 0) {
 		ret = 1;
 	}
@@ -387,7 +403,7 @@ static int check_files(alpm_pkg_t *pkg)
 	}
 
 	if(!quiet && !ret) {
-		printf("%s: all files match database\n", alpm_pkg_get_name(pkg));
+		eprintf("%s: all files match database\n", alpm_pkg_get_name(pkg));
 	}
 
 	return ret;
@@ -421,7 +437,7 @@ int cmp_type(alpm_pkg_t *pkg, const char *path,
 	const char *ftype = mode_str(st->st_mode);
 
 	if(type != ftype) {
-		printf("%s: '%s' type mismatch (expected %s)\n",
+		eprintf("%s: '%s' type mismatch (expected %s)\n",
 				alpm_pkg_get_name(pkg), path, type);
 		return 1;
 	}
@@ -436,7 +452,7 @@ int cmp_mode(alpm_pkg_t *pkg, const char *path,
 	mode_t perm = archive_entry_perm(entry);
 
 	if(perm != (st->st_mode & mask)) {
-		printf("%s: '%s' permission mismatch (expected %o)\n",
+		eprintf("%s: '%s' permission mismatch (expected %o)\n",
 				alpm_pkg_get_name(pkg), path, perm);
 	}
 
@@ -452,7 +468,7 @@ int cmp_mtime(alpm_pkg_t *pkg, const char *path,
 		struct tm ltime;
 		char time_buf[26];
 		strftime(time_buf, 26, "%F %T", localtime_r(&t, &ltime));
-		printf("%s: '%s' modification time mismatch (expected %s)\n",
+		eprintf("%s: '%s' modification time mismatch (expected %s)\n",
 				alpm_pkg_get_name(pkg), path, time_buf);
 		return 1;
 	}
@@ -469,7 +485,7 @@ int cmp_target(alpm_pkg_t *pkg, const char *path,
 	ftarget[len] = '\0';
 
 	if(strcmp(ptarget, ftarget) != 0) {
-		printf("%s: '%s' symlink target mismatch (expected %s)\n",
+		eprintf("%s: '%s' symlink target mismatch (expected %s)\n",
 				alpm_pkg_get_name(pkg), path, ptarget);
 		return 1;
 	}
@@ -484,7 +500,7 @@ int cmp_uid(alpm_pkg_t *pkg, const char *path,
 
 	if(puid != st->st_uid) {
 		struct passwd *pw = getpwuid(puid);
-		printf("%s: '%s' UID mismatch (expected %d/%s)\n",
+		eprintf("%s: '%s' UID mismatch (expected %d/%s)\n",
 				alpm_pkg_get_name(pkg), path, puid, pw ? pw->pw_name : "unknown user");
 		return 1;
 	}
@@ -499,7 +515,7 @@ int cmp_gid(alpm_pkg_t *pkg, const char *path,
 
 	if(pgid != st->st_gid) {
 		struct group *gr = getgrgid(pgid);
-		printf("%s: '%s' GID mismatch (expected %d/%s)\n",
+		eprintf("%s: '%s' GID mismatch (expected %d/%s)\n",
 				alpm_pkg_get_name(pkg), path, pgid, gr ? gr->gr_name : "unknown group");
 		return 1;
 	}
@@ -514,7 +530,7 @@ int cmp_size(alpm_pkg_t *pkg, const char *path,
 
 	if(psize != st->st_size) {
 		char hr_size[20];
-		printf("%s: '%s' size mismatch (expected %s)\n",
+		eprintf("%s: '%s' size mismatch (expected %s)\n",
 				alpm_pkg_get_name(pkg), path, pu_hr_size(psize, hr_size));
 		return 1;
 	}
@@ -533,8 +549,7 @@ static int check_file_properties(alpm_pkg_t *pkg)
 	struct archive_entry *entry;
 
 	if(!mtree) {
-		/* TODO should this return failure? files haven't actually been verified */
-		printf("%s: mtree data not available\n", alpm_pkg_get_name(pkg));
+		pu_ui_warn("%s: mtree data not available", alpm_pkg_get_name(pkg));
 		return require_mtree;
 	}
 
@@ -568,9 +583,9 @@ static int check_file_properties(alpm_pkg_t *pkg)
 
 		if(lstat(fpath, &buf) != 0) {
 			if(errno == ENOENT) {
-				printf("%s: '%s' missing file\n", alpm_pkg_get_name(pkg), fpath);
+				eprintf("%s: '%s' missing file\n", alpm_pkg_get_name(pkg), fpath);
 			} else {
-				printf("%s: '%s' read error (%s)\n",
+				pu_ui_warn("%s: '%s' read error (%s)",
 						alpm_pkg_get_name(pkg), fpath, strerror(errno));
 			}
 			ret = 1;
@@ -602,7 +617,7 @@ static int check_file_properties(alpm_pkg_t *pkg)
 	}
 
 	if(!quiet && !ret) {
-		printf("%s: all files match mtree\n", alpm_pkg_get_name(pkg));
+		eprintf("%s: all files match mtree\n", alpm_pkg_get_name(pkg));
 	}
 
 	return ret;
@@ -628,10 +643,10 @@ static int check_md5sum(alpm_pkg_t *pkg)
 
 		strcpy(rel, m->path);
 		if((md5 = alpm_compute_md5sum(path)) == NULL) {
-			printf("%s: '%s' read error (%s)\n",
+			pu_ui_warn("%s: '%s' read error (%s)",
 					alpm_pkg_get_name(pkg), path, strerror(errno));
 		} else if(memcmp(m->md5digest, md5, 32) != 0) {
-			printf("%s: '%s' md5sum mismatch (expected %s)\n",
+			eprintf("%s: '%s' md5sum mismatch (expected %s)\n",
 					alpm_pkg_get_name(pkg), path, m->md5digest);
 			ret = 1;
 		}
@@ -642,7 +657,7 @@ static int check_md5sum(alpm_pkg_t *pkg)
 	alpm_list_free(entries);
 
 	if(!quiet && !ret) {
-		printf("%s: all files match mtree md5sums\n", alpm_pkg_get_name(pkg));
+		eprintf("%s: all files match mtree md5sums\n", alpm_pkg_get_name(pkg));
 	}
 
 	return ret;
@@ -668,10 +683,10 @@ static int check_sha256sum(alpm_pkg_t *pkg)
 
 		strcpy(rel, m->path);
 		if((sha = alpm_compute_sha256sum(path)) == NULL) {
-			printf("%s: '%s' read error (%s)\n",
+			pu_ui_warn("%s: '%s' read error (%s)",
 					alpm_pkg_get_name(pkg), path, strerror(errno));
 		} else if(memcmp(m->sha256digest, sha, 32) != 0) {
-			printf("%s: '%s' sha256sum mismatch (expected %s)\n",
+			eprintf("%s: '%s' sha256sum mismatch (expected %s)\n",
 					alpm_pkg_get_name(pkg), path, m->sha256digest);
 			ret = 1;
 		}
@@ -682,7 +697,7 @@ static int check_sha256sum(alpm_pkg_t *pkg)
 	alpm_list_free(entries);
 
 	if(!quiet && !ret) {
-		printf("%s: all files match mtree sha256sums\n", alpm_pkg_get_name(pkg));
+		eprintf("%s: all files match mtree sha256sums\n", alpm_pkg_get_name(pkg));
 	}
 
 	return ret;
@@ -790,7 +805,8 @@ int main(int argc, char **argv)
 	}
 
 	for(i = packages; i; i = alpm_list_next(i)) {
-#define RUNCHECK(t, b) if((checks & t) && b != 0) { ret = 1; }
+		int pkgerr = 0;
+#define RUNCHECK(t, b) if((checks & t) && b != 0) { pkgerr = ret = 1; }
 		RUNCHECK(CHECK_DEPENDS, check_depends(i->data));
 		RUNCHECK(CHECK_OPT_DEPENDS, check_opt_depends(i->data));
 		RUNCHECK(CHECK_FILES, check_files(i->data));
@@ -798,6 +814,7 @@ int main(int argc, char **argv)
 		RUNCHECK(CHECK_MD5SUM, check_md5sum(i->data));
 		RUNCHECK(CHECK_SHA256SUM, check_sha256sum(i->data));
 #undef RUNCHECK
+		if(pkgerr && list_broken) { printf("%s\n", alpm_pkg_get_name(i->data)); }
 	}
 
 cleanup:
