@@ -38,6 +38,7 @@ enum longopt_flags {
 	FLAG_ADD = 1000,
 	FLAG_BACKUP,
 	FLAG_CONFIG,
+	FLAG_DB_FILES,
 	FLAG_DBPATH,
 	FLAG_DEPENDS,
 	FLAG_FILES,
@@ -51,6 +52,7 @@ enum longopt_flags {
 	FLAG_OPT_DEPENDS,
 	FLAG_QUIET,
 	FLAG_RECURSIVE,
+	FLAG_REQUIRE_MTREE,
 	FLAG_ROOT,
 	FLAG_VERSION,
 };
@@ -69,6 +71,7 @@ alpm_handle_t *handle = NULL;
 alpm_db_t *localdb = NULL;
 alpm_list_t *pkgcache = NULL, *packages = NULL;
 int checks = 0, recursive = 0, quiet = 0;
+int include_db_files = 0, require_mtree = 0;
 int skip_backups = 1, skip_noextract = 1, skip_noupgrade = 1;
 int isep = '\n';
 
@@ -89,6 +92,7 @@ void usage(int ret)
 	hputs("   --version          display version information");
 	hputs("");
 	hputs("   --recursive        perform checks on package [opt-]depends");
+	hputs("   --require-mtree    treat packages missing MTREE data as an error");
 	hputs("   --depends          check for missing dependencies");
 	hputs("   --opt-depends      check for missing optional dependencies");
 	hputs("   --files            check installed files against package database");
@@ -98,6 +102,7 @@ void usage(int ret)
 	hputs("   --backup           include backup files in modification checks");
 	hputs("   --noextract        include NoExtract files in modification checks");
 	hputs("   --noupgrade        include NoUpgrade files in modification checks");
+	hputs("   --db-files         include database files in checks");
 #undef hputs
 	exit(ret);
 }
@@ -124,12 +129,14 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "backup"        , no_argument       , NULL       , FLAG_BACKUP       } ,
 		{ "noextract"     , no_argument       , NULL       , FLAG_NOEXTRACT    } ,
 		{ "noupgrade"     , no_argument       , NULL       , FLAG_NOUPGRADE    } ,
+		{ "db-files"      , no_argument       , NULL       , FLAG_DB_FILES     } ,
 
 		{ "depends"       , no_argument       , NULL       , FLAG_DEPENDS      } ,
 		{ "opt-depends"   , no_argument       , NULL       , FLAG_OPT_DEPENDS  } ,
 		{ "files"         , no_argument       , NULL       , FLAG_FILES        } ,
 		{ "file-properties", no_argument      , NULL       , FLAG_FILE_PROPERTIES } ,
 		{ "mtree"         , no_argument       , NULL       , FLAG_FILE_PROPERTIES } ,
+		{ "require-mtree" , no_argument       , NULL       , FLAG_REQUIRE_MTREE } ,
 		{ "md5sum"        , no_argument       , NULL       , FLAG_MD5SUM       } ,
 		{ "sha256sum"     , no_argument       , NULL       , FLAG_SHA256SUM    } ,
 
@@ -196,10 +203,15 @@ pu_config_t *parse_opts(int argc, char **argv)
 				checks |= CHECK_SHA256SUM;
 				break;
 
-
 			/* misc */
 			case FLAG_RECURSIVE:
 				recursive = 1;
+				break;
+			case FLAG_REQUIRE_MTREE:
+				require_mtree = 1;
+				break;
+			case FLAG_DB_FILES:
+				include_db_files = 1;
 				break;
 			case FLAG_BACKUP:
 				skip_backups = 0;
@@ -279,11 +291,72 @@ static int check_opt_depends(alpm_pkg_t *p)
 	return ret;
 }
 
+static int check_file(const char *pkgname, const char *path, int isdir)
+{
+	struct stat buf;
+	if(lstat(path, &buf) != 0) {
+		if(errno == ENOENT) {
+			printf("%s: '%s' missing file\n", pkgname, path);
+		} else {
+			printf("%s: '%s' read error (%s)\n", pkgname, path, strerror(errno));
+		}
+		return 1;
+	} else if(isdir && !S_ISDIR(buf.st_mode)) {
+		printf("%s: '%s' type mismatch (expected directory)\n", pkgname, path);
+		return 1;
+	} else if(!isdir && S_ISDIR(buf.st_mode)) {
+		printf("%s: '%s' type mismatch (expected file)\n", pkgname, path);
+		return 1;
+	}
+	return 0;
+}
+
+static char *get_db_path(alpm_pkg_t *pkg, const char *path)
+{
+	static char dbpath[PATH_MAX];
+	ssize_t len = snprintf(dbpath, PATH_MAX, "%slocal/%s-%s/%s",
+				alpm_option_get_dbpath(handle),
+				alpm_pkg_get_name(pkg), alpm_pkg_get_version(pkg), path);
+	if(len < 0 || len >= PATH_MAX) { errno = ERANGE; return NULL; } /* TODO */
+	return dbpath;
+}
+
+/* verify that required db files exist */
+static int check_db_files(alpm_pkg_t *pkg)
+{
+	const char *pkgname = alpm_pkg_get_name(pkg);
+	char *dbpath;
+	int ret;
+
+	if((dbpath = get_db_path(pkg, "desc")) == NULL) {
+		printf("%s: '%s' read error (%s)\n", pkgname, dbpath, strerror(errno));
+	} else if(check_file(pkgname, dbpath, 0) != 0) {
+		ret = 1;
+	}
+
+	if((dbpath = get_db_path(pkg, "files")) == NULL) {
+		printf("%s: '%s' read error (%s)\n", pkgname, dbpath, strerror(errno));
+	} else if(check_file(pkgname, dbpath, 0) != 0) {
+		ret = 1;
+	}
+
+	if(!require_mtree) { return ret; }
+
+	if((dbpath = get_db_path(pkg, "mtree")) == NULL) {
+		printf("%s: '%s' read error (%s)\n", pkgname, dbpath, strerror(errno));
+	} else if(check_file(pkgname, dbpath, 0) != 0) {
+		ret = 1;
+	}
+
+	return ret;
+}
+
 /* verify that the filesystem matches the package database */
 static int check_files(alpm_pkg_t *pkg)
 {
 	alpm_filelist_t *filelist = alpm_pkg_get_files(pkg);
 	char path[PATH_MAX], *rel;
+	const char *pkgname = alpm_pkg_get_name(pkg);
 	unsigned int i;
 	int ret = 0;
 	size_t space;
@@ -296,7 +369,6 @@ static int check_files(alpm_pkg_t *pkg)
 		alpm_file_t file = filelist->files[i];
 		int isdir = 0;
 		size_t len;
-		struct stat buf;
 
 		if(skip_noextract && match_noextract(handle, file.name)) { continue; }
 
@@ -307,23 +379,11 @@ static int check_files(alpm_pkg_t *pkg)
 			rel[len - 1] = '\0';
 		}
 
-		if(lstat(path, &buf) != 0) {
-			if(errno == ENOENT) {
-				printf("%s: '%s' missing file\n", alpm_pkg_get_name(pkg), path);
-			} else {
-				printf("%s: '%s' read error (%s)\n",
-						alpm_pkg_get_name(pkg), path, strerror(errno));
-			}
-			ret = 1;
-		} else if(isdir && !S_ISDIR(buf.st_mode)) {
-			printf("%s: '%s' type mismatch (expected directory)\n",
-					alpm_pkg_get_name(pkg), path);
-			ret = 1;
-		} else if(!isdir && S_ISDIR(buf.st_mode)) {
-			printf("%s: '%s' type mismatch (expected file)\n",
-					alpm_pkg_get_name(pkg), path);
-			ret = 1;
-		}
+		if(check_file(pkgname, path, isdir) != 0) { ret = 1; }
+	}
+
+	if(include_db_files && check_db_files(pkg) != 0) {
+		ret = 1;
 	}
 
 	if(!quiet && !ret) {
@@ -475,7 +535,7 @@ static int check_file_properties(alpm_pkg_t *pkg)
 	if(!mtree) {
 		/* TODO should this return failure? files haven't actually been verified */
 		printf("%s: mtree data not available\n", alpm_pkg_get_name(pkg));
-		return 0;
+		return require_mtree;
 	}
 
 	strncpy(path, alpm_option_get_root(handle), PATH_MAX);
@@ -484,55 +544,59 @@ static int check_file_properties(alpm_pkg_t *pkg)
 
 	while(alpm_pkg_mtree_next(pkg, mtree, &entry) == ARCHIVE_OK) {
 		const char *ppath = archive_entry_pathname(entry);
+		const char *fpath;
 		struct stat buf;
 
 		if(strncmp("./", ppath, 2) == 0) { ppath += 2; }
 
 		if(strcmp(ppath, ".INSTALL") == 0) {
-			/* TODO */
-			continue;
+			if((fpath = get_db_path(pkg, "install")) == NULL) {
+				continue;
+			}
 		} else if(strcmp(ppath, ".CHANGELOG") == 0) {
-			/* TODO */
-			continue;
+			if((fpath = get_db_path(pkg, "changelog")) == NULL) {
+				continue;
+			}
 		} else if(ppath[0] == '.') {
 			continue;
 		} else if(skip_noextract && match_noextract(handle, ppath)) {
 			continue;
 		} else {
 			strncpy(rel, ppath, space);
+			fpath = path;
 		}
 
-		if(lstat(path, &buf) != 0) {
+		if(lstat(fpath, &buf) != 0) {
 			if(errno == ENOENT) {
-				printf("%s: '%s' missing file\n", alpm_pkg_get_name(pkg), path);
+				printf("%s: '%s' missing file\n", alpm_pkg_get_name(pkg), fpath);
 			} else {
 				printf("%s: '%s' read error (%s)\n",
-						alpm_pkg_get_name(pkg), path, strerror(errno));
+						alpm_pkg_get_name(pkg), fpath, strerror(errno));
 			}
 			ret = 1;
 			continue;
 		}
 
-		if(cmp_type(pkg, path, entry, &buf) != 0) { ret = 1; }
+		if(cmp_type(pkg, fpath, entry, &buf) != 0) { ret = 1; }
 
 		if(skip_noupgrade && match_noupgrade(handle, ppath)) { continue; }
 
-		if(cmp_mode(pkg, path, entry, &buf) != 0) { ret = 1; }
-		if(cmp_uid(pkg, path, entry, &buf) != 0) { ret = 1; }
-		if(cmp_gid(pkg, path, entry, &buf) != 0) { ret = 1; }
+		if(cmp_mode(pkg, fpath, entry, &buf) != 0) { ret = 1; }
+		if(cmp_uid(pkg, fpath, entry, &buf) != 0) { ret = 1; }
+		if(cmp_gid(pkg, fpath, entry, &buf) != 0) { ret = 1; }
 
 		if(skip_backups && match_backup(pkg, ppath)) {
 			continue;
 		}
 
 		if(S_ISLNK(buf.st_mode) && S_ISLNK(archive_entry_mode(entry))) {
-			if(cmp_target(pkg, path, entry) != 0) { ret = 1; }
+			if(cmp_target(pkg, fpath, entry) != 0) { ret = 1; }
 		}
 		if(!S_ISDIR(buf.st_mode)) {
-			if(cmp_mtime(pkg, path, entry, &buf) != 0) { ret = 1; }
+			if(cmp_mtime(pkg, fpath, entry, &buf) != 0) { ret = 1; }
 			if(!S_ISLNK(buf.st_mode)) {
 				/* always fails for directories and symlinks */
-				if(cmp_size(pkg, path, entry, &buf) != 0) { ret = 1; }
+				if(cmp_size(pkg, fpath, entry, &buf) != 0) { ret = 1; }
 			}
 		}
 	}

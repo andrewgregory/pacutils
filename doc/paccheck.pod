@@ -67,6 +67,15 @@ Check file md5sums against MTREE data.
 
 Check file sha256sums against MTREE data.
 
+=item B<--require-mtree>
+
+Treat missing MTREE data as an error for B<--db-files> and
+B<--file-properties>.
+
+=item B<--db-files>
+
+Include database files in B<--files> and B<--file-properties> checks.
+
 =item B<--backup>
 
 Include backup files in file modification checks.
