@@ -17,6 +17,7 @@
 *.app
 
 # Editor Files
+*~
 *.swp
 *.orig
 
