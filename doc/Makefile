@@ -52,4 +52,4 @@ install: doc
 clean:
 	$(RM) $(MAN1PAGES) $(MAN3PAGES) pacinstall$(MAN1EXT) pacremove$(MAN1EXT)
 
-.PHONY: all doc
+.PHONY: all clean doc install
