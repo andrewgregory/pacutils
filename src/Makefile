@@ -34,6 +34,7 @@ ifneq ($(GITTAG),)
 endif
 
 OBJECTS = \
+		  paccapability \
 		  paccheck \
 		  pacconf \
 		  pacfile \

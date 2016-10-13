@@ -1,0 +1,54 @@
+=head1 NAME
+
+paccapability - query libalpm capabilities
+
+=head1 SYNOPSIS
+
+ paccapability [options] [<capability>...]
+ paccapability (--help|--version)
+
+=head1 DESCRIPTION
+
+B<paccapability> provides a way to query which features libalpm was built with.
+Recognized capabilities are:
+
+=over
+
+=item * ALPM_CAPABILITY_NLS
+
+=item * ALPM_CAPABILITY_DOWNLOADER
+
+=item * ALPM_CAPABILITY_SIGNATURES
+
+=back
+
+Capabilities are case-insensitive and may omit the leading C<ALPM_CAPABILITY_>.
+If no capabilities are provided, all enabled capabilities will be printed, one
+per line.  Otherwise, each provided capability will printed, one per line,
+followed by a one or zero to indicate that the feature is enabled or disabled,
+respectively.  If any given capabilities are disabled B<paccapability> will
+exit with a non-zero value.
+
+=head1 OPTIONS
+
+=over
+
+=item B<--help>
+
+Display usage information and exit.
+
+=item B<--version>
+
+Display version information and exit.
+
+=back
+
+=head1 EXAMPLES
+
+=over
+
+=item Check if libalpm was built with signature checking:
+
+ paccapability signatures >/dev/null && ...
+
+=back

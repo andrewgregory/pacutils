@@ -10,6 +10,7 @@ MAN3DIR     ?= $(MANDIR)/man3
 MAN3EXT     ?= .3
 
 MAN1PAGES = \
+		   paccapability$(MAN1EXT) \
 		   paccheck$(MAN1EXT) \
 		   pacconf$(MAN1EXT) \
 		   pacfile$(MAN1EXT) \

@@ -122,6 +122,12 @@ documentation for more information.
 
 =over
 
+=item paccapability
+
+Query compile time libalpm features.
+
+ paccapability signatures >/dev/null && echo "libalpm built with signature support"
+
 =item pacconf
 
 Query I<pacman>'s configuration file.  Useful for shell scripts:
