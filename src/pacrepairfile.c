@@ -353,7 +353,8 @@ int main(int argc, char **argv) {
 	}
 	if(!isatty(fileno(stdin)) && errno != EBADF) {
 		char *buf = NULL;
-		size_t len, blen = 0;
+		size_t blen = 0;
+		ssize_t len;
 		while((len = getline(&buf, &blen, stdin)) != -1) {
 			if(buf[len - 1] == '\n') { buf[len - 1] = '\0'; }
 			if(fix_file(buf) != 0) { ret = 1; }
