@@ -60,14 +60,14 @@ typedef struct {
 	FILE *stream;
 	char buf[256], *next;
 	int eof;
-} pu_log_parser_t;
+} pu_log_reader_t;
 
 pu_log_transaction_status_t pu_log_transaction_parse(const char *message);
 
 int pu_log_fprint_entry(FILE *stream, pu_log_entry_t *entry);
-pu_log_entry_t *pu_log_parser_next(pu_log_parser_t *parser);
-pu_log_parser_t *pu_log_parser_new(FILE *stream);
-void pu_log_parser_free(pu_log_parser_t *p);
+pu_log_entry_t *pu_log_reader_next(pu_log_reader_t *reader);
+pu_log_reader_t *pu_log_reader_new(FILE *stream);
+void pu_log_reader_free(pu_log_reader_t *p);
 alpm_list_t *pu_log_parse_file(FILE *stream);
 void pu_log_entry_free(pu_log_entry_t *entry);
 

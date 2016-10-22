@@ -128,29 +128,29 @@ int pu_log_fprint_entry(FILE *stream, pu_log_entry_t *entry)
 	}
 }
 
-pu_log_parser_t *pu_log_parser_new(FILE *stream) {
-	pu_log_parser_t *parser = calloc(sizeof(pu_log_parser_t), 1);
-	parser->stream = stream;
-	return parser;
+pu_log_reader_t *pu_log_reader_new(FILE *stream) {
+	pu_log_reader_t *reader = calloc(sizeof(pu_log_reader_t), 1);
+	reader->stream = stream;
+	return reader;
 }
 
-void pu_log_parser_free(pu_log_parser_t *p) {
+void pu_log_reader_free(pu_log_reader_t *p) {
 	if(p) { free(p); }
 }
 
-pu_log_entry_t *pu_log_parser_next(pu_log_parser_t *parser) {
+pu_log_entry_t *pu_log_reader_next(pu_log_reader_t *reader) {
 	char *p, *c;
 	pu_log_entry_t *entry = calloc(sizeof(pu_log_entry_t), 1);
 
 	if(entry == NULL) { errno = ENOMEM; return NULL; }
 
-	if(parser->next == NULL && fgets(parser->buf, 256, parser->stream) == NULL) {
-		parser->eof = feof(parser->stream);
+	if(reader->next == NULL && fgets(reader->buf, 256, reader->stream) == NULL) {
+		reader->eof = feof(reader->stream);
 		free(entry);
 		return NULL;
 	}
 
-	if(!(p = strptime(parser->buf, "[%Y-%m-%d %H:%M]", &entry->timestamp))) {
+	if(!(p = strptime(reader->buf, "[%Y-%m-%d %H:%M]", &entry->timestamp))) {
 		errno = EINVAL;
 		return NULL;
 	}
@@ -167,18 +167,18 @@ pu_log_entry_t *pu_log_parser_next(pu_log_parser_t *parser) {
 
 	entry->message = strdup(p);
 
-	while((parser->next = fgets(parser->buf, 256, parser->stream)) != NULL) {
+	while((reader->next = fgets(reader->buf, 256, reader->stream)) != NULL) {
 		struct tm ts;
-		if(strptime(parser->buf, "[%Y-%m-%d %H:%M]", &ts) == NULL) {
+		if(strptime(reader->buf, "[%Y-%m-%d %H:%M]", &ts) == NULL) {
 			size_t oldlen = strlen(entry->message);
-			size_t newlen = oldlen + strlen(parser->buf) + 1;
+			size_t newlen = oldlen + strlen(reader->buf) + 1;
 			char *newmessage = realloc(entry->message, newlen);
 			if(oldlen > newlen || newmessage == NULL) {
 				errno = ENOMEM;
 				return NULL;
 			}
 			entry->message = newmessage;
-			strcpy(entry->message + oldlen, parser->buf);
+			strcpy(entry->message + oldlen, reader->buf);
 		} else {
 			break;
 		}
@@ -188,13 +188,13 @@ pu_log_entry_t *pu_log_parser_next(pu_log_parser_t *parser) {
 }
 
 alpm_list_t *pu_log_parse_file(FILE *stream) {
-	pu_log_parser_t *parser = pu_log_parser_new(stream);
+	pu_log_reader_t *reader = pu_log_reader_new(stream);
 	pu_log_entry_t *entry;
 	alpm_list_t *entries = NULL;
-	while((entry = pu_log_parser_next(parser))) {
+	while((entry = pu_log_reader_next(reader))) {
 		entries = alpm_list_add(entries, entry);
 	}
-	free(parser);
+	free(reader);
 	return entries;
 }
 
