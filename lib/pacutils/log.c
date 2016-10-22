@@ -128,7 +128,7 @@ int pu_log_fprint_entry(FILE *stream, pu_log_entry_t *entry)
 	}
 }
 
-pu_log_reader_t *pu_log_reader_new(FILE *stream) {
+pu_log_reader_t *pu_log_reader_open_stream(FILE *stream) {
 	pu_log_reader_t *reader = calloc(sizeof(pu_log_reader_t), 1);
 	reader->stream = stream;
 	return reader;
@@ -188,7 +188,7 @@ pu_log_entry_t *pu_log_reader_next(pu_log_reader_t *reader) {
 }
 
 alpm_list_t *pu_log_parse_file(FILE *stream) {
-	pu_log_reader_t *reader = pu_log_reader_new(stream);
+	pu_log_reader_t *reader = pu_log_reader_open_stream(stream);
 	pu_log_entry_t *entry;
 	alpm_list_t *entries = NULL;
 	while((entry = pu_log_reader_next(reader))) {
