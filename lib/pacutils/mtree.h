@@ -36,7 +36,23 @@ typedef struct pu_mtree_t {
   char sha256digest[65];
 } pu_mtree_t;
 
+typedef struct {
+  FILE *stream;
+  int eof;
+  pu_mtree_t defaults;
+
+  char *_buf;        /* line buffer */
+  size_t _buflen;    /* line buffer length */
+  char *_stream_buf; /* buffer for in-memory streams */
+  int _close_stream; /* close stream on free */
+} pu_mtree_reader_t;
+
 alpm_list_t *pu_mtree_load_pkg_mtree(alpm_handle_t *handle, alpm_pkg_t *pkg);
+
+pu_mtree_reader_t *pu_mtree_reader_open_stream(FILE *stream);
+pu_mtree_reader_t *pu_mtree_reader_open_package(alpm_handle_t *h, alpm_pkg_t *p);
+pu_mtree_t *pu_mtree_reader_next(pu_mtree_reader_t *reader, pu_mtree_t *dest);
+void pu_mtree_reader_free(pu_mtree_reader_t *reader);
 void pu_mtree_free(pu_mtree_t *mtree);
 
 #endif /* PACUTILS_MTREE_H */
