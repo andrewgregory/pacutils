@@ -58,9 +58,10 @@ typedef struct {
 
 typedef struct {
 	FILE *stream;
-	char buf[256], *next;
 	int eof;
 
+	char _buf[256];    /* read buffer */
+	char *_next;       /* next line indicator */
 	int _close_stream; /* close stream on free */
 } pu_log_reader_t;
 

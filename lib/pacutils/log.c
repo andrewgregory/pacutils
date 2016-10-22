@@ -155,13 +155,13 @@ pu_log_entry_t *pu_log_reader_next(pu_log_reader_t *reader) {
 
 	if(entry == NULL) { errno = ENOMEM; return NULL; }
 
-	if(reader->next == NULL && fgets(reader->buf, 256, reader->stream) == NULL) {
+	if(reader->_next == NULL && fgets(reader->_buf, 256, reader->stream) == NULL) {
 		reader->eof = feof(reader->stream);
 		free(entry);
 		return NULL;
 	}
 
-	if(!(p = strptime(reader->buf, "[%Y-%m-%d %H:%M]", &entry->timestamp))) {
+	if(!(p = strptime(reader->_buf, "[%Y-%m-%d %H:%M]", &entry->timestamp))) {
 		errno = EINVAL;
 		return NULL;
 	}
@@ -178,18 +178,18 @@ pu_log_entry_t *pu_log_reader_next(pu_log_reader_t *reader) {
 
 	entry->message = strdup(p);
 
-	while((reader->next = fgets(reader->buf, 256, reader->stream)) != NULL) {
+	while((reader->_next = fgets(reader->_buf, 256, reader->stream)) != NULL) {
 		struct tm ts;
-		if(strptime(reader->buf, "[%Y-%m-%d %H:%M]", &ts) == NULL) {
+		if(strptime(reader->_buf, "[%Y-%m-%d %H:%M]", &ts) == NULL) {
 			size_t oldlen = strlen(entry->message);
-			size_t newlen = oldlen + strlen(reader->buf) + 1;
+			size_t newlen = oldlen + strlen(reader->_buf) + 1;
 			char *newmessage = realloc(entry->message, newlen);
 			if(oldlen > newlen || newmessage == NULL) {
 				errno = ENOMEM;
 				return NULL;
 			}
 			entry->message = newmessage;
-			strcpy(entry->message + oldlen, reader->buf);
+			strcpy(entry->message + oldlen, reader->_buf);
 		} else {
 			break;
 		}
