@@ -258,12 +258,17 @@ void cmp_size(struct archive_entry *entry, struct stat *st)
 void cmp_sha256sum(struct stat *st,
 		alpm_handle_t *handle, alpm_pkg_t *pkg, const char *path)
 {
-	alpm_list_t *i, *entries = pu_mtree_load_pkg_mtree(handle, pkg);
+	pu_mtree_reader_t *reader;
+	pu_mtree_t *m;
 
-	for(i = entries; i; i = alpm_list_next(i)) {
-		pu_mtree_t *m = i->data;
+	if((reader = pu_mtree_reader_open_package(handle, pkg)) == NULL) {
+		pu_ui_warn("%s: mtree data not available", alpm_pkg_get_name(pkg));
+		return;
+	}
+
+	while((m = pu_mtree_reader_next(reader, NULL))) {
 		char *sha = NULL;
-		if(strcmp(m->path, path) != 0) { continue; }
+		if(strcmp(m->path, path) != 0) { pu_mtree_free(m); continue; }
 
 		if(checkfs && S_ISREG(st->st_mode)) {
 			char rpath[PATH_MAX];
@@ -282,23 +287,38 @@ void cmp_sha256sum(struct stat *st,
 			}
 			free(sha);
 		}
+		putchar('\n');
+
+		pu_mtree_reader_free(reader);
+		pu_mtree_free(m);
+
+		return;
 	}
 
-	alpm_list_free_inner(entries, (alpm_list_fn_free) pu_mtree_free);
-	alpm_list_free(entries);
-
-	putchar('\n');
+	if(!reader->eof) {
+		pu_ui_warn("%s: error reading mtree data (%s)",
+				alpm_pkg_get_name(pkg), strerror(errno));
+	} else {
+		pu_ui_warn("%s: error '%s' not found in mtree data",
+				alpm_pkg_get_name(pkg), path);
+	}
+	pu_mtree_reader_free(reader);
 }
 
 void cmp_md5sum(struct stat *st,
 		alpm_handle_t *handle, alpm_pkg_t *pkg, const char *path)
 {
-	alpm_list_t *i, *entries = pu_mtree_load_pkg_mtree(handle, pkg);
+	pu_mtree_reader_t *reader;
+	pu_mtree_t *m;
 
-	for(i = entries; i; i = alpm_list_next(i)) {
-		pu_mtree_t *m = i->data;
+	if((reader = pu_mtree_reader_open_package(handle, pkg)) == NULL) {
+		pu_ui_warn("%s: mtree data not available", alpm_pkg_get_name(pkg));
+		return;
+	}
+
+	while((m = pu_mtree_reader_next(reader, NULL))) {
 		char *md5 = NULL;
-		if(strcmp(m->path, path) != 0) { continue; }
+		if(strcmp(m->path, path) != 0) { pu_mtree_free(m); continue; }
 
 		if(checkfs && S_ISREG(st->st_mode)) {
 			char rpath[PATH_MAX];
@@ -317,12 +337,22 @@ void cmp_md5sum(struct stat *st,
 			}
 			free(md5);
 		}
+		putchar('\n');
+
+		pu_mtree_reader_free(reader);
+		pu_mtree_free(m);
+
+		return;
 	}
 
-	alpm_list_free_inner(entries, (alpm_list_fn_free) pu_mtree_free);
-	alpm_list_free(entries);
-
-	putchar('\n');
+	if(!reader->eof) {
+		pu_ui_warn("%s: error reading mtree data (%s)",
+				alpm_pkg_get_name(pkg), strerror(errno));
+	} else {
+		pu_ui_warn("%s: error '%s' not found in mtree data",
+				alpm_pkg_get_name(pkg), path);
+	}
+	pu_mtree_reader_free(reader);
 }
 
 int main(int argc, char **argv)
