@@ -128,6 +128,14 @@ int pu_log_fprint_entry(FILE *stream, pu_log_entry_t *entry)
 	}
 }
 
+pu_log_reader_t *pu_log_reader_open_file(const char *path) {
+	pu_log_reader_t *r;
+	if((r = calloc(sizeof(pu_log_reader_t), 1)) == NULL) { return NULL; }
+	if((r->stream = fopen(path, "r")) == NULL) { free(r); return NULL; }
+	r->_close_stream = 1;
+	return r;
+}
+
 pu_log_reader_t *pu_log_reader_open_stream(FILE *stream) {
 	pu_log_reader_t *reader;
 	if((reader = calloc(sizeof(pu_log_reader_t), 1)) == NULL) { return NULL; }
@@ -136,7 +144,9 @@ pu_log_reader_t *pu_log_reader_open_stream(FILE *stream) {
 }
 
 void pu_log_reader_free(pu_log_reader_t *p) {
-	if(p) { free(p); }
+	if(p == NULL) { return; }
+	if(p->_close_stream) { fclose(p->stream); }
+	free(p);
 }
 
 pu_log_entry_t *pu_log_reader_next(pu_log_reader_t *reader) {
