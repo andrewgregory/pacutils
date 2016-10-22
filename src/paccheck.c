@@ -627,13 +627,18 @@ static int check_md5sum(alpm_pkg_t *pkg)
 {
 	int ret = 0;
 	char path[PATH_MAX], *rel;
-	alpm_list_t *i, *entries = pu_mtree_load_pkg_mtree(handle, pkg);
+	pu_mtree_reader_t *reader;
+	pu_mtree_t *m;
 
 	strcpy(path, alpm_option_get_root(handle));
 	rel = path + strlen(alpm_option_get_root(handle));
 
-	for(i = entries; i; i = alpm_list_next(i)) {
-		pu_mtree_t *m = i->data;
+	if((reader = pu_mtree_reader_open_package(handle, pkg)) == NULL) {
+		pu_ui_warn("%s: mtree data not available", alpm_pkg_get_name(pkg));
+		return require_mtree;
+	}
+
+	while((m = pu_mtree_reader_next(reader, NULL))) {
 		char *md5;
 		if(m->md5digest[0] == '\0') { continue; }
 		if(m->path[0] == '.') { continue; }
@@ -651,10 +656,15 @@ static int check_md5sum(alpm_pkg_t *pkg)
 			ret = 1;
 		}
 		free(md5);
+		free(m);
 	}
-
-	alpm_list_free_inner(entries, (alpm_list_fn_free) pu_mtree_free);
-	alpm_list_free(entries);
+	if(!reader->eof) {
+		pu_ui_warn("%s: error reading mtree data (%s)",
+				alpm_pkg_get_name(pkg), strerror(errno));
+		pu_mtree_reader_free(reader);
+		return ret || require_mtree;
+	}
+	pu_mtree_reader_free(reader);
 
 	if(!quiet && !ret) {
 		eprintf("%s: all files match mtree md5sums\n", alpm_pkg_get_name(pkg));
@@ -666,14 +676,19 @@ static int check_md5sum(alpm_pkg_t *pkg)
 static int check_sha256sum(alpm_pkg_t *pkg)
 {
 	int ret = 0;
-	alpm_list_t *i, *entries = pu_mtree_load_pkg_mtree(handle, pkg);
 	char path[PATH_MAX], *rel;
+	pu_mtree_reader_t *reader;
+	pu_mtree_t *m;
+
+	if((reader = pu_mtree_reader_open_package(handle, pkg)) == NULL) {
+		pu_ui_warn("%s: mtree data not available", alpm_pkg_get_name(pkg));
+		return require_mtree;
+	}
 
 	strcpy(path, alpm_option_get_root(handle));
 	rel = path + strlen(alpm_option_get_root(handle));
 
-	for(i = entries; i; i = alpm_list_next(i)) {
-		pu_mtree_t *m = i->data;
+	while((m = pu_mtree_reader_next(reader, NULL))) {
 		char *sha;
 		if(m->sha256digest[0] == '\0') { continue; }
 		if(m->path[0] == '.') { continue; }
@@ -691,10 +706,16 @@ static int check_sha256sum(alpm_pkg_t *pkg)
 			ret = 1;
 		}
 		free(sha);
+		pu_mtree_free(m);
 	}
 
-	alpm_list_free_inner(entries, (alpm_list_fn_free) pu_mtree_free);
-	alpm_list_free(entries);
+	if(!reader->eof) {
+		pu_ui_warn("%s: error reading mtree data (%s)",
+				alpm_pkg_get_name(pkg), strerror(errno));
+		pu_mtree_reader_free(reader);
+		return ret || require_mtree;
+	}
+	pu_mtree_reader_free(reader);
 
 	if(!quiet && !ret) {
 		eprintf("%s: all files match mtree sha256sums\n", alpm_pkg_get_name(pkg));
