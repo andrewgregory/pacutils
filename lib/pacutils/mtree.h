@@ -47,6 +47,7 @@ typedef struct {
   int _close_stream; /* close stream on free */
 } pu_mtree_reader_t;
 
+__attribute__((__deprecated__))
 alpm_list_t *pu_mtree_load_pkg_mtree(alpm_handle_t *handle, alpm_pkg_t *pkg);
 
 pu_mtree_reader_t *pu_mtree_reader_open_stream(FILE *stream);

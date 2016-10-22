@@ -29,6 +29,7 @@ pacutils-mtree - read mtree data for installed packages
  void pu_mtree_reader_free(pu_mtree_reader_t *reader);
  void pu_mtree_free(pu_mtree_t *mtree);
 
+ /* deprecated */
  alpm_list_t *pu_mtree_load_pkg_mtree(alpm_handle_t *handle, alpm_pkg_t *pkg);
 
 =head1 DESCRIPTION
@@ -66,7 +67,8 @@ Free a C<pu_mtree_reader_t> object.
 
 =item alpm_list_t *pu_mtree_load_pkg_mtree(alpm_handle_t *handle, alpm_pkg_t *pkg);
 
-Returns a list of mtree entries for C<pkg>.
+Returns a list of mtree entries for C<pkg>.  B<DEPRECATED>: use
+C<pu_mtree_reader_open_package> instead.
 
 =back
 
