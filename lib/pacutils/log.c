@@ -129,7 +129,8 @@ int pu_log_fprint_entry(FILE *stream, pu_log_entry_t *entry)
 }
 
 pu_log_reader_t *pu_log_reader_open_stream(FILE *stream) {
-	pu_log_reader_t *reader = calloc(sizeof(pu_log_reader_t), 1);
+	pu_log_reader_t *reader;
+	if((reader = calloc(sizeof(pu_log_reader_t), 1)) == NULL) { return NULL; }
 	reader->stream = stream;
 	return reader;
 }
