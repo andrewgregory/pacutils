@@ -10,6 +10,7 @@ TESTS += \
 		 10-filelist_contains_path.t \
 		 10-log-action-parse.t \
 		 10-mtree-basic.t \
+		 10-parse-datetime.t \
 		 10-pathcmp.t \
 		 10-strreplace.t \
 		 20-config-includes.t \

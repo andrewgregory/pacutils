@@ -121,42 +121,8 @@ void usage(int ret)
 
 int parse_time(char *string, time_t *dest)
 {
-	char *c;
 	struct tm stm;
-	memset(&stm, 0, sizeof(struct tm));
-	stm.tm_isdst = -1;
-
-	if((c = strchr(string, 'T'))) {
-		/* ISO 8601 format */
-		char *sep = c;
-		*sep = ' ';
-		if((c = strchr(sep, ':')) && (c = strchr(c + 1, ':'))) {
-			/* seconds */
-			*c = '\0';
-		} else if((c = strchr(sep, '-'))) {
-			/* time zone */
-			*c = '\0';
-		}
-	}
-
-	c = string;
-#define parse_bit(s, f, t) \
-	do { \
-		if(!(s = strptime(s, f, t))) { \
-			return 0; \
-		} \
-		if(!*s) { \
-			*dest = mktime(t); \
-			return 1; \
-		} \
-	} while(0)
-	parse_bit(c, "%Y", &stm);
-	parse_bit(c, "-%m", &stm);
-	parse_bit(c, "-%d", &stm);
-	parse_bit(c, " %H:%M", &stm);
-#undef parse_bit
-
-	return 0;
+	return pu_parse_datetime(string, &stm) && (*dest = mktime(&stm)) != -1;
 }
 
 void parse_opts(int argc, char **argv)

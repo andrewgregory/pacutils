@@ -204,9 +204,6 @@ struct date_cmp *parse_date(const char *str)
 	size_t len;
 	struct tm stm;
 
-	memset(&stm, 0, sizeof(struct tm));
-	stm.tm_isdst = -1;
-
 	if(c == NULL || *c == '\0') { return NULL; }
 	if((len = strspn(c, "=<>!"))) {
 		if     (strncmp("=",  c, len) == 0) { date.cmp = CMP_EQ; }
@@ -232,15 +229,9 @@ struct date_cmp *parse_date(const char *str)
 			fprintf(stderr, "error: invalid date '%s'\n", str);
 			cleanup(1);
 		}
-	} else if((c = strptime(str, "%Y-%m-%d", &stm)) && *c == '\0') {
-		date.time = mktime(&stm);
-	} else if((c = strptime(str, "%Y-%m-%d %H:%M", &stm)) && *c == '\0') {
-		date.time = mktime(&stm);
-	} else if((c = strptime(str, "%Y-%m-%d %H:%M:%S", &stm)) && *c == '\0') {
-		date.time = mktime(&stm);
-	} else {
-			fprintf(stderr, "error: invalid date '%s'\n", str);
-			cleanup(1);
+	} else if(pu_parse_datetime(str, &stm) || (date.time = mktime(&stm)) == -1) {
+		fprintf(stderr, "error: invalid date '%s'\n", str);
+		cleanup(1);
 	}
 
 	if((ret = malloc(sizeof(struct date_cmp))) == NULL) {

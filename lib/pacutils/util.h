@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2015 Andrew Gregory <andrew.gregory.8@gmail.com>
+ * Copyright 2012-2016 Andrew Gregory <andrew.gregory.8@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -20,14 +20,17 @@
  * IN THE SOFTWARE.
  */
 
-#include <alpm.h>
-#include <stdio.h>
-
 #ifndef PACUTILS_UTIL_H
 #define PACUTILS_UTIL_H
 
+#include <stdio.h>
+#include <time.h>
+
+#include <alpm_list.h>
+
 char *pu_basename(char *path);
 char *pu_hr_size(off_t bytes, char *dest);
+struct tm *pu_parse_datetime(const char *string, struct tm *stm);
 
 void *_pu_list_shift(alpm_list_t **list);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2015 Andrew Gregory <andrew.gregory.8@gmail.com>
+ * Copyright 2012-2016 Andrew Gregory <andrew.gregory.8@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -20,7 +20,10 @@
  * IN THE SOFTWARE.
  */
 
+#define _XOPEN_SOURCE 700 /* strptime */
+
 #include <string.h>
+#include <time.h>
 
 #include "util.h"
 
@@ -60,6 +63,46 @@ void *_pu_list_shift(alpm_list_t **list)
   *list = l->next;
   free(l);
   return data;
+}
+
+struct tm *pu_parse_datetime(const char *string, struct tm *stm)
+{
+  const char *c, *end;
+  memset(stm, 0, sizeof(struct tm));
+  stm->tm_isdst = -1;
+  stm->tm_mday = 1;
+
+  /* locate the end of the usable date */
+  if((c = strpbrk(string, " T")) && (c = strpbrk(c, ",.Z-"))) {
+    /* ignore trailing timezone and/or fractional elements */
+    end = c;
+  } else {
+    end = string + strlen(string);
+  }
+
+  c = string;
+#define pu_parse_bit(s, f, t) \
+  do { \
+    if(!(s = strptime(s, f, t))) { \
+      return NULL; \
+    } \
+    if(s == end) { \
+      return stm; \
+    } else if(s > end) { \
+      /* no idea how we got here, but better safe than sorry */ \
+      return NULL; \
+    } \
+  } while(0)
+  pu_parse_bit(c, "%Y", stm);
+  pu_parse_bit(c, "-%m", stm);
+  pu_parse_bit(c, "-%d", stm);
+  if(c[0] == ' ' || c[0] == 'T') { c++; }
+  pu_parse_bit(c, "%H", stm);
+  pu_parse_bit(c, ":%M", stm);
+  pu_parse_bit(c, ":%S", stm);
+#undef pu_parse_bit
+
+  return NULL;
 }
 
 /* vim: set ts=2 sw=2 et: */
