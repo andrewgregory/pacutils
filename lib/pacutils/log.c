@@ -217,6 +217,7 @@ pu_log_transaction_status_t pu_log_transaction_parse(const char *message)
 	const size_t llen = strlen(leader);
 
 	if(message == NULL || strncmp(message, leader, llen) != 0) {
+		errno = EINVAL;
 		return 0;
 	}
 
@@ -231,6 +232,7 @@ pu_log_transaction_status_t pu_log_transaction_parse(const char *message)
 		return PU_LOG_TRANSACTION_FAILED;
 	}
 
+	errno = EINVAL;
 	return 0;
 }
 
