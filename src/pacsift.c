@@ -196,31 +196,38 @@ int parse_size_units(off_t *dest, long double bytes, const char *str)
 	return 1;
 }
 
+size_t parse_cmp(const char *str, enum cmp *c)
+{
+	size_t len;
+	if((len = strspn(str, "=<>!"))) {
+		if     (strncmp("=",  str, len) == 0) { *c = CMP_EQ; }
+		else if(strncmp(">",  str, len) == 0) { *c = CMP_GT; }
+		else if(strncmp("<",  str, len) == 0) { *c = CMP_LT; }
+		else if(strncmp("==", str, len) == 0) { *c = CMP_EQ; }
+		else if(strncmp("!=", str, len) == 0) { *c = CMP_NE; }
+		else if(strncmp(">=", str, len) == 0) { *c = CMP_GE; }
+		else if(strncmp("<=", str, len) == 0) { *c = CMP_LE; }
+		else {
+			fprintf(stderr, "error: invalid comparison '%s'\n", str);
+			cleanup(1);
+		}
+		return len;
+	} else {
+		*c = CMP_EQ;
+		return 0;
+	}
+}
+
 struct date_cmp *parse_date(const char *str)
 {
 	struct date_cmp date, *ret;
 	const char *c = str;
 	char *end;
-	size_t len;
 	struct tm stm;
 
 	if(c == NULL || *c == '\0') { return NULL; }
-	if((len = strspn(c, "=<>!"))) {
-		if     (strncmp("=",  c, len) == 0) { date.cmp = CMP_EQ; }
-		else if(strncmp(">",  c, len) == 0) { date.cmp = CMP_GT; }
-		else if(strncmp("<",  c, len) == 0) { date.cmp = CMP_LT; }
-		else if(strncmp("==", c, len) == 0) { date.cmp = CMP_EQ; }
-		else if(strncmp("!=", c, len) == 0) { date.cmp = CMP_NE; }
-		else if(strncmp(">=", c, len) == 0) { date.cmp = CMP_GE; }
-		else if(strncmp("<=", c, len) == 0) { date.cmp = CMP_LE; }
-		else {
-			fprintf(stderr, "error: invalid date comparison '%s'\n", str);
-			cleanup(1);
-		}
-		str += len;
-	} else {
-		date.cmp = CMP_EQ;
-	}
+
+	c += parse_cmp(str, &date.cmp);
 
 	if(strspn(str, "0123456789") == strlen(str)) {
 		errno = 0;
@@ -248,25 +255,11 @@ struct size_cmp *parse_size(const char *str)
 	struct size_cmp size, *ret;
 	const char *c = str;
 	char *end;
-	size_t len;
 	long double bytes;
+
 	if(c == NULL || *c == '\0') { return NULL; }
-	if((len = strspn(c, "=<>!"))) {
-		if     (strncmp("=",  c, len) == 0) { size.cmp = CMP_EQ; }
-		else if(strncmp(">",  c, len) == 0) { size.cmp = CMP_GT; }
-		else if(strncmp("<",  c, len) == 0) { size.cmp = CMP_LT; }
-		else if(strncmp("==", c, len) == 0) { size.cmp = CMP_EQ; }
-		else if(strncmp("!=", c, len) == 0) { size.cmp = CMP_NE; }
-		else if(strncmp(">=", c, len) == 0) { size.cmp = CMP_GE; }
-		else if(strncmp("<=", c, len) == 0) { size.cmp = CMP_LE; }
-		else {
-			fprintf(stderr, "error: invalid size comparison '%s'\n", str);
-			cleanup(1);
-		}
-		c += len;
-	} else {
-		size.cmp = CMP_EQ;
-	}
+
+	c += parse_cmp(str, &size.cmp);
 
 	errno = 0;
 	bytes = strtold(c, &end);
