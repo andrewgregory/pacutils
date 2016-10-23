@@ -23,6 +23,11 @@
 #ifndef PACUTILS_LOG_H
 #define PACUTILS_LOG_H
 
+#include <stdio.h>
+#include <time.h>
+
+#include <alpm_list.h>
+
 typedef enum {
 	PU_LOG_OPERATION_INSTALL,
 	PU_LOG_OPERATION_REINSTALL,
