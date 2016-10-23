@@ -59,6 +59,7 @@ pu_log_action_t *pu_log_action_parse(const char *message)
 	if((mlen = strlen(message)) <= 10) { errno = EINVAL; return NULL; }
 	if(message[mlen - 1] == '\n') { mlen--; }
 	if(message[mlen - 1] != ')') { errno = EINVAL; return NULL; }
+	mlen--; /* ignore trailing ')' */
 
 	if((a = calloc(sizeof(pu_log_action_t), 1)) == NULL) { return NULL; }
 
