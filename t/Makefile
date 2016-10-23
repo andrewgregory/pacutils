@@ -9,6 +9,7 @@ TESTS += \
 		 10-config-basic.t \
 		 10-filelist_contains_path.t \
 		 10-log-action-parse.t \
+		 10-log-transaction-parse.t \
 		 10-log-reader-basic.t \
 		 10-mtree-basic.t \
 		 10-parse-datetime.t \
