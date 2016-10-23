@@ -50,7 +50,7 @@ static const char *_pu_strrstr(const char *haystack, const char *start, const ch
 	return NULL;
 }
 
-pu_log_action_t *pu_log_action_parse(char *message)
+pu_log_action_t *pu_log_action_parse(const char *message)
 {
 	pu_log_action_t *a;
 	size_t mlen = strlen(message);

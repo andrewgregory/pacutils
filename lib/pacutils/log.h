@@ -75,7 +75,7 @@ void pu_log_reader_free(pu_log_reader_t *p);
 alpm_list_t *pu_log_parse_file(FILE *stream);
 void pu_log_entry_free(pu_log_entry_t *entry);
 
-pu_log_action_t *pu_log_action_parse(char *message);
+pu_log_action_t *pu_log_action_parse(const char *message);
 void pu_log_action_free(pu_log_action_t *action);
 
 #endif
