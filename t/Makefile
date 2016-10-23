@@ -8,6 +8,7 @@ TESTS += \
 		 10-basename.t \
 		 10-config-basic.t \
 		 10-filelist_contains_path.t \
+		 10-log-action-parse.t \
 		 10-mtree-basic.t \
 		 10-pathcmp.t \
 		 10-strreplace.t \
