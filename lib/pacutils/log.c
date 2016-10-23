@@ -216,7 +216,9 @@ pu_log_transaction_status_t pu_log_transaction_parse(const char *message)
 	const char leader[] = "transaction ";
 	const size_t llen = strlen(leader);
 
-	if(strncmp(message, leader, llen) != 0) { return 0; }
+	if(message == NULL || strncmp(message, leader, llen) != 0) {
+		return 0;
+	}
 
 	message += llen;
 	if(strcmp(message, "started\n") == 0) {
