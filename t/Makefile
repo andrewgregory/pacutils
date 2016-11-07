@@ -2,6 +2,9 @@ CFLAGS += -Wall -Wextra -I../lib
 LDFLAGS += -L../lib
 LDLIBS += -lpacutils -lalpm -larchive
 
+ALPM_CFLAGS ?= $(shell pkg-config libalpm --cflags)
+override CFLAGS += $(ALPM_CFLAGS)
+
 PROVE ?= prove
 
 TESTS += \
