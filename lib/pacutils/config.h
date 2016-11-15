@@ -91,13 +91,13 @@ typedef struct pu_config_t {
 
   float usedelta;
 
-  alpm_siglevel_t siglevel;
-  alpm_siglevel_t localfilesiglevel;
-  alpm_siglevel_t remotefilesiglevel;
+  int siglevel;
+  int localfilesiglevel;
+  int remotefilesiglevel;
 
-  alpm_siglevel_t siglevel_mask;
-  alpm_siglevel_t localfilesiglevel_mask;
-  alpm_siglevel_t remotefilesiglevel_mask;
+  int siglevel_mask;
+  int localfilesiglevel_mask;
+  int remotefilesiglevel_mask;
 
   alpm_list_t *cachedirs;
   alpm_list_t *holdpkgs;
@@ -107,7 +107,7 @@ typedef struct pu_config_t {
   alpm_list_t *noextract;
   alpm_list_t *noupgrade;
 
-  pu_config_cleanmethod_t cleanmethod;
+  int cleanmethod;
 
   alpm_list_t *repos;
 } pu_config_t;
@@ -116,9 +116,9 @@ typedef struct pu_config_t {
 typedef struct pu_repo_t {
   char *name;
   alpm_list_t *servers;
-  alpm_db_usage_t usage;
-  alpm_siglevel_t siglevel;
-  alpm_siglevel_t siglevel_mask;
+  int usage;
+  int siglevel;
+  int siglevel_mask;
 } pu_repo_t;
 
 typedef enum pu_config_reader_status_t {

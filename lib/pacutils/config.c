@@ -160,8 +160,7 @@ static int _pu_parse_cleanmethod(pu_config_t *config, char *val)
   return ret;
 }
 
-static int _pu_parse_siglevel(char *val,
-    alpm_siglevel_t *level, alpm_siglevel_t *mask)
+static int _pu_config_parse_siglevel(char *val, int *level, int *mask)
 {
   char *v, *ctx;
   int ret = 0;
@@ -618,10 +617,9 @@ int pu_config_reader_next(pu_config_reader_t *reader)
       char *v, *ctx;
       switch(s->type) {
         case PU_CONFIG_OPTION_SIGLEVEL:
-          if(_pu_parse_siglevel(mini->value, &(r->siglevel),
-                &(r->siglevel_mask)) != 0) {
-            reader->status = PU_CONFIG_READER_STATUS_INVALID_VALUE;
-            reader->error = 1;
+          if(_pu_config_parse_siglevel(mini->value,
+                &r->siglevel, &r->siglevel_mask) != 0) {
+            _PU_ERR(reader, PU_CONFIG_READER_STATUS_INVALID_VALUE);
           }
           break;
         case PU_CONFIG_OPTION_SERVER:
@@ -693,21 +691,21 @@ int pu_config_reader_next(pu_config_reader_t *reader)
           }
           break;
         case PU_CONFIG_OPTION_SIGLEVEL:
-          if(_pu_parse_siglevel(mini->value, &(config->siglevel),
+          if(_pu_config_parse_siglevel(mini->value, &(config->siglevel),
                 &(config->siglevel_mask)) != 0) {
             reader->status = PU_CONFIG_READER_STATUS_INVALID_VALUE;
             reader->error = 1;
           }
           break;
         case PU_CONFIG_OPTION_LOCAL_SIGLEVEL:
-          if(_pu_parse_siglevel(mini->value, &(config->localfilesiglevel),
+          if(_pu_config_parse_siglevel(mini->value, &(config->localfilesiglevel),
                 &(config->localfilesiglevel_mask)) != 0) {
             reader->status = PU_CONFIG_READER_STATUS_INVALID_VALUE;
             reader->error = 1;
           }
           break;
         case PU_CONFIG_OPTION_REMOTE_SIGLEVEL:
-          if(_pu_parse_siglevel(mini->value, &(config->remotefilesiglevel),
+          if(_pu_config_parse_siglevel(mini->value, &(config->remotefilesiglevel),
                 &(config->remotefilesiglevel_mask)) != 0) {
             reader->status = PU_CONFIG_READER_STATUS_INVALID_VALUE;
             reader->error = 1;
