@@ -354,16 +354,17 @@ alpm_list_t *find_pkg(const char *pkgspec) {
 	return pkgs;
 }
 
-void print_pkgspec_info(const char *pkgspec) {
+int print_pkgspec_info(const char *pkgspec) {
 	alpm_list_t *i, *pkgs = find_pkg(pkgspec);
 	if(!pkgs) {
 		fprintf(stderr, "Unable to find package '%s'\n", pkgspec);
-		return;
+		return -1;
 	}
 	for(i = pkgs; i; i = alpm_list_next(i)) {
 		print_pkg_info(i->data);
 	}
 	alpm_list_free(pkgs);
+	return 0;
 }
 
 void cb_log(alpm_loglevel_t level, const char *fmt, va_list args)
@@ -399,7 +400,7 @@ int main(int argc, char **argv) {
 	pu_register_syncdbs(handle, config->repos);
 
 	for(argv += optind; *argv; ++argv) {
-		print_pkgspec_info(*argv);
+		if(print_pkgspec_info(*argv) != 0) { ret = 1; }
 	}
 
 	if(!isatty(fileno(stdin)) && errno != EBADF) {
@@ -408,7 +409,7 @@ int main(int argc, char **argv) {
 		ssize_t read;
 		while((read = getdelim(&buf, &len, isep, stdin)) != -1) {
 			if(buf[read - 1] == isep) { buf[read - 1] = '\0'; }
-			print_pkgspec_info(buf);
+			if(print_pkgspec_info(buf) != 0) { ret = 1; }
 		}
 		free(buf);
 	}
