@@ -160,6 +160,28 @@ static int _pu_config_parse_cleanmethod(char *val, int *dest)
   return ret;
 }
 
+static int _pu_config_parse_usage(char *val, int *dest)
+{
+  char *v, *ctx;
+  int ret = 0;
+  for(v = strtok_r(val, " ", &ctx); v; v = strtok_r(NULL, " ", &ctx)) {
+    if(strcmp(v, "Sync") == 0) {
+      *dest |= ALPM_DB_USAGE_SYNC;
+    } else if(strcmp(v, "Search") == 0) {
+      *dest |= ALPM_DB_USAGE_SEARCH;
+    } else if(strcmp(v, "Install") == 0) {
+      *dest |= ALPM_DB_USAGE_INSTALL;
+    } else if(strcmp(v, "Upgrade") == 0) {
+      *dest |= ALPM_DB_USAGE_UPGRADE;
+    } else if(strcmp(v, "All") == 0) {
+      *dest |= ALPM_DB_USAGE_ALL;
+    } else {
+      ret = -1;
+    }
+  }
+  return ret;
+}
+
 static int _pu_config_parse_siglevel(char *val, int *level, int *mask)
 {
   char *v, *ctx;
@@ -614,7 +636,6 @@ int pu_config_reader_next(pu_config_reader_t *reader)
 
     if(reader->repo) {
       pu_repo_t *r = reader->repo;
-      char *v, *ctx;
       switch(s->type) {
         case PU_CONFIG_OPTION_SIGLEVEL:
           if(_pu_config_parse_siglevel(mini->value,
@@ -626,21 +647,8 @@ int pu_config_reader_next(pu_config_reader_t *reader)
           r->servers = alpm_list_add(r->servers, strdup(mini->value));
           break;
         case PU_CONFIG_OPTION_USAGE:
-          for(v = strtok_r(mini->value, " ", &ctx); v; v = strtok_r(NULL, " ", &ctx)) {
-            if(strcmp(v, "Sync") == 0) {
-              r->usage |= ALPM_DB_USAGE_SYNC;
-            } else if(strcmp(v, "Search") == 0) {
-              r->usage |= ALPM_DB_USAGE_SEARCH;
-            } else if(strcmp(v, "Install") == 0) {
-              r->usage |= ALPM_DB_USAGE_INSTALL;
-            } else if(strcmp(v, "Upgrade") == 0) {
-              r->usage |= ALPM_DB_USAGE_UPGRADE;
-            } else if(strcmp(v, "All") == 0) {
-              r->usage |= ALPM_DB_USAGE_ALL;
-            } else {
-              reader->status = PU_CONFIG_READER_STATUS_INVALID_VALUE;
-              reader->error = 1;
-            }
+          if(_pu_config_parse_usage(mini->value, &r->usage) != 0) {
+            _PU_ERR(reader, PU_CONFIG_READER_STATUS_INVALID_VALUE);
           }
           break;
         default:
