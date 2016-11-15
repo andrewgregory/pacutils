@@ -264,6 +264,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 void print_pkg_info(alpm_pkg_t *pkg) {
 		alpm_db_t *db = alpm_pkg_get_db(pkg);
 		alpm_db_t *localdb = alpm_get_localdb(handle);
+		alpm_list_t *i;
 
 		switch(level) {
 			case 1:
@@ -308,8 +309,18 @@ void print_pkg_info(alpm_pkg_t *pkg) {
 				printl("Groups:         %s\n", alpm_pkg_get_groups(pkg));
 				printd("Provides:       %s\n", alpm_pkg_get_provides(pkg));
 				printd("Requires:       %s\n", alpm_pkg_get_depends(pkg));
+				printd("Optional Deps:  %s\n", alpm_pkg_get_optdepends(pkg));
 				printd("Conflicts:      %s\n", alpm_pkg_get_conflicts(pkg));
 				printd("Replaces:       %s\n", alpm_pkg_get_replaces(pkg));
+
+				i = alpm_pkg_compute_requiredby(pkg);
+				printl("Required By:    %s\n", i);
+				FREELIST(i);
+
+				i = alpm_pkg_compute_optionalfor(pkg);
+				printl("Optional For:   %s\n", i);
+				FREELIST(i);
+
 				printo("Package Size:   %s\n", alpm_pkg_get_size(pkg));
 				printo("Download Size:  %s\n", alpm_pkg_download_size(pkg));
 				printo("Installed Size: %s\n",
@@ -322,8 +333,6 @@ void print_pkg_info(alpm_pkg_t *pkg) {
 				prints("MD5 Sum:        %s\n", alpm_pkg_get_md5sum(pkg));
 				prints("SHA-256 Sum:    %s\n", alpm_pkg_get_sha256sum(pkg));
 
-				/*printd("Required For:   ",      alpm_pkg_get_provides(pkg));*/
-				/*printd("Optional For:   ",      alpm_pkg_get_provides(pkg));*/
 				/* install reason */
 				/* install script */
 				/* validated by */
