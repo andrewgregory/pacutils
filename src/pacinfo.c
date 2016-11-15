@@ -264,6 +264,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 void print_pkg_info(alpm_pkg_t *pkg) {
 		alpm_db_t *db = alpm_pkg_get_db(pkg);
 		alpm_db_t *localdb = alpm_get_localdb(handle);
+		alpm_pkgfrom_t origin = alpm_pkg_get_origin(pkg);
 		alpm_list_t *i;
 
 		switch(level) {
@@ -333,9 +334,26 @@ void print_pkg_info(alpm_pkg_t *pkg) {
 				prints("MD5 Sum:        %s\n", alpm_pkg_get_md5sum(pkg));
 				prints("SHA-256 Sum:    %s\n", alpm_pkg_get_sha256sum(pkg));
 
-				/* install reason */
-				/* install script */
-				/* validated by */
+				if(origin != ALPM_PKG_FROM_SYNCDB) {
+					prints("Install Script: %s\n",
+							alpm_pkg_has_scriptlet(pkg) ? "Yes" : "No");
+				}
+				if(origin == ALPM_PKG_FROM_LOCALDB) {
+					int v = alpm_pkg_get_validation(pkg);
+					alpm_pkgreason_t r = alpm_pkg_get_reason(pkg);
+					prints("Install Reason: %s\n",
+							r == ALPM_PKG_REASON_EXPLICIT ? "Explicit" : "Dependency");
+					if(v == ALPM_PKG_VALIDATION_UNKNOWN) {
+						prints("Validated By:   %s\n", "Unknown");
+					} else {
+#define printv(v, m, l) if(v & m) prints("Validated By:   %s\n", l)
+						printv(v, ALPM_PKG_VALIDATION_NONE, "None");
+						printv(v, ALPM_PKG_VALIDATION_MD5SUM, "MD5");
+						printv(v, ALPM_PKG_VALIDATION_SHA256SUM, "SHA-256");
+						printv(v, ALPM_PKG_VALIDATION_SIGNATURE, "Signature");
+#undef printv
+					}
+				}
 				break;
 		}
 
