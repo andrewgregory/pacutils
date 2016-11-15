@@ -1,6 +1,6 @@
 #include <alpm.h>
 
-#include "pacutils.c"
+#include "pacutils.h"
 
 #include "tap.h"
 

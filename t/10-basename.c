@@ -1,4 +1,4 @@
-#include "pacutils.c"
+#include "pacutils/util.h"
 
 #include "tap.h"
 
