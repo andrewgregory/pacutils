@@ -33,6 +33,7 @@ char *pu_hr_size(off_t bytes, char *dest);
 struct tm *pu_parse_datetime(const char *string, struct tm *stm);
 
 void *_pu_list_shift(alpm_list_t **list);
+alpm_list_t *pu_list_append_str(alpm_list_t **list, const char *str);
 
 #endif /* PACUTILS_UTIL_H */
 

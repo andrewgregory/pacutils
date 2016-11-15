@@ -105,4 +105,16 @@ struct tm *pu_parse_datetime(const char *string, struct tm *stm)
   return NULL;
 }
 
+alpm_list_t *pu_list_append_str(alpm_list_t **list, const char *str)
+{
+  alpm_list_t *ret;
+  char *dup;
+  if((dup = strdup(str)) && (ret = alpm_list_append(list, dup))) {
+    return ret;
+  } else {
+    free(dup);
+    return NULL;
+  }
+}
+
 /* vim: set ts=2 sw=2 et: */
