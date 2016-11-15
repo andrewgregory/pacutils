@@ -144,15 +144,15 @@ static char *_pu_strreplace(const char *str,
   return newstr;
 }
 
-static int _pu_parse_cleanmethod(pu_config_t *config, char *val)
+static int _pu_config_parse_cleanmethod(char *val, int *dest)
 {
   char *v, *ctx;
   int ret = 0;
   for(v = strtok_r(val, " ", &ctx); v; v = strtok_r(NULL, " ", &ctx)) {
     if(strcmp(v, "KeepInstalled") == 0) {
-      config->cleanmethod |= PU_CONFIG_CLEANMETHOD_KEEP_INSTALLED;
+      *dest |= PU_CONFIG_CLEANMETHOD_KEEP_INSTALLED;
     } else if(strcmp(v, "KeepCurrent") == 0) {
-      config->cleanmethod |= PU_CONFIG_CLEANMETHOD_KEEP_CURRENT;
+      *dest |= PU_CONFIG_CLEANMETHOD_KEEP_CURRENT;
     } else {
       ret = -1;
     }
@@ -673,9 +673,8 @@ int pu_config_reader_next(pu_config_reader_t *reader)
           }
           break;
         case PU_CONFIG_OPTION_CLEANMETHOD:
-          if(_pu_parse_cleanmethod(config, mini->value) != 0) {
-              reader->status = PU_CONFIG_READER_STATUS_INVALID_VALUE;
-              reader->error = 1;
+          if(_pu_config_parse_cleanmethod(mini->value, &config->cleanmethod) != 0) {
+              _PU_ERR(reader, PU_CONFIG_READER_STATUS_INVALID_VALUE);
           }
           break;
         case PU_CONFIG_OPTION_USEDELTA:
