@@ -497,9 +497,7 @@ static int _pu_glob(alpm_list_t **dest, const char *pattern)
   if(gret != 0 && gret != GLOB_NOMATCH) { return -1; }
 
   for(gindex = 0; gindex < gbuf.gl_pathc; gindex++) {
-    char *dup = strdup(gbuf.gl_pathv[gindex]);
-    if(dup == NULL || alpm_list_append(&items, dup) == NULL) {
-      free(dup);
+    if(pu_list_append_str(&items, gbuf.gl_pathv[gindex]) == NULL) {
       FREELIST(items);
       globfree(&gbuf);
       return -1;
@@ -526,8 +524,7 @@ static int _pu_glob(alpm_list_t **dest, const char *pattern)
 #define APPENDLIST(dest, str) do { \
   char *v, *ctx; \
   for(v = strtok_r(str, " ", &ctx); v; v = strtok_r(NULL, " ", &ctx)) { \
-    char *dup = strdup(v); \
-    if(dup == NULL || alpm_list_append(dest, dup) == NULL) { \
+    if(pu_list_append_str(dest, v) == NULL) { \
       reader->status = PU_CONFIG_READER_STATUS_ERROR; \
       reader->error = 1; \
       return -1; \
@@ -644,7 +641,9 @@ int pu_config_reader_next(pu_config_reader_t *reader)
           }
           break;
         case PU_CONFIG_OPTION_SERVER:
-          r->servers = alpm_list_add(r->servers, strdup(mini->value));
+          if(pu_list_append_str(&r->servers, mini->value) == NULL) {
+            _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
+          }
           break;
         case PU_CONFIG_OPTION_USAGE:
           if(_pu_config_parse_usage(mini->value, &r->usage) != 0) {
