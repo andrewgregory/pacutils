@@ -690,8 +690,7 @@ int pu_config_reader_next(pu_config_reader_t *reader)
             char *end;
             float d = strtof(mini->value, &end);
             if(*end != '\0' || d < 0.0 || d > 2.0) {
-              reader->status = PU_CONFIG_READER_STATUS_INVALID_VALUE;
-              reader->error = 1;
+              _PU_ERR(reader, PU_CONFIG_READER_STATUS_INVALID_VALUE);
             } else {
               config->usedelta = d;
             }
@@ -700,22 +699,19 @@ int pu_config_reader_next(pu_config_reader_t *reader)
         case PU_CONFIG_OPTION_SIGLEVEL:
           if(_pu_config_parse_siglevel(mini->value, &(config->siglevel),
                 &(config->siglevel_mask)) != 0) {
-            reader->status = PU_CONFIG_READER_STATUS_INVALID_VALUE;
-            reader->error = 1;
+            _PU_ERR(reader, PU_CONFIG_READER_STATUS_INVALID_VALUE);
           }
           break;
         case PU_CONFIG_OPTION_LOCAL_SIGLEVEL:
           if(_pu_config_parse_siglevel(mini->value, &(config->localfilesiglevel),
                 &(config->localfilesiglevel_mask)) != 0) {
-            reader->status = PU_CONFIG_READER_STATUS_INVALID_VALUE;
-            reader->error = 1;
+            _PU_ERR(reader, PU_CONFIG_READER_STATUS_INVALID_VALUE);
           }
           break;
         case PU_CONFIG_OPTION_REMOTE_SIGLEVEL:
           if(_pu_config_parse_siglevel(mini->value, &(config->remotefilesiglevel),
                 &(config->remotefilesiglevel_mask)) != 0) {
-            reader->status = PU_CONFIG_READER_STATUS_INVALID_VALUE;
-            reader->error = 1;
+            _PU_ERR(reader, PU_CONFIG_READER_STATUS_INVALID_VALUE);
           }
           break;
         case PU_CONFIG_OPTION_HOLDPKGS:
