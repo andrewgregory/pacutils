@@ -68,9 +68,17 @@ void pu_mtree_reader_free(pu_mtree_reader_t *reader) {
 }
 
 pu_mtree_reader_t *pu_mtree_reader_open_stream(FILE *stream) {
-  pu_mtree_reader_t *reader = calloc(sizeof(pu_mtree_reader_t), 1);
-  reader->stream = stream;
-  return reader;
+  pu_mtree_reader_t *r = calloc(sizeof(pu_mtree_reader_t), 1);
+  if(r) { r->stream = stream; }
+  return r;
+}
+
+pu_mtree_reader_t *pu_mtree_reader_open_file(const char *path) {
+  pu_mtree_reader_t *r = calloc(sizeof(pu_mtree_reader_t), 1);
+  if(r == NULL) { return NULL; }
+  if((r->stream = fopen(path, "r")) == NULL) { free(r); return NULL; }
+  r->_close_stream = 1;
+  return r;
 }
 
 pu_mtree_reader_t *pu_mtree_reader_open_package( alpm_handle_t *h, alpm_pkg_t *p) {
