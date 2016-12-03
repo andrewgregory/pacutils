@@ -90,7 +90,7 @@ Include backup files in file modification checks.
 
 =item B<--noextract>
 
-Include NoUpgrade files in file modification checks.
+Include NoExtract files in file modification checks.
 
 =item B<--noupgrade>
 
