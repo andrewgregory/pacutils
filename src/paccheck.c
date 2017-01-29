@@ -616,6 +616,7 @@ static int check_file_properties(alpm_pkg_t *pkg)
 			}
 		}
 	}
+	alpm_pkg_mtree_close(pkg, mtree);
 
 	if(!quiet && !ret) {
 		eprintf("%s: all files match mtree\n", alpm_pkg_get_name(pkg));
