@@ -549,7 +549,8 @@ static int check_file_properties(alpm_pkg_t *pkg)
 	struct archive_entry *entry;
 
 	if(!mtree) {
-		pu_ui_warn("%s: mtree data not available", alpm_pkg_get_name(pkg));
+		pu_ui_warn("%s: mtree data not available (%s)",
+				alpm_pkg_get_name(pkg), strerror(errno));
 		return require_mtree;
 	}
 
@@ -634,7 +635,8 @@ static int check_md5sum(alpm_pkg_t *pkg)
 	rel = path + strlen(alpm_option_get_root(handle));
 
 	if((reader = pu_mtree_reader_open_package(handle, pkg)) == NULL) {
-		pu_ui_warn("%s: mtree data not available", alpm_pkg_get_name(pkg));
+		pu_ui_warn("%s: mtree data not available (%s)",
+				alpm_pkg_get_name(pkg), strerror(errno));
 		return require_mtree;
 	}
 
@@ -681,7 +683,8 @@ static int check_sha256sum(alpm_pkg_t *pkg)
 	pu_mtree_t *m;
 
 	if((reader = pu_mtree_reader_open_package(handle, pkg)) == NULL) {
-		pu_ui_warn("%s: mtree data not available", alpm_pkg_get_name(pkg));
+		pu_ui_warn("%s: mtree data not available (%s)",
+				alpm_pkg_get_name(pkg), strerror(errno));
 		return require_mtree;
 	}
 
