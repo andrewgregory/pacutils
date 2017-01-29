@@ -640,7 +640,14 @@ static int check_md5sum(alpm_pkg_t *pkg)
 		return require_mtree;
 	}
 
-	while((m = pu_mtree_reader_next(reader, NULL))) {
+	if((m = pu_mtree_new()) == NULL) {
+		pu_ui_warn("%s: error reading mtree data (%s)",
+				alpm_pkg_get_name(pkg), strerror(errno));
+		pu_mtree_reader_free(reader);
+		return require_mtree;
+	}
+
+	while(pu_mtree_reader_next(reader, m)) {
 		char *md5;
 		if(m->md5digest[0] == '\0') { continue; }
 		if(m->path[0] == '.') { continue; }
@@ -658,8 +665,9 @@ static int check_md5sum(alpm_pkg_t *pkg)
 			ret = 1;
 		}
 		free(md5);
-		free(m);
 	}
+	pu_mtree_free(m);
+
 	if(!reader->eof) {
 		pu_ui_warn("%s: error reading mtree data (%s)",
 				alpm_pkg_get_name(pkg), strerror(errno));
@@ -691,7 +699,14 @@ static int check_sha256sum(alpm_pkg_t *pkg)
 	strcpy(path, alpm_option_get_root(handle));
 	rel = path + strlen(alpm_option_get_root(handle));
 
-	while((m = pu_mtree_reader_next(reader, NULL))) {
+	if((m = pu_mtree_new()) == NULL) {
+		pu_ui_warn("%s: error reading mtree data (%s)",
+				alpm_pkg_get_name(pkg), strerror(errno));
+		pu_mtree_reader_free(reader);
+		return require_mtree;
+	}
+
+	while(pu_mtree_reader_next(reader, m)) {
 		char *sha;
 		if(m->sha256digest[0] == '\0') { continue; }
 		if(m->path[0] == '.') { continue; }
@@ -709,8 +724,8 @@ static int check_sha256sum(alpm_pkg_t *pkg)
 			ret = 1;
 		}
 		free(sha);
-		pu_mtree_free(m);
 	}
+	pu_mtree_free(m);
 
 	if(!reader->eof) {
 		pu_ui_warn("%s: error reading mtree data (%s)",
