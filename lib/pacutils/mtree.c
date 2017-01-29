@@ -52,6 +52,10 @@ error:
   return NULL;
 }
 
+pu_mtree_t *pu_mtree_new(void) {
+  return calloc(sizeof(pu_mtree_t), 1);
+}
+
 void pu_mtree_free(pu_mtree_t *mtree) {
   if(mtree) {
     free(mtree->path);
