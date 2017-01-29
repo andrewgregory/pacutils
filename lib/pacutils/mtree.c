@@ -88,10 +88,12 @@ pu_mtree_reader_t *pu_mtree_reader_open_package( alpm_handle_t *h, alpm_pkg_t *p
   struct archive_entry *entry = NULL;
   char *buf, rbuf[256];
   size_t len;
-  FILE *fbuf = open_memstream(&buf, &len);
+  FILE *fbuf;
   const char *dbpath = alpm_option_get_dbpath(h);
   const char *pkgname = alpm_pkg_get_name(p);
   const char *pkgver = alpm_pkg_get_version(p);
+
+  if((fbuf = open_memstream(&buf, &len)) == NULL) { return NULL; }
 
   sprintf(path, "%slocal/%s-%s/mtree", dbpath, pkgname, pkgver);
 
