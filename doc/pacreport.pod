@@ -101,7 +101,8 @@ C<IgnoreUnowned> in the C<Options> section.  Paths which should only be ignored
 if a particular package is installed can be listed under the section
 C<PkgIgnoreUnowned> using the package name as the option name and the path to
 be ignored as the value.  All options can be specified multiple times.  Paths
-may include shell-style globs.
+may include shell-style globs.  The installation root should not be included in
+paths.
 
  [Options]
  IgnoreUnowned = home/*
