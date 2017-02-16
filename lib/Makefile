@@ -49,6 +49,7 @@ HEADERS = \
 		  pacutils/depend.h \
 		  pacutils/log.h \
 		  pacutils/mtree.h \
+		  pacutils/package.h \
 		  pacutils/ui.h \
 		  pacutils/util.h
 
@@ -59,6 +60,7 @@ SOURCES = \
 		  pacutils/depend.c \
 		  pacutils/log.c \
 		  pacutils/mtree.c \
+		  pacutils/package.c \
 		  pacutils/ui.c \
 		  pacutils/util.c
 

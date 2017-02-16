@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2016 Andrew Gregory <andrew.gregory.8@gmail.com>
+ * Copyright 2017 Andrew Gregory <andrew.gregory.8@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -20,37 +20,14 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef PACUTILS_H
-#define PACUTILS_H
-
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <ctype.h>
-#include <sys/ioctl.h>
-
 #include <alpm.h>
 
-#include "pacutils/config.h"
-#include "pacutils/depend.h"
-#include "pacutils/log.h"
-#include "pacutils/mtree.h"
-#include "pacutils/package.h"
-#include "pacutils/ui.h"
-#include "pacutils/util.h"
+#ifndef PACUTILS_PACKAGE_H
+#define PACUTILS_PACKAGE_H
 
-char *pu_version(void);
-void pu_print_version(const char *progname, const char *progver);
+int pu_package_satisfies_dep(alpm_pkg_t *pkg, alpm_depend_t *dep);
+int pu_pkg_depends_on(alpm_pkg_t *pkg, alpm_pkg_t *dep);
 
-int pu_pathcmp(const char *p1, const char *p2);
-alpm_file_t *pu_filelist_contains_path(alpm_filelist_t *files, const char *path);
+#endif /* PACUTILS_PACKAGE_H */
 
-alpm_pkg_t *pu_find_pkgspec(alpm_handle_t *handle, const char *pkgspec);
-void pu_fprint_pkgspec(FILE *stream, alpm_pkg_t *pkg);
-
-int pu_log_command(alpm_handle_t *handle, const char *caller, int argc, char **argv);
-
-#endif /* PACUTILS_H */
-
-/* vim: set ts=2 sw=2 noet: */
+/* vim: set ts=2 sw=2 et: */
