@@ -27,6 +27,7 @@
 
 int pu_package_satisfies_dep(alpm_pkg_t *pkg, alpm_depend_t *dep);
 int pu_pkg_depends_on(alpm_pkg_t *pkg, alpm_pkg_t *dep);
+int pu_pkg_optdepends_on(alpm_pkg_t *pkg, alpm_pkg_t *dep);
 
 #endif /* PACUTILS_PACKAGE_H */
 

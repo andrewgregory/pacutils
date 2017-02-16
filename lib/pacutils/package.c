@@ -50,4 +50,15 @@ int pu_pkg_depends_on(alpm_pkg_t *pkg, alpm_pkg_t *dep)
 	return 0;
 }
 
+int pu_pkg_optdepends_on(alpm_pkg_t *pkg, alpm_pkg_t *dep)
+{
+	alpm_list_t *i;
+	for(i = alpm_pkg_get_depends(pkg); i; i = i->next) {
+		if(pu_package_satisfies_dep(dep, i->data)) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
 /* vim: set ts=2 sw=2 et: */
