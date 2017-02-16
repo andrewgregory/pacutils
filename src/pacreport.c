@@ -255,6 +255,35 @@ void print_toplevel_depends(alpm_handle_t *handle)
 	alpm_list_free(matches);
 }
 
+void print_unneeded_depends(alpm_handle_t *handle)
+{
+	alpm_db_t *localdb = alpm_get_localdb(handle);
+	alpm_list_t *p, *matches = NULL, *explicit = NULL;
+
+	for(p = alpm_db_get_pkgcache(localdb); p; p = p->next) {
+		if(alpm_pkg_get_reason(p->data) == ALPM_PKG_REASON_EXPLICIT) {
+			explicit = alpm_list_add(explicit, p->data);
+		} else {
+			matches = alpm_list_add(matches, p->data);
+		}
+	}
+	for(p = explicit; p; p = p->next) {
+		alpm_list_t *p2, *next;
+		for(p2 = matches; p2; p2 = next) {
+			next = p2->next;
+			if(pu_pkg_depends_on(p->data, p2->data)) {
+				explicit = alpm_list_add(explicit, p2->data);
+				matches = alpm_list_remove_item(matches, p2);
+				free(p2);
+			}
+		}
+	}
+	printf("Unneeded Packages Installed As Dependencies:\n");
+	print_pkglist(handle, matches);
+	alpm_list_free(matches);
+	alpm_list_free(explicit);
+}
+
 int pkg_is_foreign(alpm_handle_t *handle, alpm_pkg_t *pkg)
 {
 	alpm_list_t *s;
@@ -776,6 +805,7 @@ int main(int argc, char **argv)
 
 	print_toplevel_explicit(handle);
 	print_toplevel_depends(handle);
+	print_unneeded_depends(handle);
 	print_foreign(handle);
 
 	if(!groups) {
