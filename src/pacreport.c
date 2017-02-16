@@ -42,7 +42,7 @@ const char *myname = "pacreport", *myver = BUILDVER;
 pu_config_t *config = NULL;
 alpm_handle_t *handle;
 alpm_list_t *groups = NULL, *ignore = NULL, *pkg_ignore = NULL;
-int missing_files = 0, backup_files = 0, orphan_files = 0;
+int missing_files = 0, backup_files = 0, orphan_files = 0, include_optdeps = 0;
 char *dbext = NULL;
 
 enum longopt_flags {
@@ -54,6 +54,7 @@ enum longopt_flags {
 	FLAG_GROUP,
 	FLAG_HELP,
 	FLAG_MISSING_FILES,
+	FLAG_OPTDEPS,
 	FLAG_ORPHANS,
 	FLAG_ROOT,
 	FLAG_VERSION,
@@ -228,6 +229,9 @@ void print_toplevel_explicit(alpm_handle_t *handle)
 
 	for(p = pkgs; p; p = p->next) {
 		alpm_list_t *rb = alpm_pkg_compute_requiredby(p->data);
+		if(rb == NULL && include_optdeps) {
+			rb = alpm_pkg_compute_optionalfor(p->data);
+		}
 		if(!rb && alpm_pkg_get_reason(p->data) == ALPM_PKG_REASON_EXPLICIT) {
 			matches = alpm_list_add(matches, p->data);
 		}
@@ -245,6 +249,9 @@ void print_toplevel_depends(alpm_handle_t *handle)
 
 	for(p = pkgs; p; p = p->next) {
 		alpm_list_t *rb = alpm_pkg_compute_requiredby(p->data);
+		if(rb == NULL && include_optdeps) {
+			rb = alpm_pkg_compute_optionalfor(p->data);
+		}
 		if(!rb && alpm_pkg_get_reason(p->data) == ALPM_PKG_REASON_DEPEND) {
 			matches = alpm_list_add(matches, p->data);
 		}
@@ -271,7 +278,8 @@ void print_unneeded_depends(alpm_handle_t *handle)
 		alpm_list_t *p2, *next;
 		for(p2 = matches; p2; p2 = next) {
 			next = p2->next;
-			if(pu_pkg_depends_on(p->data, p2->data)) {
+			if(pu_pkg_depends_on(p->data, p2->data) ||
+					(include_optdeps && pu_pkg_optdepends_on(p->data, p2->data))) {
 				explicit = alpm_list_add(explicit, p2->data);
 				matches = alpm_list_remove_item(matches, p2);
 				free(p2);
@@ -652,6 +660,7 @@ void usage(int ret)
 	hputs("                      (pass twice for extended search outside /etc)");
 	hputs("   --group=<GROUP>    list missing group packages");
 	hputs("   --missing-files    list missing package files");
+	hputs("   --optdeps          include optional dependencies when determining whether a package is needed");
 	hputs("   --unowned-files    list unowned files");
 	hputs("   --help             display this help information");
 	hputs("   --version          display version information");
@@ -676,6 +685,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{"backups"        , no_argument       , NULL       , FLAG_BACKUPS       } ,
 		{"group"          , required_argument , NULL       , FLAG_GROUP         } ,
 		{"missing-files"  , no_argument       , NULL       , FLAG_MISSING_FILES } ,
+		{"optdeps"        , no_argument       , NULL       , FLAG_OPTDEPS       } ,
 		{"unowned-files"  , no_argument       , NULL       , FLAG_ORPHANS       } ,
 
 		{"help"           , no_argument       , NULL       , FLAG_HELP          } ,
@@ -721,6 +731,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 				break;
 			case FLAG_MISSING_FILES:
 				++missing_files;
+				break;
+			case FLAG_OPTDEPS:
+				include_optdeps = 1;
 				break;
 			case FLAG_ORPHANS:
 				++orphan_files;

@@ -70,6 +70,10 @@ Display any packages in group I<name> that are not currently installed.
 
 Check for missing package files.
 
+=item B<--optdeps>
+
+Include optional dependencies when determining whether a package is needed.
+
 =item B<--unowned-files>
 
 Check for unowned files.  See F</etc/pacreport.conf> under L<FILES> for more
