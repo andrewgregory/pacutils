@@ -76,6 +76,7 @@ enum longopt_flags {
 	FLAG_NODEPS,
 	FLAG_NOHOOKS,
 	FLAG_NOSCRIPTLET,
+	FLAG_NOTIMEOUT,
 	FLAG_NULL,
 	FLAG_PRINT,
 	FLAG_RECURSIVE,
@@ -147,6 +148,7 @@ void usage(int ret)
 	hputs("   --dbext=<ext>      set an alternate sync database extension");
 	hputs("   --dbpath=<path>    set an alternate database location");
 	hputs("   --debug            enable extra debugging messages");
+	hputs("   --no-timeout       disable low speed timeouts for downloads");
 	hputs("   --hookdir=<path>   add additional user hook directory");
 	hputs("   --logfile=<path>   set an alternate log file");
 	hputs("   --print-only       display transaction information and exit");
@@ -275,6 +277,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "no-deps"       , no_argument       , NULL       , FLAG_NODEPS       } ,
 		{ "no-scriptlet"  , no_argument       , NULL       , FLAG_NOSCRIPTLET  } ,
 		{ "no-hooks"      , no_argument       , NULL       , FLAG_NOHOOKS      } ,
+		{ "no-timeout"    , no_argument       , NULL       , FLAG_NOTIMEOUT    } ,
 		{ "root"          , required_argument , NULL       , FLAG_ROOT         } ,
 		{ "sysroot"       , required_argument , NULL       , FLAG_SYSROOT      } ,
 		{ "sysupgrade"    , no_argument       , NULL       , FLAG_SYSUPGRADE   } ,
@@ -406,6 +409,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 				break;
 			case FLAG_NOSCRIPTLET:
 				trans_flags |= ALPM_TRANS_FLAG_NOSCRIPTLET;
+				break;
+			case FLAG_NOTIMEOUT:
+				config->disabledownloadtimeout = PU_CONFIG_BOOL_TRUE;
 				break;
 			case FLAG_ROOT:
 				free(config->rootdir);

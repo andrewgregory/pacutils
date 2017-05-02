@@ -46,6 +46,7 @@ enum longopt_flags {
 	FLAG_NOCONFIRM,
 	FLAG_NOSCRIPTLET,
 	FLAG_NOHOOKS,
+	FLAG_NOTIMEOUT,
 	FLAG_PRINT,
 	FLAG_ROOT,
 	FLAG_SYSROOT,
@@ -77,6 +78,7 @@ void usage(int ret) {
 	hputs("   --no-confirm       assume default responses to all prompts");
 	hputs("   --no-hooks         do not run transaction hooks");
 	hputs("   --no-scriptlet     do not run package install scripts");
+	hputs("   --no-timeout       disable low speed timeouts for downloads");
 	hputs("   --print-only       show steps without performing them");
 	hputs("   --root=<path>      set an alternate installation root");
 	hputs("   --sysroot=<path>   set an alternate system root");
@@ -107,6 +109,7 @@ pu_config_t *parse_opts(int argc, char **argv) {
 		{ "noconfirm"     , no_argument       , NULL       , FLAG_NOCONFIRM    } ,
 		{ "no-scriptlet"  , no_argument       , NULL       , FLAG_NOSCRIPTLET  } ,
 		{ "no-hooks"      , no_argument       , NULL       , FLAG_NOHOOKS      } ,
+		{ "no-timeout"    , no_argument       , NULL       , FLAG_NOTIMEOUT    } ,
 		{ "print-only"    , no_argument       , NULL       , FLAG_PRINT        } ,
 		{ "root"          , required_argument , NULL       , FLAG_ROOT         } ,
 		{ "sysroot"       , required_argument , NULL       , FLAG_SYSROOT      } ,
@@ -165,6 +168,9 @@ pu_config_t *parse_opts(int argc, char **argv) {
 				break;
 			case FLAG_NOSCRIPTLET:
 				trans_flags |= ALPM_TRANS_FLAG_NOSCRIPTLET;
+				break;
+			case FLAG_NOTIMEOUT:
+				config->disabledownloadtimeout = PU_CONFIG_BOOL_TRUE;
 				break;
 			case FLAG_PRINT:
 				printonly = 1;

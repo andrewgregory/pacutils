@@ -32,6 +32,10 @@ Set an alternate database path.
 
 Set an alternate log file path.
 
+=item B<--no-timeout>
+
+Disable low-speed timeouts for downloads.
+
 =item B<--root>=F<path>
 
 Set an alternate installation root.

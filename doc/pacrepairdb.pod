@@ -61,6 +61,10 @@ Do not run package install scripts.
 
 Do not run transaction hooks.
 
+=item B<--no-timeout>
+
+Disable low-speed timeouts for downloads.
+
 =item B<--print-only>
 
 Display the packages to be repaired and the cache packages to be used and exit.

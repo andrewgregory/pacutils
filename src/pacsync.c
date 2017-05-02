@@ -41,6 +41,7 @@ enum longopt_flags {
 	FLAG_DBEXT,
 	FLAG_DBPATH,
 	FLAG_DEBUG,
+	FLAG_NOTIMEOUT,
 	FLAG_HELP,
 	FLAG_LOGFILE,
 	FLAG_SYSROOT,
@@ -62,6 +63,7 @@ void usage(int ret)
 	hputs("   --force            sync repos even if already up-to-date");
 	hputs("   --debug            enable extra debugging messages");
 	hputs("   --logfile=<path>   set an alternate log file");
+	hputs("   --no-timeout       disable low speed timeouts for downloads");
 	hputs("   --updated          return false unless a database was updated");
 	hputs("   --help             display this help information");
 	hputs("   --version          display version information");
@@ -80,6 +82,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "dbext"        , required_argument , NULL         , FLAG_DBEXT    } ,
 		{ "dbpath"       , required_argument , NULL         , FLAG_DBPATH   } ,
 		{ "debug"        , no_argument       , NULL         , FLAG_DEBUG    } ,
+		{ "no-timeout"   , no_argument       , NULL         , FLAG_NOTIMEOUT } ,
 		{ "sysroot"      , required_argument , NULL         , FLAG_SYSROOT  } ,
 		{ "force"        , no_argument       , &force       , 1             } ,
 		{ "updated"      , no_argument       , &ret_updated , 1             } ,
@@ -112,6 +115,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 			case FLAG_DEBUG:
 				log_level |= ALPM_LOG_DEBUG;
 				log_level |= ALPM_LOG_FUNCTION;
+				break;
+			case FLAG_NOTIMEOUT:
+				config->disabledownloadtimeout = PU_CONFIG_BOOL_TRUE;
 				break;
 			case FLAG_HELP:
 				usage(0);

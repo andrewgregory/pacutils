@@ -45,6 +45,7 @@ enum longopt_flags {
 	FLAG_DBPATH,
 	FLAG_DEBUG,
 	FLAG_HELP,
+	FLAG_NOTIMEOUT,
 	FLAG_NULL,
 	FLAG_REMOVABLE,
 	FLAG_ROOT,
@@ -165,6 +166,7 @@ void usage(int ret)
 	hputs("   --config=<path>    set an alternate configuration file");
 	hputs("   --dbext=<ext>      set an alternate sync database extension");
 	hputs("   --dbpath=<path>    set an alternate database location");
+	hputs("   --no-timeout       disable low speed timeouts for downloads");
 	hputs("   --debug            enable extra debugging messages");
 	hputs("   --null[=sep]       parse stdin as <sep> separated values (default NUL)");
 	hputs("   --short            display brief package information");
@@ -196,6 +198,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "root"          , required_argument , NULL       , FLAG_ROOT         } ,
 		{ "sysroot"       , required_argument , NULL       , FLAG_SYSROOT      } ,
 		{ "null"          , optional_argument , NULL       , FLAG_NULL         } ,
+		{ "no-timeout"    , no_argument       , NULL       , FLAG_NOTIMEOUT    } ,
 
 		{ "short"         , no_argument       , &level     , 1                 } ,
 		{ "raw"           , no_argument       , &raw       , 1                 } ,
@@ -250,6 +253,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 				break;
 			case FLAG_NULL:
 				isep = optarg ? optarg[0] : '\0';
+				break;
+			case FLAG_NOTIMEOUT:
+				config->disabledownloadtimeout = PU_CONFIG_BOOL_TRUE;
 				break;
 			case '?':
 				usage(1);

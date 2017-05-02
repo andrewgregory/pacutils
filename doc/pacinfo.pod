@@ -45,6 +45,10 @@ Set an alternate separator for values parsed from F<stdin>.  By default
 a newline C<\n> is used as the separator.  If B<--null> is used without
 specifying I<sep> C<NUL> will be used.
 
+=item B<--no-timeout>
+
+Disable low-speed timeouts for downloads.
+
 =item B<--short>
 
 Display brief information.  Suitable for printing a potentially large number of

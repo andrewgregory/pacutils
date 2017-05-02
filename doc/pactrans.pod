@@ -104,6 +104,10 @@ Display the what the transaction would do and exit.
 
 Assume default responses to all prompts.
 
+=item B<--no-timeout>
+
+Disable low-speed timeouts for downloads.
+
 =item B<--help>
 
 Display usage information and exit.
