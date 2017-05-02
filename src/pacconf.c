@@ -319,6 +319,7 @@ void dump_options(void)
 	show_bool("UseSyslog", config->usesyslog);
 	show_bool("Color", config->color);
 	show_bool("TotalDownload", config->totaldownload);
+	show_bool("DisableDownloadTimeout", config->disabledownloadtimeout);
 	show_bool("CheckSpace", config->checkspace);
 	show_bool("VerbosePkgLists", config->verbosepkglists);
 	show_bool("ILoveCandy", config->ilovecandy);
@@ -439,6 +440,8 @@ int list_directives(alpm_list_t *directives)
 			show_bool("CheckSpace", config->checkspace);
 		} else if(strcasecmp(i->data, "VerbosePkgLists") == 0) {
 			show_bool("VerbosePkgLists", config->verbosepkglists);
+		} else if(strcasecmp(i->data, "DisableDownloadTimeout") == 0) {
+			show_bool("DisableDownloadTimeout", config->disabledownloadtimeout);
 
 		} else if(strcasecmp(i->data, "UseDelta") == 0) {
 			show_float("UseDelta", config->usedelta);

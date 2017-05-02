@@ -52,6 +52,8 @@ struct _pu_config_setting {
   {"VerbosePkgLists", PU_CONFIG_OPTION_VERBOSEPKGLISTS},
   {"ILoveCandy",      PU_CONFIG_OPTION_ILOVECANDY},
 
+  {"DisableDownloadTimeout", PU_CONFIG_OPTION_DISABLEDOWNLOADTIMEOUT},
+
   {"SigLevel",        PU_CONFIG_OPTION_SIGLEVEL},
   {"LocalFileSigLevel",  PU_CONFIG_OPTION_LOCAL_SIGLEVEL},
   {"RemoteFileSigLevel", PU_CONFIG_OPTION_REMOTE_SIGLEVEL},
@@ -264,6 +266,7 @@ pu_config_t *pu_config_new(void)
 
   config->checkspace = PU_CONFIG_BOOL_UNSET;
   config->color = PU_CONFIG_BOOL_UNSET;
+  config->disabledownloadtimeout = PU_CONFIG_BOOL_UNSET;
   config->ilovecandy = PU_CONFIG_BOOL_UNSET;
   config->totaldownload = PU_CONFIG_BOOL_UNSET;
   config->usesyslog = PU_CONFIG_BOOL_UNSET;
@@ -370,6 +373,7 @@ alpm_handle_t *pu_initialize_handle_from_config(pu_config_t *config)
   alpm_option_set_gpgdir(handle, config->gpgdir);
   alpm_option_set_usesyslog(handle, config->usesyslog);
   alpm_option_set_arch(handle, config->architecture);
+  alpm_option_set_disable_dl_timeout(handle, config->disabledownloadtimeout);
 
   alpm_option_set_default_siglevel(handle, config->siglevel);
   alpm_option_set_local_file_siglevel(handle, config->localfilesiglevel);
@@ -478,6 +482,7 @@ int pu_config_resolve(pu_config_t *config)
 #define SETBOOL(opt) if(opt == -1) { opt = 0; }
   SETBOOL(config->checkspace);
   SETBOOL(config->color);
+  SETBOOL(config->disabledownloadtimeout);
   SETBOOL(config->ilovecandy);
   SETBOOL(config->totaldownload);
   SETBOOL(config->usesyslog);
@@ -523,6 +528,7 @@ void pu_config_merge(pu_config_t *dest, pu_config_t *src)
   MERGEBOOL(dest->verbosepkglists, src->verbosepkglists);
   MERGEBOOL(dest->color, src->color);
   MERGEBOOL(dest->ilovecandy, src->ilovecandy);
+  MERGEBOOL(dest->disabledownloadtimeout, src->disabledownloadtimeout);
 
   MERGEVAL(dest->cleanmethod, src->cleanmethod);
   MERGEVAL(dest->usedelta, src->usedelta);
@@ -843,6 +849,9 @@ int pu_config_reader_next(pu_config_reader_t *reader)
           break;
         case PU_CONFIG_OPTION_ILOVECANDY:
           config->ilovecandy = 1;
+          break;
+        case PU_CONFIG_OPTION_DISABLEDOWNLOADTIMEOUT:
+          config->disabledownloadtimeout = 1;
           break;
         default:
           reader->status = PU_CONFIG_READER_STATUS_UNKNOWN_OPTION;
