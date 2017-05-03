@@ -125,7 +125,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "root"          , required_argument , NULL       , FLAG_ROOT         } ,
 		{ "sysroot"       , required_argument , NULL       , FLAG_SYSROOT      } ,
 		{ "quiet"         , no_argument       , NULL       , FLAG_QUIET        } ,
-		{ "flag"          , optional_argument , NULL       , FLAG_NULL         } ,
+		{ "null"          , optional_argument , NULL       , FLAG_NULL         } ,
 
 		{ "help"          , no_argument       , NULL       , FLAG_HELP         } ,
 		{ "version"       , no_argument       , NULL       , FLAG_VERSION      } ,
