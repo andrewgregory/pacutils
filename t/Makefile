@@ -25,7 +25,7 @@ TESTS += \
 		 40-ui-cb-download-progress.t \
 		 99-pu_list_shift.t
 
-%.t: %.c ../lib/libpacutils.so
+%.t: %.c ../lib/libpacutils.so tap.c/tap.c Makefile
 	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $< $(LDLIBS) -o $@
 
 check: tests
