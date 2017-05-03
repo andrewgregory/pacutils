@@ -24,41 +24,41 @@ HOOKDIR    ?= ${SYSCONFDIR}/pacman.d/hooks
 LOGFILE    ?= ${LOCALSTATEDIR}/log/pacman.log
 ROOTDIR    ?= /
 
-override CPPFLAGS   += \
-					   -DCACHEDIR=\"$(CACHEDIR)\" \
-					   -DDBEXT=\"$(DBEXT)\" \
-					   -DDBPATH=\"$(DBPATH)\" \
-					   -DGPGDIR=\"$(GPGDIR)\" \
-					   -DHOOKDIR=\"$(HOOKDIR)\" \
-					   -DLOCALSTATEDIR=\"$(LOCALSTATEDIR)\" \
-					   -DLOGFILE=\"$(LOGFILE)\" \
-					   -DROOTDIR=\"$(ROOTDIR)\" \
-					   -DSYSCONFDIR=\"$(SYSCONFDIR)\"
+override CPPFLAGS += \
+	-DCACHEDIR=\"$(CACHEDIR)\" \
+	-DDBEXT=\"$(DBEXT)\" \
+	-DDBPATH=\"$(DBPATH)\" \
+	-DGPGDIR=\"$(GPGDIR)\" \
+	-DHOOKDIR=\"$(HOOKDIR)\" \
+	-DLOCALSTATEDIR=\"$(LOCALSTATEDIR)\" \
+	-DLOGFILE=\"$(LOGFILE)\" \
+	-DROOTDIR=\"$(ROOTDIR)\" \
+	-DSYSCONFDIR=\"$(SYSCONFDIR)\"
 
 GITTAG = $(shell git describe --abbrev=0 2>/dev/null)
 ifneq ($(GITTAG),)
-    GITVER = $(subst $(GITTAG)-,,$(shell git describe --dirty))
-    ifneq ($(GITTAG),$(GITVER))
-        override CPPFLAGS += -DGITVER=\"$(GITVER)\"
-    endif
+	GITVER = $(subst $(GITTAG)-,,$(shell git describe --dirty))
+	ifneq ($(GITTAG),$(GITVER))
+		override CPPFLAGS += -DGITVER=\"$(GITVER)\"
+	endif
 endif
 
 HEADERS = \
-		  pacutils.h \
-		  pacutils/config.h \
-		  pacutils/log.h \
-		  pacutils/mtree.h \
-		  pacutils/ui.h \
-		  pacutils/util.h
+					pacutils.h \
+					pacutils/config.h \
+					pacutils/log.h \
+					pacutils/mtree.h \
+					pacutils/ui.h \
+					pacutils/util.h
 
 SOURCES = \
-		  ../ext/mini.c/mini.c \
-		  pacutils.c \
-		  pacutils/config.c \
-		  pacutils/log.c \
-		  pacutils/mtree.c \
-		  pacutils/ui.c \
-		  pacutils/util.c
+					../ext/mini.c/mini.c \
+					pacutils.c \
+					pacutils/config.c \
+					pacutils/log.c \
+					pacutils/mtree.c \
+					pacutils/ui.c \
+					pacutils/util.c
 
 all: libpacutils.so
 
