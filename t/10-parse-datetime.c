@@ -2,7 +2,7 @@
 
 #include "pacutils/util.h"
 
-#include "tap.h"
+#include "pacutils_test.h"
 
 #define IS(str, yr, mo, dy, h, m, s) \
 	_tap_ok(__FILE__, __LINE__, pu_parse_datetime(str, &t) == &t, "%s - parse", str); \

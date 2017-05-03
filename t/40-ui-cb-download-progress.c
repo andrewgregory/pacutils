@@ -1,5 +1,5 @@
 #include "capture.c"
-#include "tap.h"
+#include "pacutils_test.h"
 #include "pacutils/ui.h"
 
 typedef struct {
