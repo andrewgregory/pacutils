@@ -10,21 +10,21 @@ MAN3DIR     ?= $(MANDIR)/man3
 MAN3EXT     ?= .3
 
 MAN1PAGES = \
-		   paccapability$(MAN1EXT) \
-		   paccheck$(MAN1EXT) \
-		   pacconf$(MAN1EXT) \
-		   pacfile$(MAN1EXT) \
-		   pacinfo$(MAN1EXT) \
-		   pacini$(MAN1EXT) \
-		   paclog$(MAN1EXT) \
-		   pacrepairdb$(MAN1EXT) \
-		   pacreport$(MAN1EXT) \
-		   pacsift$(MAN1EXT) \
-		   pacsync$(MAN1EXT) \
-		   pactrans$(MAN1EXT)
+						paccapability$(MAN1EXT) \
+						paccheck$(MAN1EXT) \
+						pacconf$(MAN1EXT) \
+						pacfile$(MAN1EXT) \
+						pacinfo$(MAN1EXT) \
+						pacini$(MAN1EXT) \
+						paclog$(MAN1EXT) \
+						pacrepairdb$(MAN1EXT) \
+						pacreport$(MAN1EXT) \
+						pacsift$(MAN1EXT) \
+						pacsync$(MAN1EXT) \
+						pactrans$(MAN1EXT)
 
 MAN3PAGES = \
-			pacutils-mtree$(MAN3EXT)
+						pacutils-mtree$(MAN3EXT)
 
 all: doc
 
