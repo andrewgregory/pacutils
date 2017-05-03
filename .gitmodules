@@ -1,6 +1,6 @@
 [submodule "ext/mini.c"]
 	path = ext/mini.c
-	url = git@github.com:andrewgregory/mINI.c.git
+	url = https://github.com/andrewgregory/mINI.c.git
 [submodule "t/tap.c"]
 	path = t/tap.c
-	url = git@github.com:andrewgregory/tap.c.git
+	url = https://github.com/andrewgregory/tap.c.git
