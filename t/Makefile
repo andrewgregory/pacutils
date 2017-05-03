@@ -7,6 +7,8 @@ override CFLAGS += $(ALPM_CFLAGS)
 
 PROVE ?= prove
 
+GIT ?= git
+
 TESTS += \
 		 10-basename.t \
 		 10-config-basic.t \
@@ -32,6 +34,9 @@ check: tests
 tests: $(TESTS)
 
 all: tests
+
+tap.c/tap.c:
+	$(GIT) submodule update tap.c
 
 gcov: CC = gcc
 gcov: CFLAGS += -fprofile-arcs -ftest-coverage
