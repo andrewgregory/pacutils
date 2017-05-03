@@ -20,11 +20,12 @@
  * IN THE SOFTWARE.
  */
 
+#include <fcntl.h>
 #include <string.h>
-#include <glob.h>
 #include <sys/utsname.h>
 
 #include "../../ext/mini.c/mini.h"
+#include "../../ext/globdir.c/globdir.h"
 
 #include "config.h"
 #include "config-defaults.h"
@@ -70,6 +71,24 @@ struct _pu_config_setting {
 
   {NULL, 0}
 };
+
+static mini_t *_pu_mini_openat(int fd, const char *path)
+{
+  FILE *f;
+  mini_t *m;
+
+  if(fd != -1) {
+    while(path[0] == '/') { path++; }
+    f = pu_fopenat(fd, path, "r");
+  } else {
+    f = fopen(path, "r");
+  }
+  if(f == NULL) { return NULL; }
+  if((m = mini_finit(f)) == NULL) { fclose(f); return NULL; }
+
+  m->_free_stream = 1;
+  return m;
+}
 
 static char *_pu_strjoin(const char *sep, ...)
 {
@@ -377,6 +396,34 @@ alpm_list_t *pu_register_syncdbs(alpm_handle_t *handle, alpm_list_t *repos)
   return alpm_get_syncdbs(handle);
 }
 
+int pu_config_resolve_sysroot(pu_config_t *config, const char *sysroot)
+{
+  alpm_list_t *i;
+
+  if(pu_config_resolve(config) == -1) { return -1; }
+
+  if(sysroot == NULL || sysroot[0] == '\0') { return 0; }
+
+#define PU_SETSYSROOT(opt) \
+  if(opt) { \
+    char *n = pu_prepend_dir(sysroot, opt);\
+    if(n == NULL) { return -1; } \
+    else { free(opt); opt = n; } \
+  }
+
+  PU_SETSYSROOT(config->rootdir)
+  PU_SETSYSROOT(config->dbpath)
+  PU_SETSYSROOT(config->logfile)
+  PU_SETSYSROOT(config->gpgdir)
+
+  for(i = config->hookdirs; i; i = i->next) { PU_SETSYSROOT(i->data); }
+  for(i = config->cachedirs; i; i = i->next) { PU_SETSYSROOT(i->data); }
+
+#undef PU_SETSYSROOT
+
+  return 0;
+}
+
 int pu_config_resolve(pu_config_t *config)
 {
   alpm_list_t *i;
@@ -487,24 +534,34 @@ void pu_config_merge(pu_config_t *dest, pu_config_t *src)
   pu_config_free(src);
 }
 
-static int _pu_glob(alpm_list_t **dest, const char *pattern)
+static int _pu_glob_at(alpm_list_t **dest, const char *pattern, int sysrootfd)
 {
-  glob_t gbuf;
+  globdir_t gbuf;
   size_t gindex;
   alpm_list_t *items = NULL;
-  int gret = glob(pattern, GLOB_NOCHECK, NULL, &gbuf);
+  int basefd, gret;
+
+  if(sysrootfd >= 0) {
+    /* expand all patterns relative to sysroot */
+    basefd = sysrootfd;
+    while(pattern[0] == '/') { pattern++; }
+  } else {
+    basefd = AT_FDCWD;
+  }
+
+  gret = globat(basefd, pattern, GLOB_NOCHECK, NULL, &gbuf);
 
   if(gret != 0 && gret != GLOB_NOMATCH) { return -1; }
 
   for(gindex = 0; gindex < gbuf.gl_pathc; gindex++) {
     if(pu_list_append_str(&items, gbuf.gl_pathv[gindex]) == NULL) {
       FREELIST(items);
-      globfree(&gbuf);
+      globdirfree(&gbuf);
       return -1;
     }
   }
 
-  globfree(&gbuf);
+  globdirfree(&gbuf);
   *dest = alpm_list_join(*dest, items);
 
   return 0;
@@ -555,7 +612,8 @@ int pu_config_reader_next(pu_config_reader_t *reader)
         /* switch to the next included file */
         reader->file = _pu_list_shift(&reader->_parent->_includes);
         reader->_includes = NULL;
-        if((reader->_mini = mini_init(reader->file)) == NULL) {
+        reader->_mini = _pu_mini_openat(reader->_sysroot_fd, reader->file);
+        if(reader->_mini == NULL) {
           _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
         }
       } else {
@@ -605,14 +663,14 @@ int pu_config_reader_next(pu_config_reader_t *reader)
     }
 
     if(s->type == PU_CONFIG_OPTION_INCLUDE) {
-      if(_pu_glob(&reader->_includes, mini->value) != 0) {
+      if(_pu_glob_at(&reader->_includes, mini->value, reader->_sysroot_fd) != 0) {
         _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
       } else if(reader->_includes == NULL) {
         return pu_config_reader_next(reader);
       } else {
         char *file = _pu_list_shift(&reader->_includes);
         pu_config_reader_t *p = malloc(sizeof(pu_config_reader_t));
-        mini_t *newmini = mini_init(file);
+        mini_t *newmini = _pu_mini_openat(reader->_sysroot_fd, file);
 
         if(p == NULL || newmini == NULL) {
           free(file);
@@ -776,18 +834,37 @@ int pu_config_reader_next(pu_config_reader_t *reader)
 #undef SETSTROPT
 #undef APPENDLIST
 
-pu_config_reader_t *pu_config_reader_new(pu_config_t *config, const char *file)
+pu_config_reader_t *pu_config_reader_new_sysroot(pu_config_t *config,
+    const char *file, const char *sysroot)
 {
   pu_config_reader_t *reader = calloc(sizeof(pu_config_reader_t), 1);
   if(reader == NULL) { return NULL; }
-  if((reader->_mini = mini_init(file)) == NULL) {
+
+  if((reader->file = strdup(file)) == NULL) {
     pu_config_reader_free(reader); return NULL;
   }
-  if((reader->file = strdup(file)) == NULL) {
+
+  if(sysroot && sysroot[0]) {
+    if((reader->sysroot = strdup(file)) == NULL) {
+      pu_config_reader_free(reader); return NULL;
+    }
+    if((reader->_sysroot_fd = open(sysroot, O_DIRECTORY)) == -1) {
+      pu_config_reader_free(reader); return NULL;
+    }
+  } else {
+    reader->_sysroot_fd = -1;
+  }
+
+  if((reader->_mini = _pu_mini_openat(reader->_sysroot_fd, file)) == NULL) {
     pu_config_reader_free(reader); return NULL;
   }
   reader->config = config;
   return reader;
+}
+
+pu_config_reader_t *pu_config_reader_new(pu_config_t *config, const char *file)
+{
+  return pu_config_reader_new_sysroot(config, file, NULL);
 }
 
 pu_config_reader_t *pu_config_reader_finit(pu_config_t *config, FILE *stream)
@@ -798,6 +875,7 @@ pu_config_reader_t *pu_config_reader_finit(pu_config_t *config, FILE *stream)
     pu_config_reader_free(reader); return NULL;
   }
   reader->config = config;
+  reader->_sysroot_fd = -1;
   return reader;
 }
 
@@ -805,6 +883,7 @@ void pu_config_reader_free(pu_config_reader_t *reader)
 {
   if(!reader) { return; }
   free(reader->file);
+  free(reader->sysroot);
   free(reader->section);
   mini_free(reader->_mini);
   FREELIST(reader->_includes);

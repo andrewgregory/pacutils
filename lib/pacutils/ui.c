@@ -21,6 +21,7 @@
  */
 
 #include <errno.h>
+#include <fcntl.h>
 #include <string.h>
 #include <sys/time.h>
 
@@ -268,9 +269,10 @@ void pu_ui_display_transaction(alpm_handle_t *handle)
   printf("Size Delta:     %10s\n", pu_hr_size(delta, size));
 }
 
-pu_config_t *pu_ui_config_parse(pu_config_t *dest, const char *file) {
+pu_config_t *pu_ui_config_parse_sysroot(pu_config_t *dest,
+    const char *file, const char *root) {
   pu_config_t *config = pu_config_new();
-  pu_config_reader_t *reader = pu_config_reader_new(config, file);
+  pu_config_reader_t *reader = pu_config_reader_new_sysroot(config, file, root);
 
   if(config == NULL || reader == NULL) {
     pu_ui_error("reading '%s' failed (%s)", file, strerror(errno));
@@ -317,17 +319,26 @@ pu_config_t *pu_ui_config_parse(pu_config_t *dest, const char *file) {
   return dest;
 }
 
-pu_config_t *pu_ui_config_load(pu_config_t *dest, const char *file) {
-  int allocd = dest == NULL ? 1 : 0;
-  if((dest = pu_ui_config_parse(dest, file)) == NULL) { return NULL; }
+pu_config_t *pu_ui_config_parse(pu_config_t *dest, const char *file) {
+  return pu_ui_config_parse_sysroot(dest, file, "/");
+}
 
-  if(pu_config_resolve(dest) != 0) {
+pu_config_t *pu_ui_config_load_sysroot(pu_config_t *dest,
+    const char *file, const char *root) {
+  int allocd = dest == NULL ? 1 : 0;
+  if((dest = pu_ui_config_parse_sysroot(dest, file, root)) == NULL) { return NULL; }
+
+  if(pu_config_resolve_sysroot(dest, root) != 0) {
     pu_ui_error("resolving config values failed (%s)", strerror(errno));
     if(allocd) { pu_config_free(dest); }
     return NULL;
   }
 
   return dest;
+}
+
+pu_config_t *pu_ui_config_load(pu_config_t *dest, const char *file) {
+  return pu_ui_config_load_sysroot(dest, file, "/");
 }
 
 /* vim: set ts=2 sw=2 et: */

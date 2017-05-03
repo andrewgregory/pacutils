@@ -38,6 +38,11 @@ alpm_list_t *pu_list_append_str(alpm_list_t **list, const char *str);
 char *pu_vasprintf(const char *fmt, va_list args);
 char *pu_asprintf(const char *fmt, ...);
 
+char *pu_prepend_dir(const char *dir, const char *path);
+int pu_prepend_dir_list(const char *dir, alpm_list_t *paths);
+
+FILE *pu_fopenat(int dirfd, const char *path, const char *mode);
+
 #endif /* PACUTILS_UTIL_H */
 
 /* vim: set ts=2 sw=2 et: */

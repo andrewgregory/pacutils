@@ -130,7 +130,7 @@ typedef enum pu_config_reader_status_t {
 
 typedef struct pu_config_reader_t {
   int eof, line, error;
-  char *file, *section, *key, *value;
+  char *sysroot, *file, *section, *key, *value;
   pu_config_t *config;
   pu_repo_t *repo;
   pu_config_reader_status_t status;
@@ -138,6 +138,7 @@ typedef struct pu_config_reader_t {
   void *_mini;
   struct pu_config_reader_t *_parent;
   alpm_list_t *_includes;
+  int _sysroot_fd;
 } pu_config_reader_t;
 
 pu_repo_t *pu_repo_new(void);
@@ -148,10 +149,12 @@ alpm_list_t *pu_register_syncdbs(alpm_handle_t *handle, alpm_list_t *repos);
 pu_config_t *pu_config_new(void);
 void pu_config_merge(pu_config_t *dest, pu_config_t *src);
 int pu_config_resolve(pu_config_t *config);
+int pu_config_resolve_sysroot(pu_config_t *config, const char *sysroot);
 void pu_config_free(pu_config_t *config);
 
 alpm_handle_t *pu_initialize_handle_from_config(pu_config_t *config);
 
+pu_config_reader_t *pu_config_reader_new_sysroot(pu_config_t *config, const char *file, const char *sysroot);
 pu_config_reader_t *pu_config_reader_new(pu_config_t *config, const char *file);
 pu_config_reader_t *pu_config_reader_finit(pu_config_t *config, FILE *stream);
 int pu_config_reader_next(pu_config_reader_t *reader);

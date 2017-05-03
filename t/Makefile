@@ -22,6 +22,7 @@ TESTS += \
 		 10-strreplace.t \
 		 20-config-includes.t \
 		 20-config-root-inheritance.t \
+		 30-config-sysroot.t \
 		 40-ui-cb-download-progress.t \
 		 99-pu_list_shift.t
 

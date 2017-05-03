@@ -52,6 +52,7 @@ HEADERS = \
 					pacutils/util.h
 
 SOURCES = \
+					../ext/globdir.c/globdir.c \
 					../ext/mini.c/mini.c \
 					pacutils.c \
 					pacutils/config.c \

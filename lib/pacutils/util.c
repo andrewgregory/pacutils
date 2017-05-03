@@ -23,11 +23,13 @@
 #define _XOPEN_SOURCE 700 /* strptime */
 
 #include <errno.h>
+#include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "util.h"
 
@@ -161,6 +163,49 @@ char *pu_asprintf(const char *fmt, ...)
   va_end(args);
 
   return p;
+}
+
+char *pu_prepend_dir(const char *dir, const char *path)
+{
+  const char *sep = dir[strlen(dir) - 1] == '/' ? "" : "/";
+  while(path[0] == '/') { path++; }
+  return pu_asprintf("%s%s%s", dir, sep, path);
+}
+
+int pu_prepend_dir_list(const char *dir, alpm_list_t *paths)
+{
+  while(paths) {
+    char *newval = pu_prepend_dir(dir, paths->data);
+    if(newval == NULL) { return -1; }
+    free(paths->data);
+    paths->data = newval;
+    paths = paths->next;
+  }
+  return 0;
+}
+
+FILE *pu_fopenat(int dirfd, const char *path, const char *mode)
+{
+  int fd, flags = 0, rwflag = 0;
+  FILE *stream;
+  const char *m = mode;
+  switch(*(m++)) {
+    case 'r': rwflag = O_RDONLY; break;
+    case 'w': rwflag = O_WRONLY; flags |= O_CREAT | O_TRUNC; break;
+    case 'a': rwflag = O_WRONLY; flags |= O_CREAT | O_APPEND; break;
+    default: errno = EINVAL; return NULL;
+  }
+  if(m[1] == 'b') { m++; }
+  if(m[1] == '+') { m++; rwflag = O_RDWR; }
+  while(*m) {
+    switch(*(m++)) {
+      case 'e': flags |= O_CLOEXEC; break;
+      case 'x': flags |= O_EXCL; break;
+    }
+  }
+  if((fd = openat(dirfd, path, flags | rwflag, 0666)) < 0) { return NULL; }
+  if((stream = fdopen(fd, mode)) == NULL) { close(fd); return NULL; }
+  return stream;
 }
 
 /* vim: set ts=2 sw=2 et: */
