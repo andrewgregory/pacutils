@@ -29,6 +29,10 @@ Set an alternate database path.
 
 Set an alternate installation root.
 
+=item B<--sysroot>=F<path>
+
+Set an alternate system root.  See L<pacutils-sysroot(7)>.
+
 =item B<--null>[=I<sep>]
 
 Set an alternate separator for values parsed from F<stdin>.  By default

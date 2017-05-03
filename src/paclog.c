@@ -41,6 +41,7 @@ char *logfile = NULL;
 time_t after = 0, before = 0;
 alpm_list_t *pkgs = NULL, *caller = NULL, *actions = NULL, *grep = NULL;
 int color = 1, warnings = 0, list_installed = 0, commandline = 0;
+const char *sysroot = NULL;
 
 enum longopt_flags {
 	FLAG_CONFIG = 1000,
@@ -55,6 +56,7 @@ enum longopt_flags {
 	FLAG_LOGFILE,
 	FLAG_PACKAGE,
 	FLAG_ROOT,
+	FLAG_SYSROOT,
 	FLAG_VERSION,
 	FLAG_WARNINGS,
 };
@@ -101,6 +103,7 @@ void usage(int ret)
 	hputs("options:");
 	hputs("   --config=<path>     set an alternate configuration file");
 	hputs("   --root=<path>       set an alternate installation root");
+	hputs("   --sysroot=<path>    set an alternate installation system root");
 	hputs("   --debug             enable extra debugging messages");
 	hputs("   --logfile=<path>    set an alternate log file");
 	hputs("   --[no-]color        color output");
@@ -136,6 +139,7 @@ void parse_opts(int argc, char **argv)
 		{ "no-color",   no_argument,       &color, 0            } ,
 		{ "config",     required_argument, NULL, FLAG_CONFIG    } ,
 		{ "root",       required_argument, NULL, FLAG_ROOT      } ,
+		{ "sysroot",    required_argument, NULL, FLAG_SYSROOT   } ,
 		{ "logfile",    required_argument, NULL, FLAG_LOGFILE   } ,
 		{ "help",       no_argument,       NULL, FLAG_HELP      } ,
 		{ "version",    no_argument,       NULL, FLAG_VERSION   } ,
@@ -166,6 +170,9 @@ void parse_opts(int argc, char **argv)
 				free(logfile);
 				logfile = malloc(strlen(optarg) + strlen("/var/log/pacman.log") + 1);
 				sprintf(logfile, "%s/var/log/pacman.log", optarg);
+				break;
+			case FLAG_SYSROOT:
+				sysroot = optarg;
 				break;
 			case FLAG_HELP:
 				usage(0);
@@ -228,7 +235,7 @@ void parse_opts(int argc, char **argv)
 	}
 
 	if(!logfile) {
-		pu_config_t *config = pu_ui_config_load(NULL, config_file);
+		pu_config_t *config = pu_ui_config_load_sysroot(NULL, config_file, sysroot);
 		if(config) {
 			logfile = strdup(config->logfile);
 			pu_config_free(config);

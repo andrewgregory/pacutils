@@ -42,7 +42,7 @@ alpm_loglevel_t log_level = ALPM_LOG_ERROR | ALPM_LOG_WARNING;
 int srch_cache = 0, srch_local = 0, srch_sync = 0;
 int invert = 0, re = 0, exact = 0, any = 0;
 int osep = '\n', isep = '\n';
-char *dbext = NULL;
+const char *dbext = NULL, *sysroot = NULL;
 alpm_list_t *search_dbs = NULL;
 alpm_list_t *repo = NULL, *name = NULL, *description = NULL, *packager = NULL;
 alpm_list_t *base = NULL, *arch = NULL, *url = NULL;
@@ -68,6 +68,7 @@ enum longopt_flags {
 	FLAG_HELP,
 	FLAG_NULL,
 	FLAG_ROOT,
+	FLAG_SYSROOT,
 	FLAG_VERSION,
 
 	FLAG_ARCH,
@@ -600,6 +601,7 @@ void usage(int ret)
 	hputs("   --dbext=<ext>        set an alternate sync database extension");
 	hputs("   --dbpath=<path>      set an alternate database location");
 	hputs("   --root=<path>        set an alternate installation root");
+	hputs("   --sysroot=<path>     set an alternate system root");
 	hputs("   --null[=sep]         use <sep> to separate values (default NUL)");
 	hputs("   --help               display this help information");
 	hputs("   --version            display version information");
@@ -665,6 +667,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "dbpath"        , required_argument , NULL    , FLAG_DBPATH        } ,
 		{ "debug"         , no_argument       , NULL    , FLAG_DEBUG         } ,
 		{ "help"          , no_argument       , NULL    , FLAG_HELP          } ,
+		{ "sysroot"       , required_argument , NULL    , FLAG_SYSROOT       } ,
 		{ "version"       , no_argument       , NULL    , FLAG_VERSION       } ,
 
 		{ "cache"         , no_argument       , NULL    , FLAG_CACHE         } ,
@@ -739,6 +742,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 			case FLAG_NULL:
 				osep = optarg ? optarg[0] : '\0';
 				isep = osep;
+				break;
+			case FLAG_SYSROOT:
+				sysroot = optarg;
 				break;
 			case FLAG_VERSION:
 				pu_print_version(myname, myver);
@@ -826,7 +832,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		}
 	}
 
-	if(!pu_ui_config_load(config, config_file)) {
+	if(!pu_ui_config_load_sysroot(config, config_file, sysroot)) {
 		fprintf(stderr, "error: could not parse '%s'\n", config_file);
 		return NULL;
 	}

@@ -34,6 +34,7 @@ const char *myname = "pacfile", *myver = BUILDVER;
 
 int checkfs = 0;
 alpm_list_t *pkgnames = NULL;
+const char *sysroot = NULL;
 
 enum longopt_flags {
 	FLAG_CONFIG = 1000,
@@ -41,6 +42,7 @@ enum longopt_flags {
 	FLAG_HELP,
 	FLAG_PACKAGE,
 	FLAG_ROOT,
+	FLAG_SYSROOT,
 	FLAG_VERSION,
 };
 
@@ -55,6 +57,7 @@ void usage(int ret)
 	hputs("   --config=<path>    set an alternate configuration file");
 	hputs("   --dbpath=<path>    set an alternate database location");
 	hputs("   --root=<path>      set an alternate installation root");
+	hputs("   --sysroot=<path>   set an alternate system root");
 	hputs("   --help             display this help information");
 	hputs("   --version          display version information");
 	hputs("   --package=<pkg>    limit information to specified package(s)");
@@ -75,6 +78,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "dbpath"       , required_argument , NULL       , FLAG_DBPATH       } ,
 		{ "help"         , no_argument       , NULL       , FLAG_HELP         } ,
 		{ "root"         , required_argument , NULL       , FLAG_ROOT         } ,
+		{ "sysroot"      , required_argument , NULL       , FLAG_SYSROOT      } ,
 		{ "version"      , no_argument       , NULL       , FLAG_VERSION      } ,
 		{ "no-check"     , no_argument       , &checkfs   , 0                 } ,
 		{ "check"        , no_argument       , &checkfs   , 1                 } ,
@@ -106,6 +110,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 				free(config->rootdir);
 				config->rootdir = strdup(optarg);
 				break;
+			case FLAG_SYSROOT:
+				sysroot = optarg;
+				break;
 			case FLAG_VERSION:
 				pu_print_version(myname, myver);
 				exit(0);
@@ -119,7 +126,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		}
 	}
 
-	if(!pu_ui_config_load(config, config_file)) {
+	if(!pu_ui_config_load_sysroot(config, config_file, sysroot)) {
 		fprintf(stderr, "error: could not parse '%s'\n", config_file);
 		pu_config_free(config);
 		return NULL;

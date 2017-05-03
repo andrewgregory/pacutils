@@ -32,6 +32,10 @@ Set an alternate log file path.
 
 Set an alternate installation root.
 
+=item B<--sysroot>=F<path>
+
+Set an alternate system root.  See L<pacutils-sysroot(7)>.
+
 =item B<--[no-]color>
 
 Colorize output.  By default output will be colorized if F<stdout> is

@@ -43,6 +43,7 @@ enum longopt_flags {
 	FLAG_HELP,
 	FLAG_PACKAGE,
 	FLAG_ROOT,
+	FLAG_SYSROOT,
 	FLAG_VERSION,
 };
 
@@ -51,6 +52,7 @@ alpm_handle_t *handle = NULL;
 alpm_list_t *packages = NULL;
 int _fix_gid = 0, _fix_mode = 0, _fix_mtime = 0, _fix_uid = 0;
 int verbose = 1;
+const char *sysroot = NULL;
 
 #define ASSERT(x) \
 	if(!(x)) { pu_ui_error("unexpected error (%s)", strerror(errno)); exit(1); }
@@ -65,6 +67,7 @@ void usage(int ret) {
 	hputs("   --config=<path>    set an alternate configuration file");
 	hputs("   --dbpath=<path>    set an alternate database location");
 	hputs("   --root=<path>      set an alternate installation root");
+	hputs("   --sysroot=<path>   set an alternate system root");
 	hputs("   --quiet            do not display progress information");
 	hputs("   --help             display this help information");
 	hputs("   --version          display version information");
@@ -88,6 +91,7 @@ pu_config_t *parse_opts(int argc, char **argv) {
 		{ "config"        , required_argument , NULL       , FLAG_CONFIG       } ,
 		{ "dbpath"        , required_argument , NULL       , FLAG_DBPATH       } ,
 		{ "root"          , required_argument , NULL       , FLAG_ROOT         } ,
+		{ "sysroot"       , required_argument , NULL       , FLAG_SYSROOT      } ,
 
 		{ "quiet"         , no_argument       , &verbose   , 0                 } ,
 
@@ -133,6 +137,9 @@ pu_config_t *parse_opts(int argc, char **argv) {
 				free(config->rootdir);
 				ASSERT(config->rootdir = strdup(optarg));
 				break;
+			case FLAG_SYSROOT:
+				sysroot = optarg;
+				break;
 
 			/* misc */
 			case FLAG_PACKAGE:
@@ -146,7 +153,7 @@ pu_config_t *parse_opts(int argc, char **argv) {
 		}
 	}
 
-	if(!pu_ui_config_load(config, config_file)) {
+	if(!pu_ui_config_load_sysroot(config, config_file, sysroot)) {
 		pu_ui_error("could not parse '%s'", config_file);
 		return NULL;
 	}

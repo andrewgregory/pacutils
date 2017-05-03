@@ -31,7 +31,7 @@ const char *myname = "pacconf", *myver = BUILDVER;
 
 pu_config_t *config = NULL;
 alpm_list_t *directives = NULL;
-char sep = '\n', *repo_name = NULL;
+char sep = '\n', *repo_name = NULL, *sysroot = NULL;
 int options = 0, raw = 0, repo_list = 0, single = 0, verbose = 0;
 
 enum {
@@ -44,6 +44,7 @@ enum {
 	FLAG_REPO_LIST,
 	FLAG_ROOT,
 	FLAG_SINGLE,
+	FLAG_SYSROOT,
 	FLAG_NULL,
 	FLAG_VERBOSE,
 	FLAG_VERSION,
@@ -97,6 +98,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "repo-list" , no_argument       , NULL , FLAG_REPO_LIST },
 		{ "root"      , required_argument , NULL , FLAG_ROOT      },
 		{ "single"    , no_argument       , NULL , FLAG_SINGLE    },
+		{ "sysroot"   , required_argument , NULL , FLAG_SYSROOT   },
 		{ "verbose"   , no_argument       , NULL , FLAG_VERBOSE   },
 		{ "version"   , no_argument       , NULL , FLAG_VERSION   },
 		{ 0, 0, 0, 0 },
@@ -141,6 +143,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 			case FLAG_SINGLE:
 				single = 1;
 				break;
+			case FLAG_SYSROOT:
+				sysroot = optarg;
+				break;
 			case FLAG_VERBOSE:
 				verbose = 1;
 				break;
@@ -156,9 +161,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 	}
 
 	if(raw) {
-		return pu_ui_config_parse(config, config_file);
+		return pu_ui_config_parse_sysroot(config, config_file, sysroot);
 	} else {
-		return pu_ui_config_load(config, config_file);
+		return pu_ui_config_load_sysroot(config, config_file, sysroot);
 	}
 }
 

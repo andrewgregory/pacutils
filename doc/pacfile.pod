@@ -27,6 +27,10 @@ Set an alternate database path.
 
 Set an alternate installation root.
 
+=item B<--sysroot>=F<path>
+
+Set an alternate system root.  See L<pacutils-sysroot(7)>.
+
 =item B<--package>=I<pkgname>
 
 Limit information to the specified package.  May be specified multiple times.

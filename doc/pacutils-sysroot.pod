@@ -1,0 +1,123 @@
+=head1 NAME
+
+pacutils-sysroot - managing a mounted guest system
+
+=head1 DESCRIPTION
+
+=head2 Managing Guests with --root
+
+When a libalpm-based installation becomes broken to the point that the package
+manager itself can no longer be used, it must be fixed by loading a working
+environment and mounting the installation in need of repair as a guest.
+Typically this is done by setting the installation root to the guest with the
+B<--root> option.  Libalpm only uses the installation root to determine where
+to install and remove files during package transactions.  It is completely
+independent of all other configuration options.  This makes using B<--root>
+unreliable for managing a mounted guest.
+
+The first issue is that when changing the installation root, the host system's
+configuration is still used. Because the installation root is a configuration
+option (C<RootDir>) it cannot be used to load an alternate configuration file.
+Even if B<--config> is added to load the guest configuration, any C<Include>'d
+paths will still be resolved relative to the host's root. The only way to
+actually use the guest's configuration without using C<chroot> is to use
+B<--config> and manually add the mount path to all C<Include> paths.
+
+Now the guest configuration files are being used, but all configured paths will
+still refer to paths under to the host's root, not the guest's.  If an
+installation root is explicitly provided, pacman and pacutils will set defaults
+for some, but not all, configuration paths to be underneath it. This typically
+works, because those paths are rarely explicitly set, so the defaults generally
+do the correct thing. If they have been set, however, the configured values
+will be used without modification. In order to reliably operate on the guest,
+all configuration paths must be set relative to the installation root (except
+for the database and log file paths which will default to paths inside the
+installation root if unset).
+
+=head2 Introducing the Sysroot
+
+This is a significant amount of work just to run operate on a mounted system
+and even setting all of the configuration paths may not work correctly in the
+future if libalpm gains the ability to automatically add system users.  In
+order to allow reliable operating on a mounted guest, pacman and pacutils have
+added the concept of a "sysroot".  The sysroot is what is commonly intended
+when using the B<--root> option; the program will operate as if the sysroot
+were actually the filesystem root.  This is similar to using C<chroot> to enter
+the mounted system before running the program, but still runs the host's copy.
+There are two ways to do this: chroot into the sysroot shortly after startup
+prior to reading any configuration or prepend the sysroot to all paths.
+
+Pacman, and all pacutils programs that run transactions, C<chroot> almost
+immediately after startup. In order to use these programs with B<--sysroot>
+they must be run as root, or otherwise run with CAP_CHROOT. As with C<chroot>,
+all paths, whether given as configuration options or arguments, must refer to
+paths under the sysroot without including the sysroot in the path.
+
+In order to allow non-root usage, pacutils programs that do not run
+transactions take the second approach. For compatibility with programs that
+implement the sysroot using C<chroot>, the sysroot is prepended to all paths.
+So, all paths must similarly refer to files under the sysroot without including
+the sysroot itself.
+
+=head2 Correctly Managing a Mounted Guest
+
+Programs that will be performing a transaction, should simply chroot(2) and
+chdir(2) into the system root as soon as possible, at least prior to parsing
+F<pacman.conf>, and proceed as normal.  Transactions that include scripts or
+hooks already require chroot(2) permissions, so this is unlikely to add any new
+restrictions or requirements to the program.  Additionally, using chroot(2)
+will improve compatibility with future versions of libalpm that may perform
+additional user management operations during transactions.
+
+Programs that perform read-only operations on the guest can still use
+chroot(2), but may wish to avoid it in order to avoid requiring root
+privileges.  Pacutils provides sysroot-aware versions of its configuration
+parsing functions that can be used instead.  For consistency with programs that
+use chroot(2), read-only programs should prepend the sysroot to any given
+paths.  Pacutils provides functions to handle prepending the sysroot to
+individual strings as well as lists of strings.
+
+=head1 EXAMPLES
+
+ #include <alpm.h>
+ #include <getopt.h>
+ #include <pacutils.h>
+
+ enum {
+ 	FLAG_CONFIG = 1,
+ 	FLAG_SYSROOT,
+ };
+
+ int main(int argc, char *argv[]) {
+  const char *config_file = "/etc/pacman.conf";
+  const char *sysroot = NULL;
+ 	alpm_handle_t *handle = NULL;
+ 	pu_config_t *config = NULL;
+
+ 	struct option long_opts[] = {
+ 		{ "config"        , required_argument , NULL    , FLAG_CONFIG        } ,
+ 		{ "sysroot"       , required_argument , NULL    , FLAG_SYSROOT       } ,
+ 		{ 0, 0, 0, 0 },
+ 	};
+ 	while((c = getopt_long(argc, argv, short_opts, long_opts, NULL)) != -1) {
+ 		switch(c) {
+ 			case FLAG_CONFIG: config_file = optarg; break;
+ 			case FLAG_SYSROOT: sysroot = optarg; break;
+ 			case '?': return 1; /* getopt_long already printed an error message */
+ 		}
+ 	}
+ 	if((config = pu_ui_config_load_sysroot(NULL, config_file, sysroot)) == NULL)
+ 		{ return 1; } /* load_sysroot already printed an error message */
+
+ 	if(!(handle = pu_initialize_handle_from_config(config))) {
+ 		fprintf(stderr, "error: failed to initialize alpm.\n");
+ 		return 1;
+ 	}
+
+ 	puts(alpm_option_get_root(handle));
+
+ 	pu_config_free(config);
+ 	alpm_release(handle);
+
+ 	return 0;
+ }

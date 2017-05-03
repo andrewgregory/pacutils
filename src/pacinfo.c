@@ -36,7 +36,7 @@ alpm_handle_t *handle = NULL;
 
 int level = 2, removable_size = 0, raw = 0;
 int isep = '\n';
-char *dbext = NULL;
+const char *dbext = NULL, *sysroot = NULL;
 alpm_loglevel_t log_level = ALPM_LOG_ERROR | ALPM_LOG_WARNING;
 
 enum longopt_flags {
@@ -48,6 +48,7 @@ enum longopt_flags {
 	FLAG_NULL,
 	FLAG_REMOVABLE,
 	FLAG_ROOT,
+	FLAG_SYSROOT,
 	FLAG_VERSION,
 };
 
@@ -193,6 +194,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "dbpath"        , required_argument , NULL       , FLAG_DBPATH       } ,
 		{ "debug"         , no_argument       , NULL       , FLAG_DEBUG        } ,
 		{ "root"          , required_argument , NULL       , FLAG_ROOT         } ,
+		{ "sysroot"       , required_argument , NULL       , FLAG_SYSROOT      } ,
 		{ "null"          , optional_argument , NULL       , FLAG_NULL         } ,
 
 		{ "short"         , no_argument       , &level     , 1                 } ,
@@ -243,6 +245,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 				free(config->rootdir);
 				config->rootdir = strdup(optarg);
 				break;
+			case FLAG_SYSROOT:
+				sysroot = optarg;
+				break;
 			case FLAG_NULL:
 				isep = optarg ? optarg[0] : '\0';
 				break;
@@ -252,7 +257,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		}
 	}
 
-	if(!pu_ui_config_load(config, config_file)) {
+	if(!pu_ui_config_load_sysroot(config, config_file, sysroot)) {
 		fprintf(stderr, "error: could not parse '%s'\n", config_file);
 		pu_config_free(config);
 		return NULL;

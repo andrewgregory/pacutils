@@ -53,6 +53,10 @@ Set an alternate database path.
 
 Set an alternate installation root.
 
+=item B<--sysroot>=F<path>
+
+Set an alternate system root.  See L<pacutils-sysroot(7)>.
+
 =item B<--cache-dir>=F<path>
 
 Set an alternate cache directory path.

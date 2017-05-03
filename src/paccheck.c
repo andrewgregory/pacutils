@@ -55,6 +55,7 @@ enum longopt_flags {
 	FLAG_RECURSIVE,
 	FLAG_REQUIRE_MTREE,
 	FLAG_ROOT,
+	FLAG_SYSROOT,
 	FLAG_VERSION,
 };
 
@@ -71,6 +72,7 @@ pu_config_t *config = NULL;
 alpm_handle_t *handle = NULL;
 alpm_db_t *localdb = NULL;
 alpm_list_t *pkgcache = NULL, *packages = NULL;
+const char *sysroot = NULL;
 int checks = 0, recursive = 0, list_broken = 0, quiet = 0;
 int include_db_files = 0, require_mtree = 0;
 int skip_backups = 1, skip_noextract = 1, skip_noupgrade = 1;
@@ -87,6 +89,7 @@ void usage(int ret)
 	hputs("   --config=<path>    set an alternate configuration file");
 	hputs("   --dbpath=<path>    set an alternate database location");
 	hputs("   --root=<path>      set an alternate installation root");
+	hputs("   --sysroot=<path>   set an alternate system root");
 	hputs("   --null[=<sep>]     parse stdin as <sep> separated values (default NUL)");
 	hputs("   --list-broken      only print packages that fail checks");
 	hputs("   --quiet            only display error messages");
@@ -120,6 +123,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "config"        , required_argument , NULL       , FLAG_CONFIG       } ,
 		{ "dbpath"        , required_argument , NULL       , FLAG_DBPATH       } ,
 		{ "root"          , required_argument , NULL       , FLAG_ROOT         } ,
+		{ "sysroot"       , required_argument , NULL       , FLAG_SYSROOT      } ,
 		{ "quiet"         , no_argument       , NULL       , FLAG_QUIET        } ,
 		{ "flag"          , optional_argument , NULL       , FLAG_NULL         } ,
 
@@ -185,6 +189,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 				free(config->rootdir);
 				config->rootdir = strdup(optarg);
 				break;
+			case FLAG_SYSROOT:
+				sysroot = optarg;
+				break;
 
 			/* checks */
 			case FLAG_DEPENDS:
@@ -235,7 +242,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		}
 	}
 
-	if(!pu_ui_config_load(config, config_file)) {
+	if(!pu_ui_config_load_sysroot(config, config_file, sysroot)) {
 		fprintf(stderr, "error: could not parse '%s'\n", config_file);
 		return NULL;
 	}

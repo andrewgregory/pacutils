@@ -48,6 +48,7 @@ enum longopt_flags {
 	FLAG_NOHOOKS,
 	FLAG_PRINT,
 	FLAG_ROOT,
+	FLAG_SYSROOT,
 	FLAG_VERBOSE,
 	FLAG_VERSION,
 };
@@ -57,6 +58,7 @@ alpm_handle_t *handle = NULL;
 int noconfirm = 0, nohooks = 0, printonly = 0, verbose = 0;
 int log_level = ALPM_LOG_ERROR | ALPM_LOG_WARNING;
 int trans_flags = ALPM_TRANS_FLAG_FORCE | ALPM_TRANS_FLAG_NODEPS | ALPM_TRANS_FLAG_NOCONFLICTS;
+char *sysroot = NULL;
 
 void usage(int ret) {
 	FILE *stream = (ret ? stderr : stdout);
@@ -77,6 +79,7 @@ void usage(int ret) {
 	hputs("   --no-scriptlet     do not run package install scripts");
 	hputs("   --print-only       show steps without performing them");
 	hputs("   --root=<path>      set an alternate installation root");
+	hputs("   --sysroot=<path>   set an alternate system root");
 	hputs("   --verbose          display additional progress information");
 	hputs("");
 	hputs("   --help             display this help information");
@@ -106,6 +109,7 @@ pu_config_t *parse_opts(int argc, char **argv) {
 		{ "no-hooks"      , no_argument       , NULL       , FLAG_NOHOOKS      } ,
 		{ "print-only"    , no_argument       , NULL       , FLAG_PRINT        } ,
 		{ "root"          , required_argument , NULL       , FLAG_ROOT         } ,
+		{ "sysroot"       , required_argument , NULL       , FLAG_SYSROOT      } ,
 		{ "verbose"       , no_argument       , NULL       , FLAG_VERBOSE      } ,
 
 		{ "help"          , no_argument       , NULL       , FLAG_HELP         } ,
@@ -169,6 +173,9 @@ pu_config_t *parse_opts(int argc, char **argv) {
 				free(config->rootdir);
 				config->rootdir = strdup(optarg);
 				break;
+			case FLAG_SYSROOT:
+				sysroot = optarg;
+				break;
 			case FLAG_VERBOSE:
 				verbose = 1;
 				break;
@@ -186,6 +193,11 @@ pu_config_t *parse_opts(int argc, char **argv) {
 				usage(1);
 				break;
 		}
+	}
+
+	if(sysroot && (chroot(sysroot) != 0 || chdir("/") != 0)) {
+		pu_ui_error("unable to chroot to '%s' (%s)", sysroot, strerror(errno));
+		return NULL;
 	}
 
 	if(!pu_ui_config_load(config, config_file)) {

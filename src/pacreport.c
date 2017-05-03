@@ -44,6 +44,7 @@ alpm_handle_t *handle;
 alpm_list_t *groups = NULL, *ignore = NULL, *pkg_ignore = NULL;
 int missing_files = 0, backup_files = 0, orphan_files = 0;
 char *dbext = NULL;
+const char *sysroot = NULL;
 
 enum longopt_flags {
 	FLAG_BACKUPS = 1000,
@@ -56,6 +57,7 @@ enum longopt_flags {
 	FLAG_MISSING_FILES,
 	FLAG_ORPHANS,
 	FLAG_ROOT,
+	FLAG_SYSROOT,
 	FLAG_VERSION,
 };
 
@@ -614,6 +616,7 @@ void usage(int ret)
 	hputs("");
 	hputs("options:");
 	hputs("   --root=<path>      set an alternate installation root");
+	hputs("   --sysroot=<path>   set an alternate system root");
 	hputs("   --cachedir=<path>  set an alternate cache location");
 	hputs("   --config=<path>    set an alternate pacman configuration file");
 	hputs("   --dbext=<ext>      set an alternate sync database extension");
@@ -643,6 +646,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "dbext"         , required_argument , NULL       , FLAG_DBEXT         } ,
 		{ "dbpath"        , required_argument , NULL       , FLAG_DBPATH        } ,
 		{ "root"          , required_argument , NULL       , FLAG_ROOT          } ,
+		{ "sysroot"       , required_argument , NULL       , FLAG_SYSROOT       } ,
 
 		{"backups"        , no_argument       , NULL       , FLAG_BACKUPS       } ,
 		{"group"          , required_argument , NULL       , FLAG_GROUP         } ,
@@ -700,6 +704,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 				free(config->rootdir);
 				config->rootdir = strdup(optarg);
 				break;
+			case FLAG_SYSROOT:
+				sysroot = optarg;
+				break;
 
 			default:
 				usage(2);
@@ -707,7 +714,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		}
 	}
 
-	if(!pu_ui_config_load(config, config_file)) {
+	if(!pu_ui_config_load_sysroot(config, config_file, sysroot)) {
 		fprintf(stderr, "error: could not parse '%s'\n", config_file);
 		return NULL;
 	}

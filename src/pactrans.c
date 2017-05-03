@@ -43,7 +43,7 @@ alpm_list_t **list = &spec;
 alpm_list_t *ignore_pkg = NULL, *ignore_group = NULL;
 int printonly = 0, noconfirm = 0, sysupgrade = 0, downgrade = 0, dbsync = 0;
 int nohooks = 0, isep = '\n';
-char *dbext = NULL;
+const char *dbext = NULL, *sysroot = NULL;
 
 enum longopt_flags {
 	FLAG_ADD = 1000,
@@ -76,6 +76,7 @@ enum longopt_flags {
 	FLAG_REMOVE,
 	FLAG_ROOT,
 	FLAG_SPEC,
+	FLAG_SYSROOT,
 	FLAG_SYSUPGRADE,
 	FLAG_UNNEEDED,
 	FLAG_VERSION,
@@ -126,6 +127,7 @@ void usage(int ret)
 	hputs("   --no-scriptlet     do not run package install scripts");
 	hputs("   --null=[sep]       parse stdin as <sep> separated values (default NUL)");
 	hputs("   --root=<path>      set an alternate installation root");
+	hputs("   --sysroot=<path>   set an alternate system root");
 	hputs("   --help             display this help information");
 	hputs("   --version          display version information");
 	hputs("");
@@ -182,6 +184,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "no-scriptlet"  , no_argument       , NULL       , FLAG_NOSCRIPTLET  } ,
 		{ "no-hooks"      , no_argument       , NULL       , FLAG_NOHOOKS      } ,
 		{ "root"          , required_argument , NULL       , FLAG_ROOT         } ,
+		{ "sysroot"       , required_argument , NULL       , FLAG_SYSROOT      } ,
 		{ "sysupgrade"    , no_argument       , NULL       , FLAG_SYSUPGRADE   } ,
 		{ "downgrade"     , no_argument       , NULL       , FLAG_DOWNGRADE    } ,
 
@@ -248,6 +251,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 			case FLAG_CACHEDIR:
 				FREELIST(config->cachedirs);
 				config->cachedirs = alpm_list_add(NULL, strdup(optarg));
+				break;
+			case FLAG_SYSROOT:
+				sysroot = optarg;
 				break;
 			case FLAG_CONFIG:
 				config_file = optarg;
@@ -360,6 +366,11 @@ pu_config_t *parse_opts(int argc, char **argv)
 				usage(1);
 				break;
 		}
+	}
+
+	if(sysroot && (chroot(sysroot) != 0 || chdir("/") != 0)) {
+		pu_ui_error("unable to chroot to '%s' (%s)", sysroot, strerror(errno));
+		return NULL;
 	}
 
 	if(!pu_ui_config_load(config, config_file)) {

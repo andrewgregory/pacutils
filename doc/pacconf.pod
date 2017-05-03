@@ -32,6 +32,10 @@ Set an alternate configuration file path.
 
 Set an alternate installation root.
 
+=item B<--sysroot>=F<path>
+
+Set an alternate system root.  See L<pacutils-sysroot(7)>.
+
 =item B<--arch>=I<arch>
 
 Set an alternate architecture.
