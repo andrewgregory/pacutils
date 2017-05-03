@@ -35,6 +35,9 @@ tests: $(TESTS)
 
 all: tests
 
+valgrind: tests
+	LD_LIBRARY_PATH=../lib $(PROVE) --exec="./runtest.sh -v" $(TESTS)
+
 tap.c/tap.c:
 	$(GIT) submodule update tap.c
 
