@@ -52,9 +52,10 @@ void pu_ui_error(const char *fmt, ...)
   va_end(args);
 }
 
-static long _pu_ui_time_diff(struct timeval *t1, struct timeval *t2)
+static long long _pu_ui_time_diff(struct timeval *t1, struct timeval *t2)
 {
-  return (t1->tv_sec - t2->tv_sec) * 1000 + (t1->tv_usec - t2->tv_usec) / 1000;
+  long long s1 = t1->tv_sec, s2 = t2->tv_sec, u1 = t1->tv_usec, u2 = t2->tv_usec;
+  return (s1 - s2) * 1000 + (u1 - u2) / 1000;
 }
 
 const char *pu_ui_msg_progress(alpm_progress_t event)
