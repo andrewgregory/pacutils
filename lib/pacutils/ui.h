@@ -40,6 +40,7 @@ void pu_ui_cb_download(const char *filename, off_t xfered, off_t total);
 void pu_ui_cb_progress(alpm_progress_t event, const char *pkgname, int percent,
     size_t total, size_t current);
 void pu_ui_cb_question(alpm_question_t *question);
+void pu_ui_cb_event(alpm_event_t *event);
 
 pu_config_t *pu_ui_config_parse(pu_config_t *dest, const char *file);
 pu_config_t *pu_ui_config_load(pu_config_t *dest, const char *file);

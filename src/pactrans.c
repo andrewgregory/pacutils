@@ -539,6 +539,7 @@ int main(int argc, char **argv)
 
 	alpm_option_set_questioncb(handle, pu_ui_cb_question);
 	alpm_option_set_progresscb(handle, pu_ui_cb_progress);
+	alpm_option_set_eventcb(handle, pu_ui_cb_event);
 	alpm_option_set_dlcb(handle, pu_ui_cb_download);
 	alpm_option_set_logcb(handle, cb_log);
 
