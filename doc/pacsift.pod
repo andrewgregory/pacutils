@@ -157,6 +157,8 @@ Dependency fields are not affected by B<--regex>.
 
 =item B<--depends>
 
+=item B<--optdepends>
+
 =back
 
 =head2 Size Fields

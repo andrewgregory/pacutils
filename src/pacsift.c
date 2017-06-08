@@ -49,7 +49,7 @@ alpm_list_t *base = NULL, *arch = NULL, *url = NULL;
 alpm_list_t *group = NULL, *license = NULL;
 alpm_list_t *ownsfile = NULL;
 alpm_list_t *requiredby = NULL;
-alpm_list_t *provides = NULL, *depends = NULL, *conflicts = NULL, *replaces = NULL;
+alpm_list_t *provides = NULL, *depends = NULL, *optdepends = NULL, *conflicts = NULL, *replaces = NULL;
 alpm_list_t *satisfies = NULL;
 alpm_list_t *isize = NULL, *size = NULL, *dsize = NULL;
 alpm_list_t *builddate = NULL, *installdate = NULL;
@@ -87,6 +87,7 @@ enum longopt_flags {
 	FLAG_PACKAGER,
 	FLAG_PROVIDES,
 	FLAG_DEPENDS,
+	FLAG_OPTDEPENDS,
 	FLAG_CONFLICTS,
 	FLAG_REPLACES,
 	FLAG_REPO,
@@ -135,6 +136,7 @@ void cleanup(int ret)
 	FREELIST(satisfies);
 	FREELIST(url);
 	FREELIST(depends);
+	FREELIST(optdepends);
 	FREELIST(conflicts);
 	FREELIST(replaces);
 
@@ -573,6 +575,7 @@ alpm_list_t *filter_pkgs(alpm_handle_t *handle, alpm_list_t *pkgs)
 
 	match(provides, filter_deplist(&haystack, i, alpm_pkg_get_provides));
 	match(depends, filter_deplist(&haystack, i, alpm_pkg_get_depends));
+	match(optdepends, filter_deplist(&haystack, i, alpm_pkg_get_optdepends));
 	match(conflicts, filter_deplist(&haystack, i, alpm_pkg_get_conflicts));
 	match(replaces, filter_deplist(&haystack, i, alpm_pkg_get_replaces));
 
@@ -638,6 +641,7 @@ void usage(int ret)
 	hputs("   --license=<val>      search package licenses");
 	hputs("   --provides=<val>     search package provides");
 	hputs("   --depends=<val>      search package dependencies");
+	hputs("   --optdepends=<val>   search package dependencies");
 	hputs("   --conflicts=<val>    search package conflicts");
 	hputs("   --replaces=<val>     search package replaces");
 	hputs("   --installed-size=<val>");
@@ -695,6 +699,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 
 		{ "provides"      , required_argument , NULL    , FLAG_PROVIDES      } ,
 		{ "depends"       , required_argument , NULL    , FLAG_DEPENDS       } ,
+		{ "optdepends"    , required_argument , NULL    , FLAG_OPTDEPENDS    } ,
 		{ "conflicts"     , required_argument , NULL    , FLAG_CONFLICTS     } ,
 		{ "replaces"      , required_argument , NULL    , FLAG_REPLACES      } ,
 
@@ -814,6 +819,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 				break;
 			case FLAG_DEPENDS:
 				depends = alpm_list_add(depends, strdup(optarg));
+				break;
+			case FLAG_OPTDEPENDS:
+				optdepends = alpm_list_add(optdepends, strdup(optarg));
 				break;
 			case FLAG_REPLACES:
 				replaces = alpm_list_add(replaces, strdup(optarg));
