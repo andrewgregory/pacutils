@@ -232,14 +232,14 @@ struct date_cmp *parse_date(const char *str)
 
 	c += parse_cmp(str, &date.cmp);
 
-	if(strspn(str, "0123456789") == strlen(str)) {
+	if(strspn(c, "0123456789") == strlen(c)) {
 		errno = 0;
-		date.time = strtoll(str, &end, 10);
+		date.time = strtoll(c, &end, 10);
 		if(*end || errno) {
 			fprintf(stderr, "error: invalid date '%s'\n", str);
 			cleanup(1);
 		}
-	} else if(pu_parse_datetime(str, &stm) || (date.time = mktime(&stm)) == -1) {
+	} else if(!pu_parse_datetime(c, &stm) || (date.time = mktime(&stm)) == -1) {
 		fprintf(stderr, "error: invalid date '%s'\n", str);
 		cleanup(1);
 	}
