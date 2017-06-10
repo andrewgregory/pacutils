@@ -256,7 +256,7 @@ alpm_list_t *find_cached_pkg(alpm_pkg_t *pkg, alpm_list_t *cache_pkgs) {
 	alpm_list_t *i, *found = NULL;
 	for(i = cache_pkgs; i; i = i->next) {
 		if(strcmp(name, alpm_pkg_get_name(i->data)) != 0
-				&& strcmp(ver, alpm_pkg_get_version(i->data)) != 0) {
+				|| strcmp(ver, alpm_pkg_get_version(i->data)) != 0) {
 			continue;
 		} else if(alpm_list_append(&found, i) == NULL) {
 			pu_ui_error("%s", strerror(errno));
