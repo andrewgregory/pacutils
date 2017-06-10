@@ -845,7 +845,7 @@ pu_config_reader_t *pu_config_reader_new_sysroot(pu_config_t *config,
   }
 
   if(sysroot && sysroot[0]) {
-    if((reader->sysroot = strdup(file)) == NULL) {
+    if((reader->sysroot = strdup(sysroot)) == NULL) {
       pu_config_reader_free(reader); return NULL;
     }
     if((reader->_sysroot_fd = open(sysroot, O_DIRECTORY)) == -1) {
