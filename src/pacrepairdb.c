@@ -258,6 +258,13 @@ alpm_list_t *find_cached_pkg(alpm_pkg_t *pkg, alpm_list_t *cache_pkgs) {
 		if(strcmp(name, alpm_pkg_get_name(i->data)) != 0
 				|| strcmp(ver, alpm_pkg_get_version(i->data)) != 0) {
 			continue;
+		} else if(alpm_pkg_get_arch(pkg)
+				&& strcmp(alpm_pkg_get_arch(pkg), alpm_pkg_get_arch(i->data)) != 0) {
+			continue;
+		} else if(alpm_pkg_get_arch(pkg) == NULL
+				&& strcmp(alpm_pkg_get_arch(i->data), alpm_option_get_arch(handle)) != 0
+				&& strcmp(alpm_pkg_get_arch(i->data), "any") != 0) {
+			continue;
 		} else if(alpm_list_append(&found, i) == NULL) {
 			pu_ui_error("%s", strerror(errno));
 			alpm_list_free(found);
