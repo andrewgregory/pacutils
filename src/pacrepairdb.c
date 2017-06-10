@@ -281,6 +281,10 @@ alpm_list_t *find_cached_pkg(alpm_pkg_t *pkg, alpm_list_t *cache_pkgs) {
 			return i;
 		default:
 			pu_ui_warn("multiple packages found for '%s-%s'", name, ver);
+			for(i = found; i; i = i->next) {
+				alpm_list_t *j = i->data;
+				fprintf(stderr, "  %s\n", alpm_pkg_get_filename(j->data));
+			}
 			alpm_list_free(found);
 			return NULL;
 	}
