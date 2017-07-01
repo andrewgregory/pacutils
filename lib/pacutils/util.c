@@ -79,7 +79,7 @@ struct tm *pu_parse_datetime(const char *string, struct tm *stm)
   stm->tm_mday = 1;
 
   /* locate the end of the usable date */
-  if((c = strpbrk(string, " T")) && (c = strpbrk(c, ",.Z-"))) {
+  if((c = strpbrk(string, " T")) && (c = strpbrk(c, ",.Z-+"))) {
     /* ignore trailing timezone and/or fractional elements */
     end = c;
   } else {
