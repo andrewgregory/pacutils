@@ -305,7 +305,6 @@ static int check_opt_depends(alpm_pkg_t *p)
 			ret = 1;
 		}
 		free(depstring);
-		i = alpm_list_next(i);
 	}
 	if(!quiet && !ret) {
 		eprintf("%s: all optional dependencies satisfied\n",
