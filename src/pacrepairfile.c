@@ -230,6 +230,7 @@ char *lrealpath(const char *path, char *resolved_path) {
 
 	if((resolved_path = realpath(dname, resolved_path)) == NULL) {
 		free(p);
+		free(p2);
 		return NULL;
 	}
 
@@ -240,12 +241,14 @@ char *lrealpath(const char *path, char *resolved_path) {
 			if(rlen + blen + 2 <= rlen) {
 				errno = ENAMETOOLONG;
 				free(p);
+				free(p2);
 				return NULL;
 			} else {
 				char *newp = realloc(resolved_path, rlen + blen + 2);
 				if(newp == NULL) {
 					errno = ENOMEM;
 					free(p);
+					free(p2);
 					return NULL;
 				}
 				resolved_path = newp;
@@ -255,6 +258,7 @@ char *lrealpath(const char *path, char *resolved_path) {
 			if((rlen + blen + 2) >= PATH_MAX) {
 				errno = ENAMETOOLONG;
 				free(p);
+				free(p2);
 				return NULL;
 			}
 		}
@@ -263,6 +267,7 @@ char *lrealpath(const char *path, char *resolved_path) {
 	}
 
 	free(p);
+	free(p2);
 	return resolved_path;
 }
 
@@ -279,11 +284,13 @@ int fix_file(const char *file) {
 
 	if(strncmp(rpath, root, rootlen) != 0) {
 		pu_ui_error("%s: file not owned");
+		free(rpath);
 		return 1;
 	}
 
 	if(access(rpath, W_OK)) {
 		pu_ui_error("%s: %s", rpath, strerror(errno));
+		free(rpath);
 		return 1;
 	}
 
@@ -306,6 +313,7 @@ int fix_file(const char *file) {
 					if(_fix_mtime && fix_mtime(rpath, entry) != 0) { ret = 1; }
 
 					alpm_pkg_mtree_close(i->data, mtree);
+					free(rpath);
 					return ret;
 				}
 				alpm_pkg_mtree_close(i->data, mtree);
@@ -314,6 +322,7 @@ int fix_file(const char *file) {
 	}
 
 	pu_ui_error("%s: could not find package", file);
+	free(rpath);
 	return 1;
 }
 
