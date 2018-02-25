@@ -329,13 +329,16 @@ static int _pu_subst_server_vars(pu_config_t *config)
     alpm_list_t *s;
     for(s = repo->servers; s; s = s->next) {
       char *rrepo, *rarch;
-      rrepo = _pu_strreplace(s->data, "$repo", repo->name);
-      if(rrepo == NULL) { return -1; }
-      rarch = _pu_strreplace(rrepo, "$arch", config->architecture);
-      free(rrepo);
+
+      rarch = _pu_strreplace(s->data, "$arch", config->architecture);
       if(rarch == NULL) { return -1; }
       free(s->data);
       s->data = rarch;
+
+      rrepo = _pu_strreplace(s->data, "$repo", repo->name);
+      if(rrepo == NULL) { return -1; }
+      free(s->data);
+      s->data = rrepo;
     }
   }
   return 0;
