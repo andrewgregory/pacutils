@@ -430,6 +430,20 @@ int pu_config_resolve_sysroot(pu_config_t *config, const char *sysroot)
   for(i = config->hookdirs; i; i = i->next) { PU_SETSYSROOT(i->data); }
   for(i = config->cachedirs; i; i = i->next) { PU_SETSYSROOT(i->data); }
 
+  for(i = config->repos; i; i = i->next) {
+    pu_repo_t *r = i->data;
+    alpm_list_t *s;
+    for(s = r->servers; s; s = s->next) {
+      if(strncmp("file://", s->data, 7) == 0) {
+        char *newdir = pu_prepend_dir(sysroot, (char*)s->data + 7);
+        char *newsrv = pu_asprintf("file://%s", newdir);
+        free(newdir);
+        free(s->data);
+        s->data = newsrv;
+      }
+    }
+  }
+
 #undef PU_SETSYSROOT
 
   return 0;
