@@ -163,7 +163,7 @@ pu_config_t *parse_opts(int argc, char **argv) {
 
 int fix_mode(const char *path, struct archive_entry *entry) {
 	mode_t m = archive_entry_perm(entry);
-	if(chmod(path, m) != 0) {
+	if(fchmodat(AT_FDCWD, path, m, AT_SYMLINK_NOFOLLOW) != 0) {
 		pu_ui_warn("%s: unable to set permissions (%s)", path, strerror(errno));
 		return 1;
 	} else if(verbose) {
@@ -189,7 +189,7 @@ int fix_mtime(const char *path, struct archive_entry *entry) {
 
 int fix_uid(const char *path, struct archive_entry *entry) {
 	uid_t u = archive_entry_uid(entry);
-	if(lchown(path, u, -1) != 0) {
+	if(fchownat(AT_FDCWD, path, u, -1, AT_SYMLINK_NOFOLLOW) != 0) {
 		pu_ui_warn("%s: unable to set uid (%s)", path, strerror(errno));
 		return 1;
 	} else if(verbose) {
@@ -202,7 +202,7 @@ int fix_uid(const char *path, struct archive_entry *entry) {
 int fix_gid(const char *path, struct archive_entry *entry)
 {
 	gid_t g = archive_entry_gid(entry);
-	if(lchown(path, -1, g) != 0) {
+	if(fchownat(AT_FDCWD, path, -1, g, AT_SYMLINK_NOFOLLOW) != 0) {
 		pu_ui_warn("%s: unable to set gid (%s)", path, strerror(errno));
 		return 1;
 	} else if(verbose) {
