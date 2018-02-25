@@ -127,7 +127,7 @@ packages.
 
 Ignore dependency versions.  Pass twice to ignore dependency checks altogether.
 
-=item B<--noscriptlet>
+=item B<--no-scriptlet>
 
 Do not run package install scripts.
 
