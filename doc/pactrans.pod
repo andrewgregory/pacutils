@@ -131,6 +131,10 @@ Ignore dependency versions.  Pass twice to ignore dependency checks altogether.
 
 Do not run package install scripts.
 
+=item B<--no-hooks>
+
+Do not run transaction hooks.
+
 =back
 
 =head2 Sysupgrade Options
