@@ -467,7 +467,7 @@ int pu_config_resolve(pu_config_t *config)
   SETDEFAULT(config->hookdirs, alpm_list_add(NULL, strdup(HOOKDIR)));
   SETDEFAULT(config->cleanmethod, PU_CONFIG_CLEANMETHOD_KEEP_INSTALLED);
 
-  if(!config->architecture || strcmp(config->architecture, "auto") == 0) {
+  if(config->architecture && strcmp(config->architecture, "auto") == 0) {
     struct utsname un;
     char *arch;
     if(uname(&un) != 0 || (arch = strdup(un.machine)) == NULL) { return -1; }
