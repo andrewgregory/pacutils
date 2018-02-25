@@ -361,10 +361,10 @@ alpm_handle_t *pu_initialize_handle_from_config(pu_config_t *config)
   }
 
   alpm_option_set_cachedirs(handle, config->cachedirs);
-  alpm_option_set_noupgrades(handle, alpm_list_strdup(config->noupgrade));
-  alpm_option_set_noextracts(handle, alpm_list_strdup(config->noextract));
-  alpm_option_set_ignorepkgs(handle, alpm_list_strdup(config->ignorepkgs));
-  alpm_option_set_ignoregroups(handle, alpm_list_strdup(config->ignoregroups));
+  alpm_option_set_noupgrades(handle, config->noupgrade);
+  alpm_option_set_noextracts(handle, config->noextract);
+  alpm_option_set_ignorepkgs(handle, config->ignorepkgs);
+  alpm_option_set_ignoregroups(handle, config->ignoregroups);
 
   alpm_option_set_logfile(handle, config->logfile);
   alpm_option_set_gpgdir(handle, config->gpgdir);
