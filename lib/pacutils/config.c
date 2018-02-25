@@ -20,6 +20,7 @@
  * IN THE SOFTWARE.
  */
 
+#include <errno.h>
 #include <fcntl.h>
 #include <string.h>
 #include <sys/utsname.h>
@@ -328,12 +329,19 @@ static int _pu_subst_server_vars(pu_config_t *config)
     pu_repo_t *repo = r->data;
     alpm_list_t *s;
     for(s = repo->servers; s; s = s->next) {
-      char *rrepo, *rarch;
+      char *rrepo;
 
-      rarch = _pu_strreplace(s->data, "$arch", config->architecture);
-      if(rarch == NULL) { return -1; }
-      free(s->data);
-      s->data = rarch;
+      if(strstr(s->data, "$arch")) {
+        if(config->architecture == NULL) {
+          errno = EINVAL;
+          return -1;
+        } else {
+          char *rarch = _pu_strreplace(s->data, "$arch", config->architecture);
+          if(rarch == NULL) { return -1; }
+          free(s->data);
+          s->data = rarch;
+        }
+      }
 
       rrepo = _pu_strreplace(s->data, "$repo", repo->name);
       if(rrepo == NULL) { return -1; }
