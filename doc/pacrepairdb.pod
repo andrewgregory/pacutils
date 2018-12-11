@@ -9,8 +9,9 @@ pacrepairdb - fix corrupted database entries
 
 =head1 DESCRIPTION
 
-Attempt to broken package entries in libalpm's database.  Any missing essential
-files will be created and the packages will be reinstalled from the cache.
+Attempt to repair broken package entries in libalpm's database.  Any missing
+essential files will be created and the packages will be reinstalled from the
+cache.
 
 If F<stdin> is not connected to a terminal, package names will be read from
 F<stdin>.
