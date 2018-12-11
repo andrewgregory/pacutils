@@ -87,6 +87,12 @@ Display version information and exit.
 
 =back
 
+=head1 EXAMPLES
+
+Find and reinstall broken packages:
+
+ paccheck --list-broken --files --file-properties --db-files --require-mtree | pacrepairdb
+
 =head1 CAVEATS
 
 B<pacrepairdb> expects all of the packages being repaired to be cached.  Cached
