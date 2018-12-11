@@ -273,7 +273,7 @@ void show_siglevel(const char *directive, alpm_siglevel_t level, int pkgonly)
 
 void show_usage(const char *directive, alpm_db_usage_t usage)
 {
-	if(usage & ALPM_DB_USAGE_ALL) {
+	if(usage == ALPM_DB_USAGE_ALL) {
 		show_str(directive, "All");
 	} else {
 		if(usage & ALPM_DB_USAGE_SYNC) {
