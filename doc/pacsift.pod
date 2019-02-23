@@ -50,6 +50,14 @@ Set an alternate separator for values parsed from F<stdin>.  By default
 a newline C<\n> is used as the separator.  If B<--null> is used without
 specifying I<sep> C<NUL> will be used.
 
+=item B<--exists>
+
+Exit with a non-zero value if no matches are found.
+
+=item B<--not-exists>
+
+Exit with a non-zero value if matches are found.
+
 =item B<--invert>
 
 Return packages that B<DO NOT> match the provided search terms.
@@ -223,6 +231,10 @@ Search for packages that satisfy I<dependency>.
 =item Find packages with both C<pacman> and C<alpm> in their description:
 
  pacsift --description pacman | pacsift --description alpm
+
+=item Check if a package is installed:
+
+ pacsift --local --exists --satisfies pacman && echo "pacman is installed"
 
 =back
 

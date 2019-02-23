@@ -40,7 +40,7 @@ alpm_handle_t *handle = NULL;
 alpm_loglevel_t log_level = ALPM_LOG_ERROR | ALPM_LOG_WARNING;
 
 int srch_cache = 0, srch_local = 0, srch_sync = 0;
-int invert = 0, re = 0, exact = 0, any = 0;
+int invert = 0, re = 0, exact = 0, any = 0, exists = 0;
 int osep = '\n', isep = '\n';
 const char *dbext = NULL, *sysroot = NULL;
 alpm_list_t *search_dbs = NULL;
@@ -77,6 +77,8 @@ enum longopt_flags {
 	FLAG_CACHE,
 	FLAG_NAME,
 	FLAG_DESCRIPTION,
+	FLAG_EXISTS,
+	FLAG_NOTEXISTS,
 	FLAG_GROUP,
 	FLAG_IDATE,
 	FLAG_ISIZE,
@@ -609,6 +611,9 @@ void usage(int ret)
 	hputs("   --help               display this help information");
 	hputs("   --version            display version information");
 
+	hputs("   --exists             exit with a non-zero value if no matches were found");
+	hputs("   --not-exists         exit with a non-zero value if matches were found");
+
 	hputs("   --invert             display packages which DO NOT match search criteria");
 	hputs("   --any                display packages matching any search criteria");
 
@@ -683,6 +688,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "exact"         , no_argument       , &exact  , 1                  } ,
 		{ "or"            , no_argument       , &any    , 1                  } ,
 		{ "any"           , no_argument       , &any    , 1                  } ,
+
+		{ "exists"        , no_argument       , &exists , FLAG_EXISTS        } ,
+		{ "not-exists"    , no_argument       , &exists , FLAG_NOTEXISTS     } ,
 
 		{ "null"          , optional_argument , NULL    , FLAG_NULL          } ,
 
@@ -982,6 +990,10 @@ int main(int argc, char **argv)
 	for(i = matches; i; i = i->next) {
 		pu_fprint_pkgspec(stdout, i->data);
 		fputc(osep, stdout);
+	}
+	if((exists == FLAG_EXISTS && matches == NULL)
+			|| (exists == FLAG_NOTEXISTS && matches != NULL)) {
+		ret = 1;
 	}
 
 cleanup:
