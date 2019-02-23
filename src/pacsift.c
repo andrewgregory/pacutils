@@ -861,6 +861,12 @@ void parse_pkg_spec(char *spec, char **pkgname, char **dbname)
 	}
 }
 
+/* gcc8's cast-function-type warning is a bit overzealous */
+void free_pkg(alpm_pkg_t *p)
+{
+	alpm_pkg_free(p);
+}
+
 int main(int argc, char **argv)
 {
 	alpm_list_t *haystack = NULL, *matches = NULL, *i;
@@ -980,7 +986,7 @@ int main(int argc, char **argv)
 
 cleanup:
 	alpm_list_free(matches);
-	alpm_list_free_inner(haystack, (alpm_list_fn_free) alpm_pkg_free);
+	alpm_list_free_inner(haystack, (alpm_list_fn_free) free_pkg);
 	alpm_list_free(haystack);
 
 	cleanup(ret);

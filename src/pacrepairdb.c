@@ -208,6 +208,11 @@ pu_config_t *parse_opts(int argc, char **argv) {
 	return config;
 }
 
+/* gcc8's cast-function-type warning is a bit overzealous */
+void free_pkg(alpm_pkg_t *p) {
+	alpm_pkg_free(p);
+}
+
 alpm_list_t *load_cache_pkgs(alpm_handle_t *handle) {
 	alpm_list_t *i, *cache_pkgs = NULL;
 	puts("Loading cache packages...");
@@ -325,12 +330,12 @@ alpm_list_t *find_cached_pkgs(alpm_handle_t *handle, alpm_list_t *pkgnames) {
 		}
 	}
 
-	alpm_list_free_inner(cache_files, (alpm_list_fn_free) alpm_pkg_free);
+	alpm_list_free_inner(cache_files, (alpm_list_fn_free) free_pkg);
 	alpm_list_free(cache_files);
 	if(!error) {
 		return packages;
 	} else {
-		alpm_list_free_inner(packages, (alpm_list_fn_free) alpm_pkg_free);
+		alpm_list_free_inner(packages, (alpm_list_fn_free) free_pkg);
 		alpm_list_free(packages);
 		return NULL;
 	}
