@@ -57,7 +57,7 @@ pu_config_t *config = NULL;
 alpm_handle_t *handle = NULL;
 int noconfirm = 0, nohooks = 0, printonly = 0, verbose = 0;
 int log_level = ALPM_LOG_ERROR | ALPM_LOG_WARNING;
-int trans_flags = ALPM_TRANS_FLAG_FORCE | ALPM_TRANS_FLAG_NODEPS | ALPM_TRANS_FLAG_NOCONFLICTS;
+int trans_flags = ALPM_TRANS_FLAG_NODEPS | ALPM_TRANS_FLAG_NOCONFLICTS;
 char *sysroot = NULL;
 
 void usage(int ret) {
@@ -545,6 +545,7 @@ int main(int argc, char **argv) {
 	alpm_option_set_progresscb(handle, pu_ui_cb_progress);
 	alpm_option_set_dlcb(handle, pu_ui_cb_download);
 	alpm_option_set_logcb(handle, cb_log);
+	alpm_option_add_overwrite_file(handle, "*");
 
 	localdb = alpm_get_localdb(handle);
 	while(optind < argc) {
