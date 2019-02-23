@@ -460,6 +460,7 @@ int cmp_mode(alpm_pkg_t *pkg, const char *path,
 	if(perm != (st->st_mode & mask)) {
 		eprintf("%s: '%s' permission mismatch (expected %o)\n",
 				alpm_pkg_get_name(pkg), path, perm);
+		return 1;
 	}
 
 	return 0;
