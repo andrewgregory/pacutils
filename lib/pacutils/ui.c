@@ -231,13 +231,19 @@ void pu_ui_cb_download(const char *filename, off_t xfered, off_t total)
   static struct timeval last_update = {0, 0};
   char end = '\r';
 
-  if(xfered < 0) {
-    /* invalid xfer size, nothing we can do with this */
+  if(xfered == 0 && total == 0) {
+    /* non-transfer event; ignore */
     return;
-  } else if(xfered == 0) {
+  } else if(xfered < 0) {
+    /* uh-oh, something has gone wrong */
+    return;
+  } else if(xfered == 0 && total == -1) {
     /* new download is starting, always print the initial status */
     gettimeofday(&last_update, NULL);
-  } else if(xfered != total) {
+  } else if(xfered == total) {
+    /* download is done, wrap to the next line */
+    end = '\n';
+  } else {
     /* mid-download, check if enough time has elapsed to update the status */
     struct timeval now;
     gettimeofday(&now, NULL);
@@ -245,9 +251,6 @@ void pu_ui_cb_download(const char *filename, off_t xfered, off_t total)
       return;
     }
     last_update = now;
-  } else {
-    /* download is done, wrap to the next line */
-    end = '\n';
   }
 
   if(total <= 0) {
