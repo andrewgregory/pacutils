@@ -186,7 +186,41 @@ void pu_ui_cb_event(alpm_event_t *event)
     case ALPM_EVENT_SCRIPTLET_INFO:
       fputs(event->scriptlet_info.line, stdout);
       break;
-    default:
+
+    case ALPM_EVENT_CHECKDEPS_DONE:
+    case ALPM_EVENT_DATABASE_MISSING:
+    case ALPM_EVENT_DELTA_INTEGRITY_DONE:
+    case ALPM_EVENT_DELTA_INTEGRITY_START:
+    case ALPM_EVENT_DELTA_PATCHES_DONE:
+    case ALPM_EVENT_DELTA_PATCHES_START:
+    case ALPM_EVENT_DELTA_PATCH_DONE:
+    case ALPM_EVENT_DELTA_PATCH_FAILED:
+    case ALPM_EVENT_DELTA_PATCH_START:
+    case ALPM_EVENT_DISKSPACE_DONE:
+    case ALPM_EVENT_DISKSPACE_START:
+    case ALPM_EVENT_FILECONFLICTS_DONE:
+    case ALPM_EVENT_FILECONFLICTS_START:
+    case ALPM_EVENT_HOOK_DONE:
+    case ALPM_EVENT_HOOK_RUN_DONE:
+    case ALPM_EVENT_INTEGRITY_DONE:
+    case ALPM_EVENT_INTEGRITY_START:
+    case ALPM_EVENT_INTERCONFLICTS_DONE:
+    case ALPM_EVENT_KEYRING_DONE:
+    case ALPM_EVENT_KEYRING_START:
+    case ALPM_EVENT_KEY_DOWNLOAD_DONE:
+    case ALPM_EVENT_LOAD_DONE:
+    case ALPM_EVENT_LOAD_START:
+    case ALPM_EVENT_OPTDEP_REMOVAL:
+    case ALPM_EVENT_PACKAGE_OPERATION_DONE:
+    case ALPM_EVENT_PACKAGE_OPERATION_START:
+    case ALPM_EVENT_PKGDOWNLOAD_DONE:
+    case ALPM_EVENT_PKGDOWNLOAD_FAILED:
+    case ALPM_EVENT_PKGDOWNLOAD_START:
+    case ALPM_EVENT_RESOLVEDEPS_DONE:
+    case ALPM_EVENT_RETRIEVE_DONE:
+    case ALPM_EVENT_RETRIEVE_FAILED:
+    case ALPM_EVENT_TRANSACTION_DONE:
+      /* ignore */
       break;
   }
 }
@@ -354,8 +388,6 @@ void pu_ui_cb_question(alpm_question_t *question)
              : "Import PGP key %u%c/%s, '%s', created: %s"),
             key->length, key->pubkey_algo, key->fingerprint, key->uid, created);
       }
-      break;
-    default:
       break;
   }
 }
