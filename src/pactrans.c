@@ -82,9 +82,12 @@ enum longopt_flags {
 	FLAG_VERSION,
 };
 
-void fatal(const char *msg)
+void fatal(const char *fmt, ...)
 {
-	fputs(msg, stderr);
+	va_list args;
+	va_start(args, fmt);
+	pu_ui_verror(fmt, args);
+	va_end(args);
 	exit(1);
 }
 
@@ -328,13 +331,13 @@ pu_config_t *parse_opts(int argc, char **argv)
 			/* install options */
 			case FLAG_ASDEPS:
 				if(trans_flags & ALPM_TRANS_FLAG_ALLEXPLICIT) {
-					fatal("error: --asdeps and --asexplicit may not be used together\n");
+					fatal("--asdeps and --asexplicit may not be used together");
 				}
 				trans_flags |= ALPM_TRANS_FLAG_ALLDEPS;
 				break;
 			case FLAG_ASEXPLICIT:
 				if(trans_flags & ALPM_TRANS_FLAG_ALLDEPS) {
-					fatal("error: --asdeps and --asexplicit may not be used together\n");
+					fatal("--asdeps and --asexplicit may not be used together");
 				}
 				trans_flags |= ALPM_TRANS_FLAG_ALLEXPLICIT;
 				break;
