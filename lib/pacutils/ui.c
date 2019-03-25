@@ -143,10 +143,8 @@ void pu_ui_cb_progress(alpm_progress_t event, const char *pkgname, int percent,
 void pu_ui_cb_event(alpm_event_t *event)
 {
   switch(event->type) {
-    case ALPM_EVENT_HOOK_START:
-      puts( event->hook.when == ALPM_HOOK_PRE_TRANSACTION
-          ? "Running pre-transaction hooks..."
-          : "Running post-transaction hooks...");
+    case ALPM_EVENT_CHECKDEPS_START:
+      puts("Checking dependencies...");
       break;
     case ALPM_EVENT_HOOK_RUN_START:
       if(event->hook_run.desc) {
@@ -157,23 +155,16 @@ void pu_ui_cb_event(alpm_event_t *event)
             event->hook_run.position, event->hook_run.name);
       }
       break;
-    case ALPM_EVENT_CHECKDEPS_START:
-      puts("Checking dependencies...");
-      break;
-    case ALPM_EVENT_RESOLVEDEPS_START:
-      puts("Resolving dependencies...");
+    case ALPM_EVENT_HOOK_START:
+      puts( event->hook.when == ALPM_HOOK_PRE_TRANSACTION
+          ? "Running pre-transaction hooks..."
+          : "Running post-transaction hooks...");
       break;
     case ALPM_EVENT_INTERCONFLICTS_START:
       puts("Checking package conflicts...");
       break;
-    case ALPM_EVENT_TRANSACTION_START:
-      puts("Starting transaction...");
-      break;
     case ALPM_EVENT_KEY_DOWNLOAD_START:
       puts("Downloading keys...");
-      break;
-    case ALPM_EVENT_RETRIEVE_START:
-      puts("Downloading packages...");
       break;
     case ALPM_EVENT_PACNEW_CREATED:
       pu_ui_notice("%s installed as %s.pacnew",
@@ -183,8 +174,17 @@ void pu_ui_cb_event(alpm_event_t *event)
       pu_ui_notice("%s saved as %s.pacsave",
           event->pacsave_created.file, event->pacsave_created.file);
       break;
+    case ALPM_EVENT_RESOLVEDEPS_START:
+      puts("Resolving dependencies...");
+      break;
+    case ALPM_EVENT_RETRIEVE_START:
+      puts("Downloading packages...");
+      break;
     case ALPM_EVENT_SCRIPTLET_INFO:
       fputs(event->scriptlet_info.line, stdout);
+      break;
+    case ALPM_EVENT_TRANSACTION_START:
+      puts("Starting transaction...");
       break;
 
     case ALPM_EVENT_CHECKDEPS_DONE:
