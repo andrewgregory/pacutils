@@ -62,6 +62,22 @@ void pu_ui_error(const char *fmt, ...)
   va_end(args);
 }
 
+void pu_ui_vnotice(const char *fmt, va_list args)
+{
+  fputs(":: ", stdout);
+  vprintf(fmt, args);
+  fputc('\n', stdout);
+}
+
+__attribute__((format (printf, 1, 2)))
+void pu_ui_notice(const char *fmt, ...)
+{
+  va_list args;
+  va_start(args, fmt);
+  pu_ui_vnotice(fmt, args);
+  va_end(args);
+}
+
 static long long _pu_ui_time_diff(struct timeval *t1, struct timeval *t2)
 {
   long long s1 = t1->tv_sec, s2 = t2->tv_sec, u1 = t1->tv_usec, u2 = t2->tv_usec;
