@@ -191,6 +191,11 @@ void pu_ui_cb_event(alpm_event_t *event)
       puts("Starting transaction...");
       break;
 
+    /* TODO */
+    case ALPM_EVENT_OPTDEP_REMOVAL:
+    case ALPM_EVENT_PACKAGE_OPERATION_DONE:
+
+    /* Ignored */
     case ALPM_EVENT_CHECKDEPS_DONE:
     case ALPM_EVENT_DELTA_INTEGRITY_DONE:
     case ALPM_EVENT_DELTA_INTEGRITY_START:
@@ -213,8 +218,6 @@ void pu_ui_cb_event(alpm_event_t *event)
     case ALPM_EVENT_KEY_DOWNLOAD_DONE:
     case ALPM_EVENT_LOAD_DONE:
     case ALPM_EVENT_LOAD_START:
-    case ALPM_EVENT_OPTDEP_REMOVAL:
-    case ALPM_EVENT_PACKAGE_OPERATION_DONE:
     case ALPM_EVENT_PACKAGE_OPERATION_START:
     case ALPM_EVENT_PKGDOWNLOAD_DONE:
     case ALPM_EVENT_PKGDOWNLOAD_FAILED:
