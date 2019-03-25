@@ -176,11 +176,11 @@ void pu_ui_cb_event(alpm_event_t *event)
       puts("Downloading packages...");
       break;
     case ALPM_EVENT_PACNEW_CREATED:
-      printf("%s installed as %s.pacnew",
+      pu_ui_notice("%s installed as %s.pacnew",
           event->pacnew_created.file, event->pacnew_created.file);
       break;
     case ALPM_EVENT_PACSAVE_CREATED:
-      printf("%s saved as %s.pacsave",
+      pu_ui_notice("%s saved as %s.pacsave",
           event->pacsave_created.file, event->pacsave_created.file);
       break;
     case ALPM_EVENT_SCRIPTLET_INFO:
