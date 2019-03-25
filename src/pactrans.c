@@ -42,7 +42,10 @@ alpm_list_t *spec = NULL, *add = NULL, *rem = NULL, *files = NULL;
 alpm_list_t **list = &spec;
 alpm_list_t *ignore_pkg = NULL, *ignore_group = NULL;
 int printonly = 0, noconfirm = 0, sysupgrade = 0, downgrade = 0, dbsync = 0;
-int nohooks = 0, resolve_conflict = 0, isep = '\n';
+int nohooks = 0, isep = '\n';
+int resolve_conflict = 0, resolve_replacement = 0;
+int install_ignored = 0, remove_corrupted = 0, import_keys = 0;
+int default_provider = 0, skip_unresolvable = 0;
 const char *dbext = NULL, *sysroot = NULL;
 
 enum longopt_flags {
@@ -57,39 +60,52 @@ enum longopt_flags {
 	FLAG_DBPATH,
 	FLAG_DBSYNC,
 	FLAG_DEBUG,
+	FLAG_DELETE_CORRUPT,
 	FLAG_DLONLY,
 	FLAG_DOWNGRADE,
 	FLAG_FILE,
 	FLAG_HELP,
 	FLAG_HOOKDIR,
-	FLAG_NOHOOKS,
-	FLAG_IGNORE_PKG,
 	FLAG_IGNORE_GROUP,
+	FLAG_IGNORE_PKG,
+	FLAG_IMPORT_KEYS,
+	FLAG_INSTALL_IGNORED,
 	FLAG_LOGFILE,
 	FLAG_NOBACKUP,
 	FLAG_NOCONFIRM,
 	FLAG_NODEPS,
+	FLAG_NOHOOKS,
 	FLAG_NOSCRIPTLET,
 	FLAG_NULL,
 	FLAG_PRINT,
 	FLAG_RECURSIVE,
 	FLAG_REMOVE,
 	FLAG_RESOLVE_CONFLICTS,
+	FLAG_RESOLVE_REPLACEMENT,
 	FLAG_ROOT,
+	FLAG_SKIP_UNRESOLVABLE,
 	FLAG_SPEC,
 	FLAG_SYSROOT,
 	FLAG_SYSUPGRADE,
 	FLAG_UNNEEDED,
+	FLAG_USE_DEFAULT_PROVIDER,
 	FLAG_VERSION,
+	FLAG_YOLO,
 };
 
-enum {
+enum replacement_disposition {
 	RESOLVE_CONFLICT_PROMPT = 0,
 	RESOLVE_CONFLICT_ALL,
 	RESOLVE_CONFLICT_NONE,
 	RESOLVE_CONFLICT_PROVIDED,
 	RESOLVE_CONFLICT_DEPENDS,
 	RESOLVE_CONFLICT_PROVIDED_DEPENDS,
+};
+
+enum bool_disposition {
+	RESOLVE_QUESTION_PROMPT = 0,
+	RESOLVE_QUESTION_YES,
+	RESOLVE_QUESTION_NO,
 };
 
 void fatal(const char *fmt, ...)
@@ -155,6 +171,15 @@ void usage(int ret)
 	hputs("   --as-deps          install packages as dependencies");
 	hputs("   --as-explicit      install packages as explicit");
 	hputs("   --download-only    download packages without installing");
+	hputs("");
+	hputs("remove options:");
+	hputs("   --cascade          remove packages that depend on removed packages");
+	hputs("   --no-backup        do not save configuration file backups");
+	hputs("   --recursive        remove unneeded dependencies of removed packages");
+	hputs("                      (pass twice to include explicitly installed packages");
+	hputs("   --unneeded         only remove packages that are unneeded");
+	hputs("");
+	hputs("prompt disposition options:");
 	hputs("   --resolve-conflicts=<method>");
 	hputs("                      method to use for resolving conflicts:");
 	hputs("                       prompt           - prompt the user (default)");
@@ -163,16 +188,61 @@ void usage(int ret)
 	hputs("                       provided         - auto-resolve for provided packages");
 	hputs("                       depends          - auto-resolve for dependencies");
 	hputs("                       provided-depends - auto-resolve for provided dependencies");
-	hputs("");
-	hputs("remove options:");
-	hputs("   --cascade          remove packages that depend on removed packages");
-	hputs("   --no-backup        do not save configuration file backups");
-	hputs("   --recursive        remove unneeded dependencies of removed packages");
-	hputs("                      (pass twice to include explicitly installed packages");
-	hputs("   --unneeded         only remove packages that are unneeded");
+	hputs("   --resolve-replacements=<method>");
+	hputs("                      method to use for resolving package replacements:");
+	hputs("                       prompt           - prompt the user (default)");
+	hputs("                       none             - do not replace any packages");
+	hputs("                       all              - auto-confirm all replacements (YOLO)");
+	hputs("                       provided         - auto-confirm for provided packages");
+	hputs("                       depends          - auto-confirm for dependencies");
+	hputs("                       provided-depends - auto-confirm for provided dependencies");
+	hputs("   --install-ignored-packages=(prompt|yes|no)");
+	hputs("                      enable/disable installation of ignored packages");
+	hputs("   --delete-corrupt-files=(prompt|yes|no)");
+	hputs("                      enable/disable deletion of corrupt package archives");
+	hputs("   --use-first-provider=(prompt|yes|no)");
+	hputs("                      enable/disable automatic provider selection");
+	hputs("   --skip-unresolvable=(prompt|yes|no)");
+	hputs("                      enable/disable skipping packages with missing dependencies");
+	hputs("   --import-pgp-keys=(prompt|yes|no)");
+	hputs("                      enable/disable automatic importing of missing PGP keys");
+	hputs("   --yolo             set all prompt disposition options to all/yes");
+	hputs("                      and set --no-confirm");
 #undef hputs
 #undef hputf
 	exit(ret);
+}
+
+void parse_replacement_disposition(int *dest, const char *val, const char *opt)
+{
+	if(strcmp(val, "prompt") == 0) {
+		*dest = RESOLVE_CONFLICT_PROMPT;
+	} else if(strcmp(val, "all") == 0) {
+		*dest = RESOLVE_CONFLICT_ALL;
+	} else if(strcmp(val, "none") == 0) {
+		*dest = RESOLVE_CONFLICT_NONE;
+	} else if(strcmp(val, "provided-depends") == 0) {
+		*dest = RESOLVE_CONFLICT_PROVIDED_DEPENDS;
+	} else if(strcmp(val, "depends") == 0) {
+		*dest = RESOLVE_CONFLICT_DEPENDS;
+	} else if(strcmp(val, "provided") == 0) {
+		*dest = RESOLVE_CONFLICT_PROVIDED;
+	} else {
+		fatal("invalid method passed to %s '%s'", opt, val);
+	}
+}
+
+void parse_bool_disposition(int *dest, const char *val, const char *opt)
+{
+	if(strcmp(val, "prompt") == 0) {
+		*dest = RESOLVE_CONFLICT_PROMPT;
+	} else if(strcmp(val, "yes") == 0) {
+		*dest = RESOLVE_QUESTION_YES;
+	} else if(strcmp(val, "no") == 0) {
+		*dest = RESOLVE_QUESTION_NO;
+	} else {
+		fatal("invalid method passed to %s '%s'", opt, val);
+	}
 }
 
 pu_config_t *parse_opts(int argc, char **argv)
@@ -227,7 +297,14 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "recursive"     , no_argument       , NULL       , FLAG_RECURSIVE    } ,
 		{ "unneeded"      , no_argument       , NULL       , FLAG_UNNEEDED     } ,
 
-		{ "resolve-conflicts", required_argument, NULL, FLAG_RESOLVE_CONFLICTS } ,
+		{ "resolve-conflicts",        required_argument, NULL, FLAG_RESOLVE_CONFLICTS    },
+		{ "resolve-replacements",     required_argument, NULL, FLAG_RESOLVE_REPLACEMENT  },
+		{ "install-ignored-packages", required_argument, NULL, FLAG_INSTALL_IGNORED      },
+		{ "delete-corrupt-files",     required_argument, NULL, FLAG_DELETE_CORRUPT       },
+		{ "use-first-provider",       required_argument, NULL, FLAG_USE_DEFAULT_PROVIDER },
+		{ "skip-unresolvable",        required_argument, NULL, FLAG_SKIP_UNRESOLVABLE    },
+		{ "import-pgp-keys",          required_argument, NULL, FLAG_IMPORT_KEYS          },
+		{ "yolo",                     no_argument,       NULL, FLAG_YOLO                 },
 
 		{ 0, 0, 0, 0 },
 	};
@@ -366,23 +443,6 @@ pu_config_t *parse_opts(int argc, char **argv)
 				trans_flags |= ALPM_TRANS_FLAG_DOWNLOADONLY;
 				trans_flags |= ALPM_TRANS_FLAG_NOCONFLICTS;
 				break;
-			case FLAG_RESOLVE_CONFLICTS:
-				if(strcmp(optarg, "prompt") == 0) {
-					resolve_conflict = RESOLVE_CONFLICT_PROMPT;
-				} else if(strcmp(optarg, "all") == 0) {
-					resolve_conflict = RESOLVE_CONFLICT_ALL;
-				} else if(strcmp(optarg, "none") == 0) {
-					resolve_conflict = RESOLVE_CONFLICT_NONE;
-				} else if(strcmp(optarg, "provided-depends") == 0) {
-					resolve_conflict = RESOLVE_CONFLICT_PROVIDED_DEPENDS;
-				} else if(strcmp(optarg, "depends") == 0) {
-					resolve_conflict = RESOLVE_CONFLICT_DEPENDS;
-				} else if(strcmp(optarg, "provided") == 0) {
-					resolve_conflict = RESOLVE_CONFLICT_PROVIDED;
-				} else {
-					fatal("invalid method passed to --resolve-conflicts '%s'", optarg);
-				}
-				break;
 
 			/* remove options */
 			case FLAG_CASCADE:
@@ -400,6 +460,41 @@ pu_config_t *parse_opts(int argc, char **argv)
 				break;
 			case FLAG_UNNEEDED:
 				trans_flags |= ALPM_TRANS_FLAG_UNNEEDED;
+				break;
+
+			/* prompt disposition options */
+			case FLAG_RESOLVE_CONFLICTS:
+				parse_replacement_disposition(&resolve_conflict,
+						optarg, "--resolve-conflicts");
+				break;
+			case FLAG_RESOLVE_REPLACEMENT:
+				parse_replacement_disposition(&resolve_replacement,
+						optarg, "--resolve-replacements");
+				break;
+			case FLAG_INSTALL_IGNORED:
+				parse_bool_disposition(&install_ignored, optarg,
+						"--install-ignored-packages");
+				break;
+			case FLAG_DELETE_CORRUPT:
+				parse_bool_disposition(&remove_corrupted, optarg,
+						"--delete-corrupt-files");
+				break;
+			case FLAG_USE_DEFAULT_PROVIDER:
+				parse_bool_disposition(&default_provider, optarg,
+						"--use-first-provider");
+				break;
+			case FLAG_SKIP_UNRESOLVABLE:
+				parse_bool_disposition(&skip_unresolvable, optarg,
+						"--skip-unresolvable");
+				break;
+			case FLAG_IMPORT_KEYS:
+				parse_bool_disposition(&import_keys, optarg, "--import-pgp-keys");
+				break;
+			case FLAG_YOLO:
+				resolve_conflict = resolve_replacement = RESOLVE_CONFLICT_ALL;
+				install_ignored = remove_corrupted = default_provider
+					= skip_unresolvable = import_keys = RESOLVE_QUESTION_YES;
+				noconfirm = 1;
 				break;
 
 			case '?':
@@ -538,9 +633,10 @@ int pkg_provides(alpm_pkg_t *pkg1, alpm_pkg_t *pkg2) {
 	return 0;
 }
 
-int should_remove_conflict(alpm_pkg_t *newpkg, alpm_pkg_t *oldpkg)
+int should_remove_conflict(enum replacement_disposition d,
+		alpm_pkg_t *newpkg, alpm_pkg_t *oldpkg)
 {
-	switch(resolve_conflict) {
+	switch(d) {
 		case RESOLVE_CONFLICT_ALL:
 			return 1; /* YOLO */
 		case RESOLVE_CONFLICT_PROVIDED:
@@ -551,26 +647,171 @@ int should_remove_conflict(alpm_pkg_t *newpkg, alpm_pkg_t *oldpkg)
 			return alpm_pkg_get_reason(oldpkg) == ALPM_PKG_REASON_DEPEND
 				&& pkg_provides(newpkg, oldpkg);
 		case RESOLVE_CONFLICT_NONE:
+		case RESOLVE_CONFLICT_PROMPT: /* shouldn't happen; bail out */
 			return 0;
 	}
 	return 0; /* shouldn't happen; bail out */
 }
 
+void print_q_resolution(alpm_question_t *question) {
+	switch(question->type) {
+		case ALPM_QUESTION_CONFLICT_PKG:
+			{
+				alpm_question_conflict_t *q = (alpm_question_conflict_t*) question;
+				alpm_conflict_t *c = q->conflict;
+				alpm_list_t *localpkgs = alpm_db_get_pkgcache(alpm_get_localdb(handle));
+				alpm_pkg_t *newpkg = alpm_pkg_find(alpm_trans_get_add(handle), c->package1);
+				alpm_pkg_t *oldpkg = alpm_pkg_find(localpkgs, c->package2);
+
+				if(q->remove){
+					pu_ui_notice("uninstalling package '%s-%s' due to conflict with '%s-%s'",
+							alpm_pkg_get_name(oldpkg), alpm_pkg_get_version(oldpkg),
+							alpm_pkg_get_name(newpkg), alpm_pkg_get_version(newpkg));
+				}
+			}
+			break;
+		case ALPM_QUESTION_REPLACE_PKG:
+			{
+				alpm_question_replace_t *q = (alpm_question_replace_t*) question;
+				if(q->replace) {
+					pu_ui_notice("replacing package '%s-%s' with '%s-%s'",
+							alpm_pkg_get_name(q->oldpkg), alpm_pkg_get_version(q->oldpkg),
+							alpm_pkg_get_name(q->newpkg), alpm_pkg_get_version(q->newpkg));
+				}
+			}
+			break;
+		case ALPM_QUESTION_INSTALL_IGNOREPKG:
+			{
+				alpm_question_install_ignorepkg_t *q = &question->install_ignorepkg;
+				if(q->install) {
+					pu_ui_notice("installing ignored package '%s-%s'",
+							alpm_pkg_get_name(q->pkg), alpm_pkg_get_version(q->pkg));
+				} else {
+					pu_ui_notice("ignoring package '%s-%s'",
+							alpm_pkg_get_name(q->pkg), alpm_pkg_get_version(q->pkg));
+				}
+			}
+			break;
+		case ALPM_QUESTION_REMOVE_PKGS:
+			{
+				alpm_question_remove_pkgs_t *q = &question->remove_pkgs;
+				if(q->skip) {
+					alpm_list_t *i;
+					for(i = q->packages; i; i = i->next) {
+						pu_ui_notice("skipping package '%s-%s' due to unresolvable dependencies",
+								alpm_pkg_get_name(i->data), alpm_pkg_get_version(i->data));
+					}
+				}
+			}
+			break;
+		case ALPM_QUESTION_CORRUPTED_PKG:
+			{
+				alpm_question_corrupted_t *q = &question->corrupted;
+				if(q->remove) {
+					pu_ui_notice("deleting corrupted file '%s' (%s)",
+							q->filepath, alpm_strerror(q->reason));
+				}
+			}
+			break;
+		case ALPM_QUESTION_IMPORT_KEY:
+			{
+				alpm_question_import_key_t *q = &question->import_key;
+				if(q->import) {
+					alpm_pgpkey_t *key = q->key;
+					char created[16];
+					time_t time = (time_t) key->created;
+
+					if(strftime(created, 12, "%Y-%m-%d", localtime(&time)) == 0) {
+						strcpy(created, "(unknown)");
+					}
+
+					pu_ui_notice((key->revoked
+								? "importing PGP key %u%c/%s '%s', created: %s (revoked)"
+								: "importing PGP key %u%c/%s '%s', created: %s"),
+							key->length, key->pubkey_algo, key->fingerprint, key->uid, created);
+				}
+			}
+			break;
+		case ALPM_QUESTION_SELECT_PROVIDER:
+			{
+				alpm_question_select_provider_t *q = &question->select_provider;
+				char *depstr = alpm_dep_compute_string(q->depend);
+				int idx = q->use_index;
+				alpm_list_t *i;
+				if(idx >= 0 && (i = alpm_list_nth(q->providers, idx))) {
+					pu_ui_notice("selecting package '%s-%s' as provider for dependency '%s'",
+							alpm_pkg_get_name(i->data), alpm_pkg_get_version(i->data),
+							depstr ? depstr : q->depend->name);
+				} else if(idx != -1) {
+					/* somebody really messed up to get here */
+					pu_ui_error("invalid index (%d) selected for dependency '%s'",
+							idx, depstr ? depstr : q->depend->name);
+				}
+				free(depstr);
+			}
+			break;
+	}
+}
+
+int set_bool_response(alpm_question_t *q, enum bool_disposition d) {
+	switch(d) {
+		case RESOLVE_QUESTION_PROMPT: return 0;
+		case RESOLVE_QUESTION_YES:
+			q->any.answer = 1;
+			return 1; /* indicate a response was set */
+		case RESOLVE_QUESTION_NO:
+			q->any.answer = 0;
+			return 1; /* indicate a response was set */
+	}
+	return 0; /* oh noes, something went wrong */
+}
+
 void cb_question(alpm_question_t *question)
 {
-	if(question->type == ALPM_QUESTION_CONFLICT_PKG
-			&& resolve_conflict != RESOLVE_CONFLICT_PROMPT) {
-		alpm_question_conflict_t *q = (alpm_question_conflict_t*) question;
-		alpm_conflict_t *c = q->conflict;
-		alpm_list_t *localpkgs = alpm_db_get_pkgcache(alpm_get_localdb(handle));
-		alpm_pkg_t *newpkg = alpm_pkg_find(alpm_trans_get_add(handle), c->package1);
-		alpm_pkg_t *oldpkg = alpm_pkg_find(localpkgs, c->package2);
+	int autoset = 0;
 
-		if((q->remove = should_remove_conflict(newpkg, oldpkg))) {
-			pu_ui_notice("package '%s' conflicts with '%s'; removing '%s'",
-					c->package2, c->package1, c->package2);
-		}
-	} else if(!noconfirm) {
+	switch(question->type) {
+		case ALPM_QUESTION_INSTALL_IGNOREPKG:
+			autoset = set_bool_response(question, install_ignored);
+			break;
+		case ALPM_QUESTION_REMOVE_PKGS:
+			autoset = set_bool_response(question, skip_unresolvable);
+			break;
+		case ALPM_QUESTION_CORRUPTED_PKG:
+			autoset = set_bool_response(question, remove_corrupted);
+			break;
+		case ALPM_QUESTION_IMPORT_KEY:
+			autoset = set_bool_response(question, import_keys);
+			break;
+		case ALPM_QUESTION_CONFLICT_PKG:
+			if((autoset = (resolve_conflict != RESOLVE_CONFLICT_PROMPT))) {
+				alpm_question_conflict_t *q = (alpm_question_conflict_t*) question;
+				alpm_conflict_t *c = q->conflict;
+				alpm_list_t *localpkgs = alpm_db_get_pkgcache(alpm_get_localdb(handle));
+				alpm_pkg_t *newpkg = alpm_pkg_find(alpm_trans_get_add(handle), c->package1);
+				alpm_pkg_t *oldpkg = alpm_pkg_find(localpkgs, c->package2);
+
+				q->remove = should_remove_conflict(resolve_conflict, newpkg, oldpkg);
+			}
+			break;
+		case ALPM_QUESTION_REPLACE_PKG:
+			if((autoset = (resolve_replacement != RESOLVE_CONFLICT_PROMPT))) {
+				alpm_question_replace_t *q = (alpm_question_replace_t*) question;
+				q->replace = should_remove_conflict(
+						resolve_replacement, q->newpkg, q->oldpkg);
+			}
+			break;
+		case ALPM_QUESTION_SELECT_PROVIDER:
+			if((autoset = (default_provider != RESOLVE_QUESTION_PROMPT))) {
+				question->any.answer
+					= (default_provider == RESOLVE_QUESTION_YES ? 0 : -1);
+			}
+			break;
+	}
+
+	if(autoset || noconfirm) {
+		print_q_resolution(question);
+	} else {
 		pu_ui_cb_question(question);
 	}
 }

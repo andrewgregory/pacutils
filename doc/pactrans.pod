@@ -173,6 +173,35 @@ Mark all installed packages as explicitly installed.
 
 Download packages without actually installing them.
 
+=back
+
+=head2 B<--remove> Options
+
+=over
+
+=item B<--cascade>
+
+Uninstall all installed packages that depend on a package being uninstalled.
+
+=item B<--no-backup>
+
+Do not save F<.pacsave> backups.
+
+=item B<--recursive>
+
+Uninstall any dependencies of packages being removed that are not required by
+any other packages.
+
+=item B<--unneeded>
+
+Do not uninstall any packages required by an installed package.
+
+=back
+
+=head2 Prompt Disposition Options
+
+=over
+
 =item B<--resolve-conflicts>=I<method>
 
 Select a method to use for resolving conflicts.  Possible values for I<method>
@@ -207,34 +236,72 @@ package provides it.
 
 =back
 
-NOTE: regardless of the conflict resolution method, all dependencies must be
-satisfied in order for the transaction to succeed unless B<--nodeps> is used as
-well.
+=item B<--resolve-replacements>=I<method>
 
-=back
-
-=head2 B<--remove> Options
+Select a method to use for resolving replacements.  Possible values for
+I<method> are:
 
 =over
 
-=item B<--cascade>
+=item C<prompt>
 
-Uninstall all installed packages that depend on a package being uninstalled.
+Prompt the user to replace the package.
 
-=item B<--no-backup>
+=item C<none>
 
-Do not save F<.pacsave> backups.
+Do not replace any packages.
 
-=item B<--recursive>
+=item C<all>
 
-Uninstall any dependencies of packages being removed that are not required by
-any other packages.
+Perform all available package replacements.
 
-=item B<--unneeded>
+=item C<provided>
 
-Do not uninstall any packages required by an installed package.
+Perform replacements where the new package provides the old one.
+
+=item C<depends>
+
+Perform replacements where the old package was installed as a dependency.
+
+=item C<provided-depends>
+
+Perform replacements where the old package was installed as a dependency and
+the new package provides the old one.
 
 =back
+
+=item B<--install-ignored-packages>=I<prompt|yes|no>
+
+Set the disposition for prompts to install ignored packages.
+
+=item B<--delete-corrupt-files>=I<prompt|yes|no>
+
+Set the disposition for prompts to delete corrupt package.
+
+=item B<--use-first-provider>=I<prompt|yes|no>
+
+Set the disposition for prompts to select a provider.  If set to C<yes>, the
+first available provider will be selected.
+
+=item B<--skip-unresolvable>=I<prompt|yes|no>
+
+Set the disposition for prompts to skip packages with unresolvable
+dependencies.
+
+=item B<--import-pgp-keys>=I<prompt|yes|no>
+
+Set the disposition for prompts to import missing PGP keys.
+
+=item B<--yolo>
+
+Set all prompt disposition options to their C<all> or C<yes> value and set
+B<--no-confirm>.
+
+=back
+
+NOTE: regardless of the disposition options chosen, all dependencies must still
+be satisfied in order for the transaction to succeed unless B<--nodeps> is used
+as well.
 
 =head1 PKGSPEC
 
