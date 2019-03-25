@@ -146,6 +146,10 @@ void pu_ui_cb_event(alpm_event_t *event)
     case ALPM_EVENT_CHECKDEPS_START:
       puts("Checking dependencies...");
       break;
+    case ALPM_EVENT_DATABASE_MISSING:
+      pu_ui_warn("missing database file for '%s'",
+          event->database_missing.dbname);
+      break;
     case ALPM_EVENT_HOOK_RUN_START:
       if(event->hook_run.desc) {
         printf("(%zu/%zu) Running %s (%s)\n", event->hook_run.position,
@@ -188,7 +192,6 @@ void pu_ui_cb_event(alpm_event_t *event)
       break;
 
     case ALPM_EVENT_CHECKDEPS_DONE:
-    case ALPM_EVENT_DATABASE_MISSING:
     case ALPM_EVENT_DELTA_INTEGRITY_DONE:
     case ALPM_EVENT_DELTA_INTEGRITY_START:
     case ALPM_EVENT_DELTA_PATCHES_DONE:
