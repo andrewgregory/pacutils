@@ -669,8 +669,8 @@ int main(int argc, char **argv)
 				for(i = err_data; i; i = alpm_list_next(i)) {
 					alpm_depmissing_t *dep = i->data;
 					char *depstr = alpm_dep_compute_string(dep->depend);
-					fprintf(stderr, "error: missing dependency '%s' (%s)\n",
-							dep->target, depstr);
+					fprintf(stderr, "error: missing dependency '%s' for package '%s'\n",
+							depstr, dep->target);
 					free(depstr);
 					alpm_depmissing_free(dep);
 				}
