@@ -118,6 +118,10 @@ Display version information and exit.
 
 =over
 
+=item B<--dbsync>
+
+Update sync databases before performing the transaction.
+
 =item B<--dbonly>
 
 Make the changes to the database without actually extracting or removing any
