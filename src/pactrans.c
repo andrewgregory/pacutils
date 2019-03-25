@@ -42,7 +42,7 @@ alpm_list_t *spec = NULL, *add = NULL, *rem = NULL, *files = NULL;
 alpm_list_t **list = &spec;
 alpm_list_t *ignore_pkg = NULL, *ignore_group = NULL;
 int printonly = 0, noconfirm = 0, sysupgrade = 0, downgrade = 0, dbsync = 0;
-int nohooks = 0, isep = '\n';
+int nohooks = 0, resolve_conflict = 0, isep = '\n';
 const char *dbext = NULL, *sysroot = NULL;
 
 enum longopt_flags {
@@ -74,12 +74,22 @@ enum longopt_flags {
 	FLAG_PRINT,
 	FLAG_RECURSIVE,
 	FLAG_REMOVE,
+	FLAG_RESOLVE_CONFLICTS,
 	FLAG_ROOT,
 	FLAG_SPEC,
 	FLAG_SYSROOT,
 	FLAG_SYSUPGRADE,
 	FLAG_UNNEEDED,
 	FLAG_VERSION,
+};
+
+enum {
+	RESOLVE_CONFLICT_PROMPT = 0,
+	RESOLVE_CONFLICT_ALL,
+	RESOLVE_CONFLICT_NONE,
+	RESOLVE_CONFLICT_PROVIDED,
+	RESOLVE_CONFLICT_DEPENDS,
+	RESOLVE_CONFLICT_PROVIDED_DEPENDS,
 };
 
 void fatal(const char *fmt, ...)
@@ -144,6 +154,14 @@ void usage(int ret)
 	hputs("   --as-deps          install packages as dependencies");
 	hputs("   --as-explicit      install packages as explicit");
 	hputs("   --download-only    download packages without installing");
+	hputs("   --resolve-conflicts=<method>");
+	hputs("                      method to use for resolving conflicts:");
+	hputs("                       prompt           - prompt the user (default)");
+	hputs("                       none             - do not remove conflicting packages");
+	hputs("                       all              - auto-resolve all conflicts (YOLO)");
+	hputs("                       provided         - auto-resolve for provided packages");
+	hputs("                       depends          - auto-resolve for dependencies");
+	hputs("                       provided-depends - auto-resolve for provided dependencies");
 	hputs("");
 	hputs("remove options:");
 	hputs("   --cascade          remove packages that depend on removed packages");
@@ -207,6 +225,8 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "no-backup"     , no_argument       , NULL       , FLAG_NOBACKUP     } ,
 		{ "recursive"     , no_argument       , NULL       , FLAG_RECURSIVE    } ,
 		{ "unneeded"      , no_argument       , NULL       , FLAG_UNNEEDED     } ,
+
+		{ "resolve-conflicts", required_argument, NULL, FLAG_RESOLVE_CONFLICTS } ,
 
 		{ 0, 0, 0, 0 },
 	};
@@ -344,6 +364,23 @@ pu_config_t *parse_opts(int argc, char **argv)
 			case FLAG_DLONLY:
 				trans_flags |= ALPM_TRANS_FLAG_DOWNLOADONLY;
 				trans_flags |= ALPM_TRANS_FLAG_NOCONFLICTS;
+				break;
+			case FLAG_RESOLVE_CONFLICTS:
+				if(strcmp(optarg, "prompt") == 0) {
+					resolve_conflict = RESOLVE_CONFLICT_PROMPT;
+				} else if(strcmp(optarg, "all") == 0) {
+					resolve_conflict = RESOLVE_CONFLICT_ALL;
+				} else if(strcmp(optarg, "none") == 0) {
+					resolve_conflict = RESOLVE_CONFLICT_NONE;
+				} else if(strcmp(optarg, "provided-depends") == 0) {
+					resolve_conflict = RESOLVE_CONFLICT_PROVIDED_DEPENDS;
+				} else if(strcmp(optarg, "depends") == 0) {
+					resolve_conflict = RESOLVE_CONFLICT_DEPENDS;
+				} else if(strcmp(optarg, "provided") == 0) {
+					resolve_conflict = RESOLVE_CONFLICT_PROVIDED;
+				} else {
+					fatal("invalid method passed to --resolve-conflicts '%s'", optarg);
+				}
 				break;
 
 			/* remove options */
@@ -490,6 +527,53 @@ void print_fileconflict(alpm_fileconflict_t *conflict) {
 	}
 }
 
+int pkg_provides(alpm_pkg_t *pkg1, alpm_pkg_t *pkg2) {
+	const char *depname = alpm_pkg_get_name(pkg2);
+	alpm_list_t *i;
+	for(i = alpm_pkg_get_provides(pkg1); i; i = i->next) {
+		alpm_depend_t *d = i->data;
+		if(strcmp(d->name, depname) == 0) { return 1; }
+	}
+	return 0;
+}
+
+int should_remove_conflict(alpm_pkg_t *newpkg, alpm_pkg_t *oldpkg)
+{
+	switch(resolve_conflict) {
+		case RESOLVE_CONFLICT_ALL:
+			return 1; /* YOLO */
+		case RESOLVE_CONFLICT_PROVIDED:
+			return pkg_provides(newpkg, oldpkg);
+		case RESOLVE_CONFLICT_DEPENDS:
+			return alpm_pkg_get_reason(oldpkg) == ALPM_PKG_REASON_DEPEND;
+		case RESOLVE_CONFLICT_PROVIDED_DEPENDS:
+			return alpm_pkg_get_reason(oldpkg) == ALPM_PKG_REASON_DEPEND
+				&& pkg_provides(newpkg, oldpkg);
+		case RESOLVE_CONFLICT_NONE:
+			return 0;
+	}
+	return 0; /* shouldn't happen; bail out */
+}
+
+void cb_question(alpm_question_t *question)
+{
+	if(question->type == ALPM_QUESTION_CONFLICT_PKG
+			&& resolve_conflict != RESOLVE_CONFLICT_PROMPT) {
+		alpm_question_conflict_t *q = (alpm_question_conflict_t*) question;
+		alpm_conflict_t *c = q->conflict;
+		alpm_list_t *localpkgs = alpm_db_get_pkgcache(alpm_get_localdb(handle));
+		alpm_pkg_t *newpkg = alpm_pkg_find(alpm_trans_get_add(handle), c->package1);
+		alpm_pkg_t *oldpkg = alpm_pkg_find(localpkgs, c->package2);
+
+		if((q->remove = should_remove_conflict(newpkg, oldpkg))) {
+			pu_ui_notice("package '%s' conflicts with '%s'; removing '%s'",
+					c->package2, c->package1, c->package2);
+		}
+	} else {
+		pu_ui_cb_question(question);
+	}
+}
+
 int main(int argc, char **argv)
 {
 	alpm_list_t *i, *err_data = NULL;
@@ -540,7 +624,7 @@ int main(int argc, char **argv)
 		alpm_option_set_hookdirs(handle, NULL);
 	}
 
-	alpm_option_set_questioncb(handle, pu_ui_cb_question);
+	alpm_option_set_questioncb(handle, cb_question);
 	alpm_option_set_progresscb(handle, pu_ui_cb_progress);
 	alpm_option_set_eventcb(handle, pu_ui_cb_event);
 	alpm_option_set_dlcb(handle, pu_ui_cb_download);

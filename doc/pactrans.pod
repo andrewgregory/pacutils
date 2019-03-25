@@ -169,6 +169,44 @@ Mark all installed packages as explicitly installed.
 
 Download packages without actually installing them.
 
+=item B<--resolve-conflicts>=I<method>
+
+Select a method to use for resolving conflicts.  Possible values for I<method>
+are:
+
+=over
+
+=item C<prompt>
+
+Prompt the user to remove the installed conflicting package.
+
+=item C<none>
+
+Do not remove any conflicting packages.
+
+=item C<all>
+
+Remove any conflicting packages.
+
+=item C<provided>
+
+Remove a conflicting package if the new package provides it.
+
+=item C<depends>
+
+Remove a conflicting package if it was installed as a dependency.
+
+=item C<provided-depends>
+
+Remove a conflicting package if it was installed as a dependency and the new
+package provides it.
+
+=back
+
+NOTE: regardless of the conflict resolution method, all dependencies must be
+satisfied in order for the transaction to succeed unless B<--nodeps> is used as
+well.
+
 =back
 
 =head2 B<--remove> Options
