@@ -27,6 +27,7 @@
 
 #include "ui.h"
 #include "util.h"
+#include "../pacutils.h"
 
 #define PU_MAX_REFRESH_MS 200
 
@@ -288,9 +289,72 @@ void pu_ui_cb_question(alpm_question_t *question)
       }
       break;
     case ALPM_QUESTION_REMOVE_PKGS:
+      {
+        alpm_question_remove_pkgs_t *q = &question->remove_pkgs;
+        alpm_list_t *i;
+        pu_ui_notice("The following packages have unresolvable dependencies:");
+        for(i = q->packages; i; i = i->next) {
+          fputs("  ", stdout);
+          pu_fprint_pkgspec(stdout, i->data);
+        }
+        q->skip = pu_ui_confirm(0,
+            "Remove the above packages from the transaction?");
+      }
+      break;
     case ALPM_QUESTION_SELECT_PROVIDER:
+      {
+        alpm_question_select_provider_t *q = &question->select_provider;
+        alpm_list_t *i;
+        alpm_depend_t *dep = q->depend;
+        int count = 0;
+
+        pu_ui_notice("There are multiple providers for the following dependency:");
+        printf("  %s", dep->name);
+        switch(dep->mod) {
+          case ALPM_DEP_MOD_ANY: break;
+          case ALPM_DEP_MOD_EQ: printf("=%s", dep->version); break;
+          case ALPM_DEP_MOD_GE: printf(">=%s", dep->version); break;
+          case ALPM_DEP_MOD_LE: printf("<=%s", dep->version); break;
+          case ALPM_DEP_MOD_GT: printf(">%s", dep->version); break;
+          case ALPM_DEP_MOD_LT: printf("<%s", dep->version); break;
+        }
+        fputs("\n\n", stdout);
+
+        for(i = q->providers; i; i = i->next) {
+          printf("  %d - ", ++count);
+          pu_fprint_pkgspec(stdout, i->data);
+          fputs("\n", stdout);
+        }
+
+        q->use_index = pu_ui_select_index(count ? 1 : 0, 0, count,
+            "Select a provider (0 to skip)") - 1;
+      }
+      break;
     case ALPM_QUESTION_CORRUPTED_PKG:
+      {
+        alpm_question_corrupted_t *q = &question->corrupted;
+        q->remove = pu_ui_confirm(1, "Delete corrupted file '%s' (%s)",
+            q->filepath, alpm_strerror(q->reason));
+      }
+      break;
     case ALPM_QUESTION_IMPORT_KEY:
+      {
+        alpm_question_import_key_t *q = &question->import_key;
+        alpm_pgpkey_t *key = q->key;
+        char created[12];
+        time_t time = (time_t) key->created;
+
+        if(strftime(created, 12, "%Y-%m-%d", localtime(&time)) == 0) {
+          strcpy(created, "(unknown)");
+        }
+
+        q->import = pu_ui_confirm(1,
+            (key->revoked
+             ? "Import PGP key %u%c/%s, '%s', created: %s (revoked)"
+             : "Import PGP key %u%c/%s, '%s', created: %s"),
+            key->length, key->pubkey_algo, key->fingerprint, key->uid, created);
+      }
+      break;
     default:
       break;
   }
