@@ -218,6 +218,50 @@ int pu_ui_confirm(int def, const char *prompt, ...)
   }
 }
 
+__attribute__((format (printf, 4, 5)))
+long pu_ui_select_index(long def, long min, long max, const char *prompt, ...)
+{
+  int err_sav = errno;
+  va_list args;
+  va_start(args, prompt);
+  fputs("\n:: ", stdout);
+  vprintf(prompt, args);
+  printf(" [%ld] ", def);
+  fflush(stdout);
+  va_end(args);
+
+  while(1) {
+    char input[32];
+
+    if(fgets(input, 32, stdin)) {
+      size_t len = strlen(input);
+      char *endptr;
+      long selected;
+
+      if(len == 0 || (len == 1 && input[0] == '\n')) {
+        errno = err_sav;
+        return def;
+      } else if(input[len - 1] == '\n') {
+        input[len - 1] = '\0';
+      }
+
+      errno = 0;
+      selected = strtol(input, &endptr, 10);
+      if(errno != 0 || selected > max || selected < min || *endptr != '\0') {
+        printf("\n:: Invalid input '%s', please enter a number in the range %ld-%ld: ",
+            input, min, max);
+        continue;
+      }
+
+      errno = err_sav;
+      return selected;
+    } else if(errno != EINTR) {
+      errno = err_sav;
+      return def;
+    }
+  }
+}
+
 void pu_ui_cb_question(alpm_question_t *question)
 {
   switch(question->type) {

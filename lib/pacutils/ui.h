@@ -36,6 +36,7 @@ void pu_ui_vwarn(const char *fmt, ...);
 void pu_ui_vnotice(const char *fmt, ...);
 
 int pu_ui_confirm(int def, const char *prompt, ...);
+int pu_ui_select_index(long def, long min, long max, const char *prompt, ...);
 
 const char *pu_ui_msg_progress(alpm_progress_t event);
 
