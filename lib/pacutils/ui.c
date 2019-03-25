@@ -30,15 +30,27 @@
 
 #define PU_MAX_REFRESH_MS 200
 
+void pu_ui_vwarn(const char *fmt, va_list args)
+{
+  fputs("warning: ", stderr);
+  vfprintf(stderr, fmt, args);
+  fputc('\n', stderr);
+}
+
 __attribute__((format (printf, 1, 2)))
 void pu_ui_warn(const char *fmt, ...)
 {
   va_list args;
   va_start(args, fmt);
-  fputs("warning: ", stderr);
+  pu_ui_vwarn(fmt, args);
+  va_end(args);
+}
+
+void pu_ui_verror(const char *fmt, va_list args)
+{
+  fputs("error: ", stderr);
   vfprintf(stderr, fmt, args);
   fputc('\n', stderr);
-  va_end(args);
 }
 
 __attribute__((format (printf, 1, 2)))
@@ -46,9 +58,7 @@ void pu_ui_error(const char *fmt, ...)
 {
   va_list args;
   va_start(args, fmt);
-  fputs("error: ", stderr);
-  vfprintf(stderr, fmt, args);
-  fputc('\n', stderr);
+  pu_ui_verror(fmt, args);
   va_end(args);
 }
 

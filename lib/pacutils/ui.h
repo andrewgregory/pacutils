@@ -30,6 +30,9 @@
 void pu_ui_error(const char *fmt, ...);
 void pu_ui_warn(const char *fmt, ...);
 
+void pu_ui_verror(const char *fmt, ...);
+void pu_ui_vwarn(const char *fmt, ...);
+
 int pu_ui_confirm(int def, const char *prompt, ...);
 
 const char *pu_ui_msg_progress(alpm_progress_t event);
