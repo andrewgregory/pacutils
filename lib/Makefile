@@ -64,7 +64,7 @@ SOURCES = \
 all: libpacutils.so
 
 libpacutils.so: ${SOURCES}
-	$(CC) $(CPPFLAGS) -shared -fPIC $(CFLAGS) -o $@ $^ $(LDLIBS)
+	$(CC) $(CPPFLAGS) -shared -fPIC $(CFLAGS) -o $@ $^ $(LDLIBS) $(LDFLAGS)
 
 install: libpacutils.so
 	install -d "${DESTDIR}${INCLUDEDIR}/pacutils"
