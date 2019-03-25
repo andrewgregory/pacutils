@@ -569,7 +569,7 @@ void cb_question(alpm_question_t *question)
 			pu_ui_notice("package '%s' conflicts with '%s'; removing '%s'",
 					c->package2, c->package1, c->package2);
 		}
-	} else {
+	} else if(!noconfirm) {
 		pu_ui_cb_question(question);
 	}
 }
