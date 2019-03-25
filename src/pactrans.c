@@ -127,6 +127,7 @@ void usage(int ret)
 	hputs("   --cachedir=<path>  set an alternate cache location");
 	hputs("   --config=<path>    set an alternate configuration file");
 	hputs("   --dbonly           make the requested changes only to the database");
+	hputs("   --dbsync           update sync databases prior to the transaction");
 	hputs("   --dbext=<ext>      set an alternate sync database extension");
 	hputs("   --dbpath=<path>    set an alternate database location");
 	hputs("   --debug            enable extra debugging messages");
