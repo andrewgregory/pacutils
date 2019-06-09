@@ -75,6 +75,7 @@ typedef struct {
 	char _buf[256];    /* read buffer */
 	char *_next;       /* next line indicator */
 	int _close_stream; /* close stream on free */
+	pu_log_timestamp_t _next_ts;
 } pu_log_reader_t;
 
 pu_log_transaction_status_t pu_log_transaction_parse(const char *message);

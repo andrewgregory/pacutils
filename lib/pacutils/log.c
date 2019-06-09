@@ -196,13 +196,14 @@ pu_log_entry_t *pu_log_reader_next(pu_log_reader_t *reader) {
 
 	if(entry == NULL) { errno = ENOMEM; return NULL; }
 
-	if(reader->_next == NULL && fgets(reader->_buf, 256, reader->stream) == NULL) {
-		reader->eof = feof(reader->stream);
+	if(reader->_next) {
+		memcpy(&entry->timestamp, &reader->_next_ts, sizeof(pu_log_timestamp_t));
+		p = reader->_next;
+	} else if(fgets(reader->_buf, 256, reader->stream) == NULL) {
 		free(entry);
+		reader->eof = feof(reader->stream);
 		return NULL;
-	}
-
-	if(!(p = _pu_log_parse_timestamp(reader->_buf, &entry->timestamp))) {
+	} else if(!(p = _pu_log_parse_timestamp(reader->_buf, &entry->timestamp))) {
 		free(entry);
 		errno = EINVAL;
 		return NULL;
@@ -219,19 +220,20 @@ pu_log_entry_t *pu_log_reader_next(pu_log_reader_t *reader) {
 	entry->message = strdup(p);
 
 	while((reader->_next = fgets(reader->_buf, 256, reader->stream)) != NULL) {
-		pu_log_timestamp_t ts;
-		if(_pu_log_parse_timestamp(reader->_buf, &ts) == NULL) {
+		if((p = _pu_log_parse_timestamp(reader->_buf, &reader->_next_ts)) == NULL) {
 			size_t oldlen = strlen(entry->message);
 			size_t newlen = oldlen + strlen(reader->_buf) + 1;
 			char *newmessage = realloc(entry->message, newlen);
 			if(oldlen > newlen || newmessage == NULL) {
 				free(entry);
+				reader->_next = NULL;
 				errno = ENOMEM;
 				return NULL;
 			}
 			entry->message = newmessage;
 			strcpy(entry->message + oldlen, reader->_buf);
 		} else {
+			reader->_next = p;
 			break;
 		}
 	}
