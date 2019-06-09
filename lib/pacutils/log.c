@@ -164,6 +164,7 @@ pu_log_entry_t *pu_log_reader_next(pu_log_reader_t *reader) {
 	}
 
 	if(!(p = strptime(reader->_buf, "[%Y-%m-%d %H:%M]", &entry->timestamp))) {
+		free(entry);
 		errno = EINVAL;
 		return NULL;
 	}
@@ -187,6 +188,7 @@ pu_log_entry_t *pu_log_reader_next(pu_log_reader_t *reader) {
 			size_t newlen = oldlen + strlen(reader->_buf) + 1;
 			char *newmessage = realloc(entry->message, newlen);
 			if(oldlen > newlen || newmessage == NULL) {
+				free(entry);
 				errno = ENOMEM;
 				return NULL;
 			}
