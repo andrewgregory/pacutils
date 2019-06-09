@@ -121,7 +121,7 @@ int pu_log_fprint_entry(FILE *stream, pu_log_entry_t *entry)
 {
 	char timestamp[50];
 
-	strftime(timestamp, 50, "%F %R", &entry->timestamp);
+	strftime(timestamp, 50, "%F %R", &entry->timestamp.tm);
 	if(entry->caller) {
 		return fprintf(stream, "[%s] [%s] %s",
 				timestamp, entry->caller, entry->message);
@@ -151,6 +151,45 @@ void pu_log_reader_free(pu_log_reader_t *p) {
 	free(p);
 }
 
+char *_pu_log_parse_iso8601(const char *buf, pu_log_timestamp_t *ts) {
+	int negative = 0;
+	int gmtofflen = 4;
+	char *p = strptime(buf, "[%Y-%m-%dT%H:%M:%S", &ts->tm);
+	if(p == NULL || (*p != '-' && *p != '+')) { return NULL; }
+	negative = *(p++) == '-';
+	ts->gmtoff = 0;
+	while(*p && gmtofflen--) {
+		ts->gmtoff = (ts->gmtoff * 10) + (*(p++) - '0');
+	}
+	if(gmtofflen != -1 || *p != ']') { return NULL; }
+
+	ts->has_seconds = 1;
+	ts->has_gmtoff = 1;
+	if(negative) {
+		ts->gmtoff *= -1 ;
+	}
+
+	return p + 1;
+}
+
+char *_pu_log_parse_timestamp(const char *buf, pu_log_timestamp_t *ts) {
+	char *p;
+	struct tm *tm = &ts->tm;
+
+	if((p = strptime(buf, "[%Y-%m-%d %H:%M]", tm))) {
+		ts->has_seconds = 0;
+		ts->has_gmtoff = 0;
+		ts->gmtoff = 0;
+		ts->tm.tm_isdst = -1;
+		return p;
+	} else if((p = _pu_log_parse_iso8601(buf, ts))) {
+		ts->tm.tm_isdst = -1;
+		return p;
+	}
+
+	return NULL;
+}
+
 pu_log_entry_t *pu_log_reader_next(pu_log_reader_t *reader) {
 	char *p, *c;
 	pu_log_entry_t *entry = calloc(sizeof(pu_log_entry_t), 1);
@@ -163,13 +202,11 @@ pu_log_entry_t *pu_log_reader_next(pu_log_reader_t *reader) {
 		return NULL;
 	}
 
-	if(!(p = strptime(reader->_buf, "[%Y-%m-%d %H:%M]", &entry->timestamp))) {
+	if(!(p = _pu_log_parse_timestamp(reader->_buf, &entry->timestamp))) {
 		free(entry);
 		errno = EINVAL;
 		return NULL;
 	}
-
-	entry->timestamp.tm_isdst = -1;
 
 	if(p[0] == ' ' && p[1] == '[' && (c = strstr(p + 2, "] "))) {
 		entry->caller = strndup(p + 2, c - (p + 2));
@@ -182,8 +219,8 @@ pu_log_entry_t *pu_log_reader_next(pu_log_reader_t *reader) {
 	entry->message = strdup(p);
 
 	while((reader->_next = fgets(reader->_buf, 256, reader->stream)) != NULL) {
-		struct tm ts;
-		if(strptime(reader->_buf, "[%Y-%m-%d %H:%M]", &ts) == NULL) {
+		pu_log_timestamp_t ts;
+		if(_pu_log_parse_timestamp(reader->_buf, &ts) == NULL) {
 			size_t oldlen = strlen(entry->message);
 			size_t newlen = oldlen + strlen(reader->_buf) + 1;
 			char *newmessage = realloc(entry->message, newlen);

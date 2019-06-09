@@ -282,7 +282,12 @@ int fprint_entry_color(FILE *stream, pu_log_entry_t *entry)
 		message_color = palette.message;
 	}
 
-	strftime(timestamp, 50, "%F %R", &entry->timestamp);
+	if(entry->timestamp.has_gmtoff) {
+		int nwrite = strftime(timestamp, 50, "%FT%T", &entry->timestamp.tm);
+		snprintf(timestamp + nwrite, 50 - nwrite, "%+05d", entry->timestamp.gmtoff);
+	} else {
+		strftime(timestamp, 50, "%F %R", &entry->timestamp.tm);
+	}
 
 	/* strip trailing newline so colors don't span line breaks */
 	if(*(c = message + strlen(message) - 1) == '\n') {
@@ -375,12 +380,12 @@ int main(int argc, char **argv)
 		for(i = entries; i; i = i->next) {
 			pu_log_entry_t *e = i->data;
 
-			if(after && mktime(&e->timestamp) >= after) {
+			if(after && mktime(&e->timestamp.tm) >= after) {
 				print_entry(stdout, e);
 				continue;
 			}
 
-			if(before && mktime(&e->timestamp) <= before) {
+			if(before && mktime(&e->timestamp.tm) <= before) {
 				print_entry(stdout, e);
 				continue;
 			}

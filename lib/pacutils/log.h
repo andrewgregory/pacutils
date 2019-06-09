@@ -44,7 +44,14 @@ typedef struct {
 } pu_log_action_t;
 
 typedef struct {
-	struct tm timestamp;
+	struct tm tm;
+	int gmtoff;
+	unsigned int has_seconds:1;
+	unsigned int has_gmtoff:1;
+} pu_log_timestamp_t;
+
+typedef struct {
+	pu_log_timestamp_t timestamp;
 	char *caller;
 	char *message;
 } pu_log_entry_t;
