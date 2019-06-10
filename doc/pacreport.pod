@@ -68,7 +68,7 @@ pass twice to search outside F</etc>.
 
 =item B<--group>=I<name>
 
-Display any packages in group I<name> that are not currently installed.
+Display any packages in group I<name> that are not currently installed. May be specified multiple times.
 
 =item B<--missing-files>
 
