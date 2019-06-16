@@ -1036,7 +1036,6 @@ int main(int argc, char **argv)
 
 	if(alpm_trans_commit(handle, &err_data) != 0) {
 		switch(alpm_errno(handle)) {
-				case ALPM_ERR_DLT_INVALID:
 				case ALPM_ERR_PKG_INVALID:
 				case ALPM_ERR_PKG_INVALID_CHECKSUM:
 				case ALPM_ERR_PKG_INVALID_SIG:

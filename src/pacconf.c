@@ -324,8 +324,6 @@ void dump_options(void)
 	show_bool("VerbosePkgLists", config->verbosepkglists);
 	show_bool("ILoveCandy", config->ilovecandy);
 
-	show_float("UseDelta", config->usedelta);
-
 	show_cleanmethod("CleanMethod", config->cleanmethod);
 
 	show_siglevel("SigLevel", config->siglevel, 0);
@@ -442,9 +440,6 @@ int list_directives(alpm_list_t *directives)
 			show_bool("VerbosePkgLists", config->verbosepkglists);
 		} else if(strcasecmp(i->data, "DisableDownloadTimeout") == 0) {
 			show_bool("DisableDownloadTimeout", config->disabledownloadtimeout);
-
-		} else if(strcasecmp(i->data, "UseDelta") == 0) {
-			show_float("UseDelta", config->usedelta);
 
 		} else if(strcasecmp(i->data, "CleanMethod") == 0) {
 			show_cleanmethod("CleanMethod", config->cleanmethod);

@@ -483,7 +483,6 @@ int install_packages(alpm_handle_t *handle, alpm_list_t *packages) {
 
 	if(alpm_trans_commit(handle, &err_data) != 0) {
 		switch(alpm_errno(handle)) {
-			case ALPM_ERR_DLT_INVALID:
 			case ALPM_ERR_PKG_INVALID:
 			case ALPM_ERR_PKG_INVALID_CHECKSUM:
 			case ALPM_ERR_PKG_INVALID_SIG:

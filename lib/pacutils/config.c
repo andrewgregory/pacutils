@@ -46,7 +46,6 @@ struct _pu_config_setting {
   {"CleanMethod",     PU_CONFIG_OPTION_CLEANMETHOD},
   {"Color",           PU_CONFIG_OPTION_COLOR},
   {"UseSyslog",       PU_CONFIG_OPTION_USESYSLOG},
-  {"UseDelta",        PU_CONFIG_OPTION_USEDELTA},
   {"TotalDownload",   PU_CONFIG_OPTION_TOTALDOWNLOAD},
   {"CheckSpace",      PU_CONFIG_OPTION_CHECKSPACE},
   {"VerbosePkgLists", PU_CONFIG_OPTION_VERBOSEPKGLISTS},
@@ -275,8 +274,6 @@ pu_config_t *pu_config_new(void)
   config->siglevel = ALPM_SIG_USE_DEFAULT;
   config->localfilesiglevel = ALPM_SIG_USE_DEFAULT;
   config->remotefilesiglevel = ALPM_SIG_USE_DEFAULT;
-
-  config->usedelta = -1.0;
 
   return config;
 }
@@ -531,7 +528,6 @@ void pu_config_merge(pu_config_t *dest, pu_config_t *src)
   MERGEBOOL(dest->disabledownloadtimeout, src->disabledownloadtimeout);
 
   MERGEVAL(dest->cleanmethod, src->cleanmethod);
-  MERGEVAL(dest->usedelta, src->usedelta);
 
   MERGESTR(dest->rootdir, src->rootdir);
   MERGESTR(dest->dbpath, src->dbpath);
@@ -773,17 +769,6 @@ int pu_config_reader_next(pu_config_reader_t *reader)
               _PU_ERR(reader, PU_CONFIG_READER_STATUS_INVALID_VALUE);
           }
           break;
-        case PU_CONFIG_OPTION_USEDELTA:
-          {
-            char *end;
-            float d = strtof(mini->value, &end);
-            if(*end != '\0' || d < 0.0 || d > 2.0) {
-              _PU_ERR(reader, PU_CONFIG_READER_STATUS_INVALID_VALUE);
-            } else {
-              config->usedelta = d;
-            }
-          }
-          break;
         case PU_CONFIG_OPTION_SIGLEVEL:
           if(_pu_config_parse_siglevel(mini->value, &(config->siglevel),
                 &(config->siglevel_mask)) != 0) {
@@ -834,9 +819,6 @@ int pu_config_reader_next(pu_config_reader_t *reader)
           break;
         case PU_CONFIG_OPTION_USESYSLOG:
           config->usesyslog = 1;
-          break;
-        case PU_CONFIG_OPTION_USEDELTA:
-          config->usedelta = 0.7;
           break;
         case PU_CONFIG_OPTION_TOTALDOWNLOAD:
           config->totaldownload = 1;

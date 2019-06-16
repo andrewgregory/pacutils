@@ -44,7 +44,6 @@ char buf[] =
 "CleanMethod = KeepInstalled KeepCurrent\n"
 "UseSyslog\n"
 "Color\n"
-"UseDelta\n"
 "TotalDownload\n"
 "CheckSpace\n"
 "VerbosePkgLists\n"
@@ -110,7 +109,7 @@ int main(void) {
 
 	while(pu_config_reader_next(reader) != -1);
 
-	tap_plan(39);
+	tap_plan(38);
 
 	tap_ok(reader->eof, "eof reached");
 	tap_ok(!reader->error, "no error");
@@ -163,8 +162,6 @@ int main(void) {
 	is_str_list(i, "holdpkga", "HoldPkg a");
 	is_str_list(i, "holdpkgb", "HoldPkg b");
 	is_list_exhausted(i, "holdpkgs");
-
-	tap_is_float(config->usedelta, 0.7, 0.0001, "UseDelta (default)");
 
 	tap_ok(config->repos != NULL, "repo list");
 

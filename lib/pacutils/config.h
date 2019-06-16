@@ -36,7 +36,6 @@ typedef enum pu_config_option_t {
   PU_CONFIG_OPTION_CLEANMETHOD,
   PU_CONFIG_OPTION_COLOR,
   PU_CONFIG_OPTION_USESYSLOG,
-  PU_CONFIG_OPTION_USEDELTA,
   PU_CONFIG_OPTION_TOTALDOWNLOAD,
   PU_CONFIG_OPTION_CHECKSPACE,
   PU_CONFIG_OPTION_VERBOSEPKGLISTS,
@@ -90,8 +89,6 @@ typedef struct pu_config_t {
   pu_config_bool_t usesyslog;
   pu_config_bool_t verbosepkglists;
   pu_config_bool_t disabledownloadtimeout;
-
-  float usedelta;
 
   int siglevel;
   int localfilesiglevel;
