@@ -161,9 +161,23 @@ pu_config_t *parse_opts(int argc, char **argv) {
 	return config;
 }
 
+int _fchmodat(int fd, const char *path, mode_t mode, int flag) {
+	int ret = fchmodat(fd, path, mode, flag);
+	if(ret != 0 && flag & AT_SYMLINK_NOFOLLOW && errno == ENOTSUP) {
+		/* Linux does not provide a proper fchmodat with AT_SYMLINK_NOFOLLOW
+		 * support and pre-emptively fails if it's used; fall back to a more
+		 * portable method */
+		int ofd = openat(fd, path, O_RDONLY | O_NOFOLLOW);
+		if(ofd == -1) { errno = EOPNOTSUPP; return -1; }
+		ret = fchmod(ofd, mode);
+		close(ofd);
+	}
+	return ret;
+}
+
 int fix_mode(const char *path, struct archive_entry *entry) {
 	mode_t m = archive_entry_perm(entry);
-	if(fchmodat(AT_FDCWD, path, m, AT_SYMLINK_NOFOLLOW) != 0) {
+	if(_fchmodat(AT_FDCWD, path, m, AT_SYMLINK_NOFOLLOW) != 0) {
 		pu_ui_warn("%s: unable to set permissions (%s)", path, strerror(errno));
 		return 1;
 	} else if(verbose) {
