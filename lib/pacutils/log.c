@@ -121,7 +121,13 @@ int pu_log_fprint_entry(FILE *stream, pu_log_entry_t *entry)
 {
 	char timestamp[50];
 
-	strftime(timestamp, 50, "%F %R", &entry->timestamp.tm);
+	if(entry->timestamp.has_gmtoff) {
+		int nwrite = strftime(timestamp, 50, "%FT%T", &entry->timestamp.tm);
+		snprintf(timestamp + nwrite, 50 - nwrite, "%+05d", entry->timestamp.gmtoff);
+	} else {
+		strftime(timestamp, 50, "%F %R", &entry->timestamp.tm);
+	}
+
 	if(entry->caller) {
 		return fprintf(stream, "[%s] [%s] %s",
 				timestamp, entry->caller, entry->message);
