@@ -183,6 +183,12 @@ Repair file properties based on pacman's database.
 
  find /usr/share | pacrepairfile --uid --gid
 
+=item paclock
+
+Provide script-friendly database locking and unlocking.
+
+ paclock --run -- paccache --dryrun --verbose
+
 =item paclog
 
 Filter pacman log entries.  If multiple filters are provided, the entries

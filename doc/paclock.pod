@@ -1,0 +1,97 @@
+=head1 NAME
+
+paclock - lock/unlock the alpm database
+
+=head1 SYNOPSIS
+
+ paclock [options]
+ paclock (--help|--version)
+
+=head1 DESCRIPTION
+
+Safe locking and unlocking of the ALPM database using identity keys for
+scripts.
+
+=head1 OPTIONS
+
+=over
+
+=item B<--config>=F<path>
+
+Set an alternate configuration file path.
+
+=item B<--lockfile>=F<path>
+
+Set an alternate lock file path.
+
+=item B<--root>=F<path>
+
+Set an alternate installation root.
+
+=item B<--sysroot>=F<path>
+
+Set an alternate system root.  See L<pacutils-sysroot(7)>.
+
+=item B<--lock>
+
+Lock the database (default).
+
+=item B<--unlock>
+
+Unlock the database.
+
+=item B<--run>
+
+Treat C<argv> as a command to run with the database locked.  If the command
+returns non-zero, the lock file will be left in place to indicate an error.
+
+=item B<--print>
+
+Write the lock file path to F<stdout> and exit without modifying the lock file.
+
+=item B<--no-check-keys>
+
+Skip checking for an identity key match before unlocking.
+
+=item B<--enoent-ok>
+
+Do not treat a non-existent lock file as an error when unlocking.
+
+=item B<--key>=I<identity>
+
+An identifier to write to the lock file.  By default, B<--unlock> will only
+operate if the lock file was previously locked with the same key.  Defaults to
+the hostname followed by a colon and the process id of the caller (for example:
+C<localhost:123>).
+
+=item B<--help>
+
+Display usage information and exit.
+
+=item B<--version>
+
+Display version information and exit.
+
+=back
+
+=head1 EXAMPLE
+
+The system configuration that B<paclock> relies on to construct the default
+lock file path and identity key may change between invocations.  To ensure
+consistency, scripts should explicitly provide the path and key to use each
+time B<paclock> is called.
+
+ #!/bin/bash
+ lock_file="$(paclock --print)"
+ lock_key="myapp:$(hostname):$$"
+ paclock --lockfile="$lock_file" --key="$lock_key" || exit 1
+ echo "do stuff here"
+ paclock --lockfile="$lock_file" --key="$lock_key" --unlock || exit 1
+
+Run a command lacking native lock support:
+
+ paclock --run -- paccache --dryrun --verbose
+
+=head1 SEE ALSO
+
+pacconf(1)

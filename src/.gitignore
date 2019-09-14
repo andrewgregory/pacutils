@@ -5,6 +5,7 @@ pacfile
 pacinfo
 pacini
 pacinstall
+paclock
 paclog
 pacremove
 pacrepairdb
