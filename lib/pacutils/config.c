@@ -909,6 +909,7 @@ void pu_config_reader_free(pu_config_reader_t *reader)
   if(!reader) { return; }
   free(reader->file);
   free(reader->sysroot);
+  if(reader->_sysroot_fd > -1) { close(reader->_sysroot_fd); }
   free(reader->section);
   mini_free(reader->_mini);
   FREELIST(reader->_includes);
