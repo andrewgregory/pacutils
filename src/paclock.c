@@ -196,8 +196,8 @@ int check_key(void) {
 }
 
 int remove_lock(void) {
-	if(!nocheck) {
-		check_key();
+	if(!nocheck && check_key() != 0) {
+		return 1;
 	}
 
 	if(unlink(lockfile) != 0) {
