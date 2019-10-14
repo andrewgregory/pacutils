@@ -195,12 +195,7 @@ pu_config_t *parse_opts(int argc, char **argv) {
 		}
 	}
 
-	if(sysroot && (chroot(sysroot) != 0 || chdir("/") != 0)) {
-		pu_ui_error("unable to chroot to '%s' (%s)", sysroot, strerror(errno));
-		return NULL;
-	}
-
-	if(!pu_ui_config_load(config, config_file)) {
+	if(!pu_ui_config_load_sysroot(config, config_file, sysroot)) {
 		fprintf(stderr, "error: could not parse '%s'\n", config_file);
 		return NULL;
 	}

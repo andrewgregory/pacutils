@@ -36,46 +36,28 @@ installation root if unset).
 
 =head2 Introducing the Sysroot
 
-This is a significant amount of work just to run operate on a mounted system
-and even setting all of the configuration paths may not work correctly in the
-future if libalpm gains the ability to automatically add system users.  In
-order to allow reliable operating on a mounted guest, pacman and pacutils have
-added the concept of a "sysroot".  The sysroot is what is commonly intended
-when using the B<--root> option; the program will operate as if the sysroot
-were actually the filesystem root.  This is similar to using C<chroot> to enter
-the mounted system before running the program, but still runs the host's copy.
-There are two ways to do this: chroot into the sysroot shortly after startup
-prior to reading any configuration or prepend the sysroot to all paths.
+This is a significant amount of work just to run operate on a mounted system.
+In order to allow reliable operating on a mounted guest, pacman and pacutils
+have added the concept of a "sysroot".  The sysroot is what is commonly
+intended when using the B<--root> option; the program will operate as if the
+sysroot were actually the filesystem root.  This is similar to using C<chroot>
+to enter the mounted system before running the program, but still runs the
+host's copy.  There are two ways to do this: chroot into the sysroot shortly
+after startup prior to reading any configuration or prepend the sysroot to all
+paths.
 
-Pacman, and all pacutils programs that run transactions, C<chroot> almost
-immediately after startup. In order to use these programs with B<--sysroot>
-they must be run as root, or otherwise run with CAP_CHROOT. As with C<chroot>,
-all paths, whether given as configuration options or arguments, must refer to
-paths under the sysroot without including the sysroot in the path.
+Using C<chroot> directly can cause problems with libraries that use delayed
+loading of configuration files or shared objects.  Notably, glibc delays
+loading certain objects until their functionality is actually used.  This can
+cause a mismatch between components loaded prior to the C<chroot> and those
+loaded after.  To avoid this problem, libalpm should generally be configured to
+use paths under the sysroot without actually calling C<chroot>.
 
-In order to allow non-root usage, pacutils programs that do not run
-transactions take the second approach. For compatibility with programs that
-implement the sysroot using C<chroot>, the sysroot is prepended to all paths.
-So, all paths must similarly refer to files under the sysroot without including
-the sysroot itself.
-
-=head2 Correctly Managing a Mounted Guest
-
-Programs that will be performing a transaction, should simply chroot(2) and
-chdir(2) into the system root as soon as possible, at least prior to parsing
-F<pacman.conf>, and proceed as normal.  Transactions that include scripts or
-hooks already require chroot(2) permissions, so this is unlikely to add any new
-restrictions or requirements to the program.  Additionally, using chroot(2)
-will improve compatibility with future versions of libalpm that may perform
-additional user management operations during transactions.
-
-Programs that perform read-only operations on the guest can still use
-chroot(2), but may wish to avoid it in order to avoid requiring root
-privileges.  Pacutils provides sysroot-aware versions of its configuration
-parsing functions that can be used instead.  For consistency with programs that
-use chroot(2), read-only programs should prepend the sysroot to any given
-paths.  Pacutils provides functions to handle prepending the sysroot to
-individual strings as well as lists of strings.
+Pacutils provides sysroot-aware versions of its configuration parsing functions
+to simplify the process.  Note that the sysroot is prepended to all paths
+during config resolution.  Programs using the sysroot configuration parsing
+routines should B<NOT> prepend the sysroot to configuration paths provided on
+the command line.
 
 =head1 EXAMPLES
 
