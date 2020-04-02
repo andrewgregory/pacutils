@@ -17,6 +17,8 @@ Generate a report of installed packages including:
 
 =item unneeded packages installed as dependencies
 
+=item unneeded packages in a dependency cycle
+
 =item installed packages not in a repository
 
 =item packages missing from specified groups

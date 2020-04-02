@@ -223,38 +223,99 @@ void print_pkglist(alpm_handle_t *handle, alpm_list_t *pkgs)
 	}
 }
 
-void print_toplevel_explicit(alpm_handle_t *handle)
+int _pu_version_satisfies_dep(const char *ver, alpm_depend_t *dep)
 {
-	alpm_db_t *localdb = alpm_get_localdb(handle);
-	alpm_list_t *matches = NULL, *p, *pkgs = alpm_db_get_pkgcache(localdb);
-
-	for(p = pkgs; p; p = p->next) {
-		alpm_list_t *rb = alpm_pkg_compute_requiredby(p->data);
-		if(!rb && alpm_pkg_get_reason(p->data) == ALPM_PKG_REASON_EXPLICIT) {
-			matches = alpm_list_add(matches, p->data);
+	if(dep->mod == ALPM_DEP_MOD_ANY) {
+		return 1;
+	} else {
+		int cmp = alpm_pkg_vercmp(ver, dep->version);
+		switch(dep->mod) {
+			case ALPM_DEP_MOD_EQ: return cmp == 0;
+			case ALPM_DEP_MOD_LE: return cmp <= 0;
+			case ALPM_DEP_MOD_GE: return cmp >= 0;
+			case ALPM_DEP_MOD_LT: return cmp < 0;
+			case ALPM_DEP_MOD_GT: return cmp > 0;
+			case ALPM_DEP_MOD_ANY: return 1; /* duplicated here for consistency */
 		}
-		FREELIST(rb);
 	}
-	printf("Unneeded Packages Installed Explicitly:\n");
-	print_pkglist(handle, matches);
-	alpm_list_free(matches);
+	return 0;
 }
 
-void print_toplevel_depends(alpm_handle_t *handle)
+int _pu_pkg_satisfies_dep(alpm_pkg_t *pkg, alpm_depend_t *dep)
+{
+	alpm_list_t *p;
+	if(strcmp(alpm_pkg_get_name(pkg), dep->name) == 0 &&
+			_pu_version_satisfies_dep(alpm_pkg_get_version(pkg), dep)) {
+		return 1;
+	}
+	for(p = alpm_pkg_get_provides(pkg); p; p = p->next) {
+		alpm_depend_t *provide = p->data;
+		if(provide->name_hash == dep->name_hash
+				&& strcmp(provide->name, dep->name) == 0
+				&& _pu_version_satisfies_dep(provide->version, dep)) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
+int _pu_pkg_depends_on(alpm_pkg_t *pkg, alpm_pkg_t *dpkg)
+{
+	alpm_list_t *d, *deps = alpm_pkg_get_depends(pkg);
+	for(d = deps; d; d = d->next) {
+		if(_pu_pkg_satisfies_dep(dpkg, d->data)) { return 1; }
+	}
+	return 0;
+}
+
+void print_unneeded_packages(alpm_handle_t *handle)
 {
 	alpm_db_t *localdb = alpm_get_localdb(handle);
-	alpm_list_t *matches = NULL, *p, *pkgs = alpm_db_get_pkgcache(localdb);
+	alpm_list_t *leaves_e = NULL, *leaves_d = NULL;
+	alpm_list_t *connected = NULL, *disconnected = NULL;
+	alpm_list_t *p, *pkgs = alpm_db_get_pkgcache(localdb);
 
 	for(p = pkgs; p; p = p->next) {
 		alpm_list_t *rb = alpm_pkg_compute_requiredby(p->data);
-		if(!rb && alpm_pkg_get_reason(p->data) == ALPM_PKG_REASON_DEPEND) {
-			matches = alpm_list_add(matches, p->data);
+		if(!rb) {
+			if(alpm_pkg_get_reason(p->data) == ALPM_PKG_REASON_EXPLICIT) {
+				leaves_e = alpm_list_add(leaves_e, p->data);
+			} else {
+				leaves_d = alpm_list_add(leaves_d, p->data);
+			}
 		}
 		FREELIST(rb);
 	}
+
+	connected = alpm_list_join(alpm_list_copy(leaves_e), alpm_list_copy(leaves_d));
+	disconnected = alpm_list_copy(pkgs);
+	for(p = connected; p; p = p->next) {
+		alpm_list_t *l, *next = NULL;
+		for(l = disconnected; l; l = next) {
+			next = l->next;
+			if(p->data == l->data) {
+				disconnected = alpm_list_remove_item(disconnected, l);
+				free(l);
+			} else if(_pu_pkg_depends_on(p->data, l->data)) {
+				connected = alpm_list_add(connected, l->data);
+				disconnected = alpm_list_remove_item(disconnected, l);
+				free(l);
+			}
+		}
+	}
+
+	printf("Unneeded Packages Installed Explicitly:\n");
+	print_pkglist(handle, leaves_e);
+	alpm_list_free(leaves_e);
+
 	printf("Unneeded Packages Installed As Dependencies:\n");
-	print_pkglist(handle, matches);
-	alpm_list_free(matches);
+	print_pkglist(handle, leaves_d);
+	alpm_list_free(leaves_d);
+
+	printf("Unneeded Packages In A Dependency Cycle:\n");
+	print_pkglist(handle, disconnected);
+	alpm_list_free(disconnected);
+	alpm_list_free(connected);
 }
 
 int pkg_is_foreign(alpm_handle_t *handle, alpm_pkg_t *pkg)
@@ -781,8 +842,7 @@ int main(int argc, char **argv)
 		scan_filesystem(handle, backup_files, orphan_files);
 	}
 
-	print_toplevel_explicit(handle);
-	print_toplevel_depends(handle);
+	print_unneeded_packages(handle);
 	print_foreign(handle);
 	if(groups) {
 		print_group_missing(handle, groups);
