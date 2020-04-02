@@ -784,12 +784,9 @@ int main(int argc, char **argv)
 	print_toplevel_explicit(handle);
 	print_toplevel_depends(handle);
 	print_foreign(handle);
-
-	if(!groups) {
-		groups = alpm_list_add(groups, strdup("base"));
-		groups = alpm_list_add(groups, strdup("base-devel"));
+	if(groups) {
+		print_group_missing(handle, groups);
 	}
-	print_group_missing(handle, groups);
 
 	if(missing_files) {
 		print_missing_files(handle);
