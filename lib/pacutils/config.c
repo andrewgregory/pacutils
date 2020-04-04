@@ -436,8 +436,13 @@ int pu_config_resolve_sysroot(pu_config_t *config, const char *sysroot)
     alpm_list_t *s;
     for(s = r->servers; s; s = s->next) {
       if(strncmp("file://", s->data, 7) == 0) {
-        char *newdir = pu_prepend_dir(sysroot, (char*)s->data + 7);
-        char *newsrv = pu_asprintf("file://%s", newdir);
+        char *newdir = NULL, *newsrv = NULL;
+        if((newdir = pu_prepend_dir(sysroot, (char*)s->data + 7)) == NULL
+              || (newsrv = pu_asprintf("file://%s", newdir)) == NULL) {
+          free(newdir);
+          free(newsrv);
+          return 1;
+        }
         free(newdir);
         free(s->data);
         s->data = newsrv;
