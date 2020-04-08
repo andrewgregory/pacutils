@@ -54,7 +54,7 @@ enum action {
 
 char *config_file = PACMANCONF, *dbpath = NULL, *root = NULL, *sysroot = NULL;
 char *key = NULL, *lockfile = NULL;
-int nocheck = 0, enoent_ok = 0, action = ACTION_LOCK;
+int nocheck = 0, enoent_ok = 0, fail_ok = 0, action = ACTION_LOCK;
 
 void usage(int ret)
 {
@@ -76,6 +76,7 @@ void usage(int ret)
 	hputs("   --print            print the lock file path exit");
 	hputs("   --no-check-keys    skip check for matching lock file key before unlocking");
 	hputs("   --enoent-ok        ignore unlock errors due to a missing lock file");
+	hputs("   --fail-ok          always unlock the database following --run");
 #undef hputs
 	exit(ret);
 }
@@ -97,6 +98,7 @@ void parse_opts(int argc, char **argv)
 		{ "no-check-keys" , no_argument       , &nocheck   , 1                 } ,
 
 		{ "enoent-ok"     , no_argument       , &enoent_ok , 1                 } ,
+		{ "fail-ok"       , no_argument       , &fail_ok   , 1                 } ,
 
 		{ "lock"          , no_argument       , &action    , ACTION_LOCK       } ,
 		{ "unlock"        , no_argument       , &action    , ACTION_UNLOCK     } ,
@@ -228,9 +230,14 @@ int run_cmd(char **argv) {
 		default:
 			/* parent */
 			while(waitpid(pid, &ret, 0) == -1 && errno == EINTR);
-			/* if something went wrong, leave the lock to indicate an error */
-			if(WEXITSTATUS(ret) != 0) { return WEXITSTATUS(ret); }
-			return remove_lock();
+			/* if something went wrong, leave the lock to indicate an error,
+			 * unless the caller indicated otherwise */
+			if(WEXITSTATUS(ret) != 0) {
+				if(fail_ok) { remove_lock(); }
+				return WEXITSTATUS(ret);
+			} else {
+				return remove_lock();
+			}
 	}
 }
 

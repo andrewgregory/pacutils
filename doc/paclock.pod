@@ -43,7 +43,15 @@ Unlock the database.
 =item B<--run>
 
 Treat C<argv> as a command to run with the database locked.  If the command
-returns non-zero, the lock file will be left in place to indicate an error.
+returns non-zero, the lock file will be left in place to indicate an error
+unless B<--fail-ok> is used.
+
+=item B<--fail-ok>
+
+Unlock the database after running a command with B<--run> even if the command
+returns non-zero.  Generally, the database should be left locked if it may be
+in an inconsistent to indicate that it may need to be repaired.  This flag is
+intended primarily for read-only operations.
 
 =item B<--print>
 
