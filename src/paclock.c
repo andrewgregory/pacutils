@@ -216,7 +216,6 @@ int run_cmd(char **argv) {
 	if(create_lock() != 0) { return 1; }
 	switch((pid = fork())) {
 		case -1:
-			remove_lock();
 			pu_ui_error("unable to fork process (%s)", strerror(errno));
 			remove_lock(); /* command didn't run, the lock can safely be removed */
 			return 1;
