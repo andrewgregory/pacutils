@@ -191,8 +191,10 @@ void print_pkg_info(alpm_handle_t *handle, alpm_pkg_t *pkg, size_t pkgname_len)
 	char size[20];
 	alpm_list_t *group;
 
-	printf("  %-*s	%8s", (int) pkgname_len, alpm_pkg_get_name(pkg),
-			pu_hr_size( get_pkg_chain_size(handle, pkg), size));
+	printf("  %-*s	%8s - %s",
+			(int) pkgname_len, alpm_pkg_get_name(pkg),
+			pu_hr_size( get_pkg_chain_size(handle, pkg), size),
+			alpm_pkg_get_desc(pkg));
 
 	if(alpm_pkg_get_groups(pkg)) {
 		fputs(" (", stdout);
