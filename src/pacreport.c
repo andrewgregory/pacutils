@@ -831,12 +831,12 @@ int parse_config(const char *path)
 				if(streq(mini->key, "IgnoreUnowned")) {
 					ignore = alpm_list_add(ignore, strdup(mini->value));
 				} else {
-					pu_ui_warn("unknown option '%s' in section '%s'\n",
-							mini->key, mini->section);
+					pu_ui_warn("unknown option '%s' in '%s' section '%s'\n",
+							mini->key, path, mini->section);
 				}
 			} else {
-				pu_ui_warn("unknown option '%s' in section '%s'\n",
-						mini->key, mini->section);
+				pu_ui_warn("unknown option '%s' in '%s' section '%s'\n",
+						mini->key, path, mini->section);
 			}
 		}
 	}
