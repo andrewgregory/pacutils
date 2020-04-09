@@ -78,29 +78,6 @@ static int streq(const char *s1, const char *s2)
 	return (s1 == s2 || (s1 && s2 && strcmp(s1, s2) == 0));
 }
 
-static void warn(const char *fmt, ...)
-{
-	if(fmt) {
-		va_list ap;
-		va_start(ap, fmt);
-		fputs("warning: ", stderr);
-		vfprintf(stderr, fmt, ap);
-		va_end(ap);
-	}
-}
-
-static void die(const char *fmt, ...)
-{
-	if(fmt) {
-		va_list ap;
-		va_start(ap, fmt);
-		fputs("error: ", stderr);
-		vfprintf(stderr, fmt, ap);
-		va_end(ap);
-	}
-	exit(1);
-}
-
 struct pkg_ignore_t *pkg_ignore_new(const char *pkgname, const char *ignore)
 {
 	struct pkg_ignore_t *pi = malloc(sizeof(struct pkg_ignore_t));
@@ -495,11 +472,11 @@ off_t get_cache_size(alpm_handle_t *handle, int fd, const char *path,
 	DIR *d;
 
 	if((dirfd = openat(fd, path, O_RDONLY | O_DIRECTORY)) < 0) {
-		warn("unable to open cachedir '%s' (%s)\n", path, strerror(errno));
+		pu_ui_warn("unable to open cachedir '%s' (%s)\n", path, strerror(errno));
 		return 0;
 	}
 	if((d = fdopendir(dirfd)) == NULL) {
-		warn("unable to open cachedir '%s' (%s)\n", path, strerror(errno));
+		pu_ui_warn("unable to open cachedir '%s' (%s)\n", path, strerror(errno));
 		close(dirfd);
 		return 0;
 	}
@@ -511,7 +488,7 @@ off_t get_cache_size(alpm_handle_t *handle, int fd, const char *path,
 			continue;
 		}
 		if(fstatat(dirfd, de->d_name, &buf, AT_SYMLINK_NOFOLLOW) != 0) {
-			warn("unable to stat '%s' (%s)\n", de->d_name, strerror(errno));
+			pu_ui_warn("unable to stat '%s' (%s)\n", de->d_name, strerror(errno));
 			continue;
 		}
 
@@ -831,17 +808,21 @@ pu_config_t *parse_opts(int argc, char **argv)
 	return config;
 }
 
-void parse_config(const char *path)
+int parse_config(const char *path)
 {
 	mini_t *mini = mini_init(path);
 	if(mini == NULL) {
-		if(errno == ENOENT) { return; }
-		die("failed to initialize ini parser for '%s' (%s)\n", path, strerror(errno));
+		if(errno == ENOENT) { return 0; }
+		pu_ui_error("failed to initialize ini parser for '%s' (%s)\n",
+				path, strerror(errno));
+		return -1;
 	}
 	while(mini_next(mini)) {
 		if(mini->key) {
 			if(!mini->value) {
-				die("option '%s' require a value\n", mini->key);
+				pu_ui_error("option '%s' require a value\n", mini->key);
+				mini_free(mini);
+				return -1;
 			}
 			if(streq(mini->section, "PkgIgnoreUnowned")) {
 				struct pkg_ignore_t *pi = pkg_ignore_new(mini->key, mini->value);
@@ -850,17 +831,22 @@ void parse_config(const char *path)
 				if(streq(mini->key, "IgnoreUnowned")) {
 					ignore = alpm_list_add(ignore, strdup(mini->value));
 				} else {
-					warn("unknown option '%s' in section '%s'\n", mini->key, mini->section);
+					pu_ui_warn("unknown option '%s' in section '%s'\n",
+							mini->key, mini->section);
 				}
 			} else {
-				warn("unknown option '%s' in section '%s'\n", mini->key, mini->section);
+				pu_ui_warn("unknown option '%s' in section '%s'\n",
+						mini->key, mini->section);
 			}
 		}
 	}
 	if(!mini->eof) {
-		die("reading '%s' failed (%s)\n", path, strerror(errno));
+		pu_ui_error("reading '%s' failed (%s)\n", path, strerror(errno));
+		mini_free(mini);
+		return -1;
 	}
 	mini_free(mini);
+	return 0;
 }
 
 int main(int argc, char **argv)
@@ -884,7 +870,10 @@ int main(int argc, char **argv)
 	}
 	pu_register_syncdbs(handle, config->repos);
 
-	parse_config(SYSCONFDIR "/pacreport.conf");
+	if(parse_config(SYSCONFDIR "/pacreport.conf") != 0) {
+		ret = -1;
+		goto cleanup;
+	}
 
 	if(backup_files || orphan_files) {
 		scan_filesystem(handle, backup_files, orphan_files);
