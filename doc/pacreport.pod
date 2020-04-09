@@ -35,6 +35,9 @@ Generate a report of installed packages including:
 
 Package sizes include dependencies not needed by other packages.
 
+Packages prefixed by an asterisk (C<*>) are optional dependencies for another
+package.
+
 =head1 OPTIONS
 
 =over

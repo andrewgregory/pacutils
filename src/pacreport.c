@@ -189,9 +189,16 @@ off_t get_pkg_chain_size(alpm_handle_t *handle, alpm_pkg_t *pkg)
 void print_pkg_info(alpm_handle_t *handle, alpm_pkg_t *pkg, size_t pkgname_len)
 {
 	char size[20];
-	alpm_list_t *group;
+	alpm_list_t *group, *optional_for;
+	int is_optional = 0;
 
-	printf("  %-*s	%8s - %s",
+	if((optional_for = alpm_pkg_compute_optionalfor(pkg))) {
+		is_optional = 1;
+		FREELIST(optional_for);
+	}
+
+	printf(" %c%-*s	%8s - %s",
+			is_optional ? '*' : ' ',
 			(int) pkgname_len, alpm_pkg_get_name(pkg),
 			pu_hr_size( get_pkg_chain_size(handle, pkg), size),
 			alpm_pkg_get_desc(pkg));
