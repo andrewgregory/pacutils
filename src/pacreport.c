@@ -42,7 +42,7 @@ const char *myname = "pacreport", *myver = BUILDVER;
 pu_config_t *config = NULL;
 alpm_handle_t *handle;
 alpm_list_t *groups = NULL, *ignore = NULL, *pkg_ignore = NULL;
-int missing_files = 0, backup_files = 0, orphan_files = 0;
+int missing_files = 0, backup_files = 0, orphan_files = 0, optional_deps = 0;
 int looped_explicit = 0;
 char *dbext = NULL;
 const char *sysroot = NULL;
@@ -56,6 +56,7 @@ enum longopt_flags {
 	FLAG_GROUP,
 	FLAG_HELP,
 	FLAG_MISSING_FILES,
+	FLAG_OPTIONAL_DEPS,
 	FLAG_ORPHANS,
 	FLAG_ROOT,
 	FLAG_SYSROOT,
@@ -148,7 +149,12 @@ off_t get_pkg_chain_size(alpm_handle_t *handle, alpm_pkg_t *pkg)
 
 	for(d = depchain; d; d = d->next) {
 		alpm_pkg_t *p = d->data;
-		alpm_list_t *dep, *deps = alpm_pkg_get_depends(p);
+		alpm_list_t *dep, *deps = alpm_list_copy(alpm_pkg_get_depends(p));
+		alpm_list_t *r, *rb;
+
+		if(optional_deps) {
+			deps = alpm_list_join(deps, alpm_list_copy(alpm_pkg_get_optdepends(p)));
+		}
 
 		size += alpm_pkg_get_isize(p);
 
@@ -166,8 +172,8 @@ off_t get_pkg_chain_size(alpm_handle_t *handle, alpm_pkg_t *pkg)
 			}
 
 			/* check if the dependency is required outside the chain */
-			alpm_list_t *r, *rb = alpm_pkg_compute_requiredby(satisfier);
 			int required = 0;
+			rb = alpm_pkg_compute_requiredby(satisfier);
 			for(r = rb; r; r = r->next) {
 				alpm_pkg_t *p = alpm_db_get_pkg(localdb, r->data);
 				if(!alpm_list_find_ptr(depchain, p)) {
@@ -176,6 +182,19 @@ off_t get_pkg_chain_size(alpm_handle_t *handle, alpm_pkg_t *pkg)
 				}
 			}
 			FREELIST(rb);
+
+			/* check if the dependency is optionally required outside the chain */
+			if(!required && optional_deps) {
+				rb = alpm_pkg_compute_optionalfor(satisfier);
+				for(r = rb; r; r = r->next) {
+					alpm_pkg_t *p = alpm_db_get_pkg(localdb, r->data);
+					if(!alpm_list_find_ptr(depchain, p)) {
+						required = 1;
+						break;
+					}
+				}
+				FREELIST(rb);
+			}
 
 			if(!required) {
 				depchain = alpm_list_add(depchain, satisfier);
@@ -271,9 +290,14 @@ int _pu_pkg_satisfies_dep(alpm_pkg_t *pkg, alpm_depend_t *dep)
 
 int _pu_pkg_depends_on(alpm_pkg_t *pkg, alpm_pkg_t *dpkg)
 {
-	alpm_list_t *d, *deps = alpm_pkg_get_depends(pkg);
-	for(d = deps; d; d = d->next) {
+	alpm_list_t *d;
+	for(d = alpm_pkg_get_depends(pkg); d; d = d->next) {
 		if(_pu_pkg_satisfies_dep(dpkg, d->data)) { return 1; }
+	}
+	if(optional_deps) {
+		for(d = alpm_pkg_get_optdepends(pkg); d; d = d->next) {
+			if(_pu_pkg_satisfies_dep(dpkg, d->data)) { return 1; }
+		}
 	}
 	return 0;
 }
@@ -287,7 +311,10 @@ void print_unneeded_packages(alpm_handle_t *handle)
 
 	for(p = pkgs; p; p = p->next) {
 		alpm_list_t *rb = alpm_pkg_compute_requiredby(p->data);
-		if(!rb) {
+		if(rb == NULL && optional_deps) {
+			rb = alpm_pkg_compute_optionalfor(p->data);
+		}
+		if(rb == NULL) {
 			if(alpm_pkg_get_reason(p->data) == ALPM_PKG_REASON_EXPLICIT) {
 				leaves_e = alpm_list_add(leaves_e, p->data);
 			} else {
@@ -730,6 +757,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{"group"          , required_argument , NULL       , FLAG_GROUP         } ,
 		{"missing-files"  , no_argument       , NULL       , FLAG_MISSING_FILES } ,
 		{"unowned-files"  , no_argument       , NULL       , FLAG_ORPHANS       } ,
+		{"optional-deps"  , no_argument       , NULL       , FLAG_OPTIONAL_DEPS } ,
 
 		{"help"           , no_argument       , NULL       , FLAG_HELP          } ,
 		{"version"        , no_argument       , NULL       , FLAG_VERSION       } ,
@@ -774,6 +802,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 				break;
 			case FLAG_MISSING_FILES:
 				++missing_files;
+				break;
+			case FLAG_OPTIONAL_DEPS:
+				optional_deps = 1;
 				break;
 			case FLAG_ORPHANS:
 				++orphan_files;
