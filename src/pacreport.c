@@ -596,12 +596,36 @@ void _scan_filesystem(alpm_handle_t *handle, const char *dir, int backups,
 	closedir(dirp);
 }
 
+void find_backups(alpm_handle_t *handle, alpm_list_t **backups) {
+	alpm_list_t *p;
+	for(p = alpm_db_get_pkgcache(alpm_get_localdb(handle)); p; p = p->next) {
+		alpm_pkg_t *pkg = p->data;
+		alpm_list_t *b;
+		for(b = alpm_pkg_get_backup(pkg); b; b = b->next) {
+			alpm_backup_t *bup = b->data;
+			char *extensions[] = { ".pacnew", ".pacsave", ".pacorig", NULL };
+			if(strncmp(bup->name, "etc/", 4) == 0) {
+				continue; /* handled in scan_filesystem */
+			}
+			for(char **e = extensions; *e; e++) {
+				char path[PATH_MAX];
+				sprintf(path, "/%s%s", bup->name, *e);
+				if(access(path, F_OK) == 0) {
+					alpm_list_append_strdup(backups, path);
+				}
+			}
+		}
+	}
+}
+
 void scan_filesystem(alpm_handle_t *handle, int backups, int orphans)
 {
 	char *base_dir = "/etc/";
 	alpm_list_t *orphans_found = NULL, *backups_found = NULL;
 	if(backups > 1 || orphans) {
 		base_dir = "/";
+	} else {
+		find_backups(handle, &backups_found);
 	}
 	_scan_filesystem(handle, base_dir, backups, orphans, &backups_found, &orphans_found);
 

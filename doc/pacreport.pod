@@ -68,8 +68,8 @@ Set an alternate cache directory path.
 
 =item B<--backups>
 
-Search for F<.pac{save,orig,new}> files.  By default only F</etc> is searched;
-pass twice to search outside F</etc>.
+Search for F<.pac{save,orig,new}> files.  By default F</etc> is searched and
+all known config files are checked; pass twice to search outside F</etc>.
 
 =item B<--group>=I<name>
 
