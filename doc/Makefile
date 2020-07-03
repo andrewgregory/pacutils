@@ -18,6 +18,7 @@ MAN1PAGES = \
 						pacfile$(MAN1EXT) \
 						pacinfo$(MAN1EXT) \
 						pacini$(MAN1EXT) \
+						paclock$(MAN1EXT) \
 						paclog$(MAN1EXT) \
 						pacrepairdb$(MAN1EXT) \
 						pacrepairfile$(MAN1EXT) \
