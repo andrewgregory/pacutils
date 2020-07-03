@@ -43,7 +43,6 @@ pu_config_t *config = NULL;
 alpm_handle_t *handle;
 alpm_list_t *groups = NULL, *ignore = NULL, *pkg_ignore = NULL;
 int missing_files = 0, backup_files = 0, orphan_files = 0, optional_deps = 0;
-int looped_explicit = 0;
 char *dbext = NULL;
 const char *sysroot = NULL;
 
@@ -238,7 +237,7 @@ int _pu_pkg_depends_on(alpm_pkg_t *pkg, alpm_pkg_t *dpkg)
 void print_unneeded_packages(alpm_handle_t *handle)
 {
 	alpm_db_t *localdb = alpm_get_localdb(handle);
-	alpm_list_t *leaves_e = NULL, *leaves_d = NULL, *branches_e = NULL;
+	alpm_list_t *leaves_e = NULL, *leaves_d = NULL;
 	alpm_list_t *connected = NULL, *disconnected = NULL;
 	alpm_list_t *p, *pkgs = alpm_db_get_pkgcache(localdb);
 
@@ -253,16 +252,11 @@ void print_unneeded_packages(alpm_handle_t *handle)
 			} else {
 				leaves_d = alpm_list_add(leaves_d, p->data);
 			}
-		} else if(alpm_pkg_get_reason(p->data) == ALPM_PKG_REASON_EXPLICIT) {
-			branches_e = alpm_list_add(branches_e, p->data);
 		}
 		FREELIST(rb);
 	}
 
 	connected = alpm_list_join(alpm_list_copy(leaves_e), alpm_list_copy(leaves_d));
-	if(!looped_explicit) {
-		connected = alpm_list_join(connected, alpm_list_copy(branches_e));
-	}
 	disconnected = alpm_list_copy(pkgs);
 	for(p = connected; p; p = p->next) {
 		alpm_list_t *l, *next = NULL;
@@ -281,16 +275,14 @@ void print_unneeded_packages(alpm_handle_t *handle)
 
 	printf("Unneeded Packages Installed Explicitly:\n");
 	print_pkglist(handle, leaves_e);
+	alpm_list_free(leaves_e);
 
 	printf("Unneeded Packages Installed As Dependencies:\n");
 	print_pkglist(handle, leaves_d);
+	alpm_list_free(leaves_d);
 
 	printf("Unneeded Packages In A Dependency Cycle:\n");
 	print_pkglist(handle, disconnected);
-
-	alpm_list_free(leaves_e);
-	alpm_list_free(leaves_d);
-	alpm_list_free(branches_e);
 	alpm_list_free(disconnected);
 	alpm_list_free(connected);
 }
