@@ -46,6 +46,7 @@ endif
 HEADERS = \
 					pacutils.h \
 					pacutils/config.h \
+					pacutils/depends.h \
 					pacutils/log.h \
 					pacutils/mtree.h \
 					pacutils/ui.h \
@@ -56,6 +57,7 @@ SOURCES = \
 					../ext/mini.c/mini.c \
 					pacutils.c \
 					pacutils/config.c \
+					pacutils/depends.c \
 					pacutils/log.c \
 					pacutils/mtree.c \
 					pacutils/ui.c \

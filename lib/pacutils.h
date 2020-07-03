@@ -33,6 +33,7 @@
 #include <alpm.h>
 
 #include "pacutils/config.h"
+#include "pacutils/depends.h"
 #include "pacutils/log.h"
 #include "pacutils/mtree.h"
 #include "pacutils/ui.h"

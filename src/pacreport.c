@@ -229,54 +229,10 @@ void print_pkglist(alpm_handle_t *handle, alpm_list_t *pkgs)
 	}
 }
 
-int _pu_version_satisfies_dep(const char *ver, alpm_depend_t *dep)
-{
-	if(dep->mod == ALPM_DEP_MOD_ANY) {
-		return 1;
-	} else {
-		int cmp = alpm_pkg_vercmp(ver, dep->version);
-		switch(dep->mod) {
-			case ALPM_DEP_MOD_EQ: return cmp == 0;
-			case ALPM_DEP_MOD_LE: return cmp <= 0;
-			case ALPM_DEP_MOD_GE: return cmp >= 0;
-			case ALPM_DEP_MOD_LT: return cmp < 0;
-			case ALPM_DEP_MOD_GT: return cmp > 0;
-			case ALPM_DEP_MOD_ANY: return 1; /* duplicated here for consistency */
-		}
-	}
-	return 0;
-}
-
-int _pu_pkg_satisfies_dep(alpm_pkg_t *pkg, alpm_depend_t *dep)
-{
-	alpm_list_t *p;
-	if(strcmp(alpm_pkg_get_name(pkg), dep->name) == 0 &&
-			_pu_version_satisfies_dep(alpm_pkg_get_version(pkg), dep)) {
-		return 1;
-	}
-	for(p = alpm_pkg_get_provides(pkg); p; p = p->next) {
-		alpm_depend_t *provide = p->data;
-		if(provide->name_hash == dep->name_hash
-				&& strcmp(provide->name, dep->name) == 0
-				&& _pu_version_satisfies_dep(provide->version, dep)) {
-			return 1;
-		}
-	}
-	return 0;
-}
-
 int _pu_pkg_depends_on(alpm_pkg_t *pkg, alpm_pkg_t *dpkg)
 {
-	alpm_list_t *d;
-	for(d = alpm_pkg_get_depends(pkg); d; d = d->next) {
-		if(_pu_pkg_satisfies_dep(dpkg, d->data)) { return 1; }
-	}
-	if(optional_deps) {
-		for(d = alpm_pkg_get_optdepends(pkg); d; d = d->next) {
-			if(_pu_pkg_satisfies_dep(dpkg, d->data)) { return 1; }
-		}
-	}
-	return 0;
+	return pu_pkg_depends_on(pkg, dpkg)
+		|| (optional_deps && pu_pkg_optdepends_on(pkg, dpkg));
 }
 
 void print_unneeded_packages(alpm_handle_t *handle)
