@@ -33,6 +33,7 @@ const char *myname = "pacinfo", *myver = BUILDVER;
 
 pu_config_t *config = NULL;
 alpm_handle_t *handle = NULL;
+alpm_list_t *allpkgs = NULL;
 
 int level = 2, removable_size = 0, raw = 0;
 int isep = '\n';
@@ -78,6 +79,30 @@ void printl(const char *field, alpm_list_t *values) {
 	while(values) {
 		prints(field, values->data);
 		values = values->next;
+	}
+}
+
+void printr(const char *field, alpm_pkg_t *pkg, alpm_list_t *values, int optdeps) {
+	alpm_list_t *v;
+	for(v = values; v; v = v->next) {
+		alpm_pkg_t *p = v->data;
+		alpm_list_t *deps = optdeps ? alpm_pkg_get_optdepends(p) : alpm_pkg_get_depends(p);
+		for(alpm_list_t *d = deps; d; d = d->next) {
+			alpm_depend_t *dep = d->data;
+			if(pu_pkg_satisfies_dep(pkg, dep)) {
+				if(dep->desc) {
+					char *name = pu_pkgspec(p);
+					char *str = pu_asprintf("%s: %s", name, dep->desc);
+					printf(field, str);
+					free(name);
+					free(str);
+				} else {
+					char *name = pu_pkgspec(p);
+					printf(field, name);
+					free(name);
+				}
+			}
+		}
 	}
 }
 
@@ -276,7 +301,7 @@ void print_pkg_info(alpm_pkg_t *pkg) {
 		alpm_db_t *db = alpm_pkg_get_db(pkg);
 		alpm_db_t *localdb = alpm_get_localdb(handle);
 		alpm_pkgfrom_t origin = alpm_pkg_get_origin(pkg);
-		alpm_list_t *i;
+		alpm_list_t *i = NULL;
 
 		switch(level) {
 			case 1:
@@ -325,13 +350,15 @@ void print_pkg_info(alpm_pkg_t *pkg) {
 				printd("Conflicts:      %s\n", alpm_pkg_get_conflicts(pkg));
 				printd("Replaces:       %s\n", alpm_pkg_get_replaces(pkg));
 
-				i = alpm_pkg_compute_requiredby(pkg);
-				printl("Required By:    %s\n", i);
-				FREELIST(i);
+				pu_pkg_find_requiredby(pkg, allpkgs, &i);
+				printr("Required By:    %s\n", pkg, i, 0);
+				alpm_list_free(i);
+				i = NULL;
 
-				i = alpm_pkg_compute_optionalfor(pkg);
-				printl("Optional For:   %s\n", i);
-				FREELIST(i);
+				pu_pkg_find_optionalfor(pkg, allpkgs, &i);
+				printr("Optional For:   %s\n", pkg, i, 1);
+				alpm_list_free(i);
+				i = NULL;
 
 				printo("Package Size:   %s\n", alpm_pkg_get_size(pkg));
 				printo("Download Size:  %s\n", alpm_pkg_download_size(pkg));
@@ -436,6 +463,10 @@ int main(int argc, char **argv) {
 	alpm_option_set_logcb(handle, cb_log);
 
 	pu_register_syncdbs(handle, config->repos);
+	allpkgs = alpm_list_copy(alpm_db_get_pkgcache(alpm_get_localdb(handle)));
+	for(alpm_list_t *i = alpm_get_syncdbs(handle); i; i = i->next) {
+		allpkgs = alpm_list_join(allpkgs, alpm_list_copy(alpm_db_get_pkgcache(i->data)));
+	}
 
 	for(argv += optind; *argv; ++argv) {
 		if(print_pkgspec_info(*argv) != 0) { ret = 1; }
@@ -453,6 +484,7 @@ int main(int argc, char **argv) {
 	}
 
 cleanup:
+	alpm_list_free(allpkgs);
 	alpm_release(handle);
 	pu_config_free(config);
 
