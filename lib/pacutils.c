@@ -117,31 +117,28 @@ alpm_pkg_t *pu_find_pkgspec(alpm_handle_t *handle, const char *pkgspec)
 	return NULL;
 }
 
-void pu_fprint_pkgspec(FILE *stream, alpm_pkg_t *pkg)
+int pu_fprint_pkgspec(FILE *stream, alpm_pkg_t *pkg)
 {
 	const char *c;
 	switch(alpm_pkg_get_origin(pkg)) {
 		case ALPM_PKG_FROM_FILE:
 			c = alpm_pkg_get_filename(pkg);
 			if(strstr(c, "://")) {
-				fprintf(stream, "%s", alpm_pkg_get_filename(pkg));
+				return fprintf(stream, "%s", alpm_pkg_get_filename(pkg));
 			} else {
 				char *real = realpath(c, NULL);
-				fprintf(stream, "file://%s", real);
+				int ret = fprintf(stream, "file://%s", real);
 				free(real);
+				return ret;
 			}
-			break;
 		case ALPM_PKG_FROM_LOCALDB:
-			fprintf(stream, "local/%s", alpm_pkg_get_name(pkg));
-			break;
+			return fprintf(stream, "local/%s", alpm_pkg_get_name(pkg));
 		case ALPM_PKG_FROM_SYNCDB:
-			fprintf(stream, "%s/%s",
+			return fprintf(stream, "%s/%s",
 					alpm_db_get_name(alpm_pkg_get_db(pkg)), alpm_pkg_get_name(pkg));
-			break;
 		default:
 			/* no idea where this package came from, fall back to its name */
-			fputs(alpm_pkg_get_name(pkg), stream);
-			break;
+			return fprintf(stream, "%s", alpm_pkg_get_name(pkg));
 	}
 }
 
