@@ -371,6 +371,7 @@ void print_pkg_info(alpm_pkg_t *pkg) {
 				printt("Install Date:   %s\n", alpm_pkg_get_installdate(pkg));
 				prints("MD5 Sum:        %s\n", alpm_pkg_get_md5sum(pkg));
 				prints("SHA-256 Sum:    %s\n", alpm_pkg_get_sha256sum(pkg));
+				prints("Signature:      %s\n", alpm_pkg_get_base64_sig(pkg));
 
 				if(origin != ALPM_PKG_FROM_SYNCDB) {
 					prints("Install Script: %s\n",
