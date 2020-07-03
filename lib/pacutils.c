@@ -124,7 +124,7 @@ int pu_fprint_pkgspec(FILE *stream, alpm_pkg_t *pkg)
 		case ALPM_PKG_FROM_FILE:
 			c = alpm_pkg_get_filename(pkg);
 			if(strstr(c, "://")) {
-				return fprintf(stream, "%s", alpm_pkg_get_filename(pkg));
+				return fprintf(stream, "%s", c);
 			} else {
 				char *real = realpath(c, NULL);
 				int ret = fprintf(stream, "file://%s", real);
@@ -149,7 +149,7 @@ char *pu_pkgspec(alpm_pkg_t *pkg)
 		case ALPM_PKG_FROM_FILE:
 			c = alpm_pkg_get_filename(pkg);
 			if(strstr(c, "://")) {
-				return pu_asprintf("%s", alpm_pkg_get_filename(pkg));
+				return pu_asprintf("%s", c);
 			} else {
 				char *real = realpath(c, NULL);
 				char *str = pu_asprintf("file://%s", real);
