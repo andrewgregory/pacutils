@@ -31,11 +31,16 @@
 
 const char *myname = "pacinfo", *myver = BUILDVER;
 
+enum format {
+	FORMAT_SHORT = 1,
+	FORMAT_LONG = 2,
+};
+
 pu_config_t *config = NULL;
 alpm_handle_t *handle = NULL;
 alpm_list_t *allpkgs = NULL;
 
-int level = 2, removable_size = 0, raw = 0;
+int format = FORMAT_LONG, verbosity = 1, removable_size = 0, raw = 0;
 int isep = '\n';
 const char *dbext = NULL, *sysroot = NULL;
 alpm_loglevel_t log_level = ALPM_LOG_ERROR | ALPM_LOG_WARNING;
@@ -51,6 +56,7 @@ enum longopt_flags {
 	FLAG_REMOVABLE,
 	FLAG_ROOT,
 	FLAG_SYSROOT,
+	FLAG_VERBOSE,
 	FLAG_VERSION,
 };
 
@@ -198,6 +204,7 @@ void usage(int ret)
 	hputs("   --raw              display raw numeric values");
 	hputs("   --root=<path>      set an alternate installation root");
 	hputs("   --removable-size   include removable dependencies in size");
+	hputs("   --verbose          display additional package information");
 	hputs("   --help             display this help information");
 	hputs("   --version          display version information");
 #undef hputs
@@ -225,8 +232,10 @@ pu_config_t *parse_opts(int argc, char **argv)
 		{ "null"          , optional_argument , NULL       , FLAG_NULL         } ,
 		{ "no-timeout"    , no_argument       , NULL       , FLAG_NOTIMEOUT    } ,
 
-		{ "short"         , no_argument       , &level     , 1                 } ,
+		{ "short"         , no_argument       , &format    , FORMAT_SHORT      } ,
 		{ "raw"           , no_argument       , &raw       , 1                 } ,
+
+		{ "verbose"       , no_argument       , NULL       , FLAG_VERBOSE      } ,
 
 		{ "removable-size", no_argument       , NULL       , FLAG_REMOVABLE    } ,
 		{ 0, 0, 0, 0 },
@@ -282,6 +291,11 @@ pu_config_t *parse_opts(int argc, char **argv)
 			case FLAG_NOTIMEOUT:
 				config->disabledownloadtimeout = PU_CONFIG_BOOL_TRUE;
 				break;
+
+			case FLAG_VERBOSE:
+				verbosity++;
+				break;
+
 			case '?':
 				usage(1);
 				break;
@@ -303,8 +317,8 @@ void print_pkg_info(alpm_pkg_t *pkg) {
 		alpm_pkgfrom_t origin = alpm_pkg_get_origin(pkg);
 		alpm_list_t *i = NULL;
 
-		switch(level) {
-			case 1:
+		switch(format) {
+			case FORMAT_SHORT:
 				printf("%s/%s %s", alpm_db_get_name(db), alpm_pkg_get_name(pkg),
 						alpm_pkg_get_version(pkg));
 				{
@@ -333,7 +347,7 @@ void print_pkg_info(alpm_pkg_t *pkg) {
 				}
 				prints("\n    %s", alpm_pkg_get_desc(pkg));
 				break;
-			case 2:
+			case FORMAT_LONG:
 				prints("Name:           %s\n", alpm_pkg_get_name(pkg));
 				prints("Base:           %s\n", alpm_pkg_get_base(pkg));
 				prints("Repository:     %s\n", alpm_db_get_name(db));
@@ -350,15 +364,17 @@ void print_pkg_info(alpm_pkg_t *pkg) {
 				printd("Conflicts:      %s\n", alpm_pkg_get_conflicts(pkg));
 				printd("Replaces:       %s\n", alpm_pkg_get_replaces(pkg));
 
-				pu_pkg_find_requiredby(pkg, allpkgs, &i);
-				printr("Required By:    %s\n", pkg, i, 0);
-				alpm_list_free(i);
-				i = NULL;
+				if(verbosity >= 2) {
+					pu_pkg_find_requiredby(pkg, allpkgs, &i);
+					printr("Required By:    %s\n", pkg, i, 0);
+					alpm_list_free(i);
+					i = NULL;
 
-				pu_pkg_find_optionalfor(pkg, allpkgs, &i);
-				printr("Optional For:   %s\n", pkg, i, 1);
-				alpm_list_free(i);
-				i = NULL;
+					pu_pkg_find_optionalfor(pkg, allpkgs, &i);
+					printr("Optional For:   %s\n", pkg, i, 1);
+					alpm_list_free(i);
+					i = NULL;
+				}
 
 				printo("Package Size:   %s\n", alpm_pkg_get_size(pkg));
 				printo("Download Size:  %s\n", alpm_pkg_download_size(pkg));
@@ -371,7 +387,9 @@ void print_pkg_info(alpm_pkg_t *pkg) {
 				printt("Install Date:   %s\n", alpm_pkg_get_installdate(pkg));
 				prints("MD5 Sum:        %s\n", alpm_pkg_get_md5sum(pkg));
 				prints("SHA-256 Sum:    %s\n", alpm_pkg_get_sha256sum(pkg));
-				prints("Signature:      %s\n", alpm_pkg_get_base64_sig(pkg));
+				if(verbosity >= 2) {
+					prints("Signature:      %s\n", alpm_pkg_get_base64_sig(pkg));
+				}
 
 				if(origin != ALPM_PKG_FROM_SYNCDB) {
 					prints("Install Script: %s\n",

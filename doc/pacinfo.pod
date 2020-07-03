@@ -56,6 +56,11 @@ packages:
 
  pacsift --name libreoffice | pacinfo --short
 
+=item B<--verbose>
+
+Display additional package information: C<required by>, C<optional for>, and
+C<base64 signature>.
+
 =item B<--raw>
 
 Display raw numeric size and date values.
