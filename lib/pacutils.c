@@ -142,6 +142,31 @@ int pu_fprint_pkgspec(FILE *stream, alpm_pkg_t *pkg)
 	}
 }
 
+char *pu_pkgspec(alpm_pkg_t *pkg)
+{
+	const char *c;
+	switch(alpm_pkg_get_origin(pkg)) {
+		case ALPM_PKG_FROM_FILE:
+			c = alpm_pkg_get_filename(pkg);
+			if(strstr(c, "://")) {
+				return pu_asprintf("%s", alpm_pkg_get_filename(pkg));
+			} else {
+				char *real = realpath(c, NULL);
+				char *str = pu_asprintf("file://%s", real);
+				free(real);
+				return str;
+			}
+		case ALPM_PKG_FROM_LOCALDB:
+			return pu_asprintf("local/%s", alpm_pkg_get_name(pkg));
+		case ALPM_PKG_FROM_SYNCDB:
+			return pu_asprintf("%s/%s",
+					alpm_db_get_name(alpm_pkg_get_db(pkg)), alpm_pkg_get_name(pkg));
+		default:
+			/* no idea where this package came from, fall back to its name */
+			return strdup(alpm_pkg_get_name(pkg));
+	}
+}
+
 int pu_log_command(alpm_handle_t *handle, const char *caller, int argc, char **argv)
 {
 	int i;

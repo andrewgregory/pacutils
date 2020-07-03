@@ -46,6 +46,7 @@ alpm_file_t *pu_filelist_contains_path(alpm_filelist_t *files, const char *path)
 
 alpm_pkg_t *pu_find_pkgspec(alpm_handle_t *handle, const char *pkgspec);
 int pu_fprint_pkgspec(FILE *stream, alpm_pkg_t *pkg);
+char *pu_pkgspec(alpm_pkg_t *pkg);
 
 int pu_log_command(alpm_handle_t *handle, const char *caller, int argc, char **argv);
 
