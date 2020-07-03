@@ -88,11 +88,16 @@ void printl(const char *field, alpm_list_t *values) {
 	}
 }
 
-void printr(const char *field, alpm_pkg_t *pkg, alpm_list_t *values, int optdeps) {
+void printr(const char *field, alpm_pkg_t *pkg, alpm_list_t *values, int deptype) {
 	alpm_list_t *v;
 	for(v = values; v; v = v->next) {
 		alpm_pkg_t *p = v->data;
-		alpm_list_t *deps = optdeps ? alpm_pkg_get_optdepends(p) : alpm_pkg_get_depends(p);
+		alpm_list_t *deps
+			= deptype == 0 ? alpm_pkg_get_depends(p)
+			: deptype == 1 ? alpm_pkg_get_optdepends(p)
+			: deptype == 2 ? alpm_pkg_get_makedepends(p)
+			: deptype == 3 ? alpm_pkg_get_checkdepends(p)
+			:                NULL;
 		for(alpm_list_t *d = deps; d; d = d->next) {
 			alpm_depend_t *dep = d->data;
 			if(pu_pkg_satisfies_dep(pkg, dep)) {
@@ -372,6 +377,16 @@ void print_pkg_info(alpm_pkg_t *pkg) {
 
 					pu_pkg_find_optionalfor(pkg, allpkgs, &i);
 					printr("Optional For:   %s\n", pkg, i, 1);
+					alpm_list_free(i);
+					i = NULL;
+
+					pu_pkg_find_makedepfor(pkg, allpkgs, &i);
+					printr("MakeDep For:    %s\n", pkg, i, 2);
+					alpm_list_free(i);
+					i = NULL;
+
+					pu_pkg_find_checkdepfor(pkg, allpkgs, &i);
+					printr("CheckDep For:   %s\n", pkg, i, 3);
 					alpm_list_free(i);
 					i = NULL;
 				}
