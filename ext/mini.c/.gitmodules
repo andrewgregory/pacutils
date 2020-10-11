@@ -1,0 +1,3 @@
+[submodule "t/tap.c"]
+	path = t/tap.c
+	url = git@github.com:andrewgregory/tap.c.git
