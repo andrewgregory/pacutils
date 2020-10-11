@@ -1,0 +1,82 @@
+=head1 NAME
+
+globdir.c - expand glob patterns relative to a specific directory
+
+=head1 SYNOPSIS
+
+glob(3) only expands glob patterns relative to the current working directory.
+In order to expand glob patterns relative to a different directory the caller
+must either chdir(2) into the directory or alter the glob to refer to that
+directory including accounting for any glob-characters in the path.  C<globdir>
+provides a neater and more direct way to expand patterns outside the current
+directory.
+
+=head1 DESCRIPTION
+
+=over
+
+=item typedef glob_t globdir_t;
+
+Structure used to store the results of the glob expansion.  Includes the same
+members POSIX requires for C<glob_t>.  Currently C<globdir_t> is just an alias
+for C<glob_t> but this may change in a future revision.
+
+=item void globdirfree(globdir_t *g);
+
+Free the memory associated with a C<globdir_t> structure but not the structure
+itself.  This should be used in place of C<globfree> for the results of
+C<globat> and C<globdir>.
+
+=item int globdir(const char *dir, const char *pattern, int flags,
+        int (*errfunc) (const char *epath, int eerrno), globdir_t *pglob);
+
+Expand a glob pattern relative to a specific directory C<dir>.  All other
+arguments are identical to their C<glob> counterparts.  C<flags> may include
+all flags specified by POSIX and C<GLOB_PERIOD> if defined in C<glob.h>.
+
+=item int globat(int fd, const char *pattern, int flags,
+        int (*errfunc) (const char *epath, int eerrno), globdir_t *pglob);
+
+Identical to C<globdir> except the base directory is specified as an open
+directory file descriptor C<fd> rather than a string path.
+
+=back
+
+=head1 EXAMPLES
+
+ #include <stdio.h>
+
+ #include "globdir.c"
+
+ int main(int argc, char *argv[]) {
+    const char *base_dir, *glob_str;
+    globdir_t globbuf;
+    size_t i;
+
+    if(argc != 3)  {
+        fputs("error: wrong number of arguments (expected 2)\n", stderr);
+        return 1;
+    }
+
+    base_dir = argv[1];
+    glob_str = argv[2];
+
+    switch(globdir(base_dir, glob_str, GLOB_ERR, NULL, &globbuf)) {
+        case GLOB_ABORTED:
+            fputs("error: directory read error\n", stderr);
+            return 1;
+        case GLOB_NOSPACE:
+            fputs("error: memory exhausted\n", stderr);
+            return 1;
+        case GLOB_NOMATCH:
+            fputs("error: no matches\n", stderr);
+            return 1;
+        default:
+            for(i = 0; i < globbuf.gl_pathc; i++) {
+                puts(globbuf.gl_pathv[i]);
+            }
+            globdirfree(&globbuf);
+    }
+
+    return 0;
+ }
