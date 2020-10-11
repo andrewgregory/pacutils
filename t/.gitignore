@@ -1,0 +1,5 @@
+*.gcda
+*.gcno
+*.gcov
+*.t
+gmon.out
