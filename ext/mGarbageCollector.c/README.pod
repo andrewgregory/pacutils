@@ -1,0 +1,160 @@
+=head1 NAME
+
+mGarbageCollector.c - track and free allocated resources
+
+=head1 SYNOPSIS
+
+mGargageCollector.c is a lightweight tool for tracking and freeing allocated
+resources.  Its primary intended use is in test suites, where it greatly
+simplifies allocating resources during setup.  A failure callback function can
+be used to easily detect and indicate setup failures without having to manually
+check every call.
+
+=head1 DESCRIPTION
+
+=head2 Types
+
+=over
+
+=item typedef void (mgc_fn_free_t) (void*);
+
+=item typedef void (mgc_fn_fail_t) (void*);
+
+=item typedef struct mgc_t mgc_t;
+
+=back
+
+=head2 Functions
+
+=over
+
+=item mpp_t *mgc_new(mgc_fn_fail_t failfn, void *failctx);
+
+Create and return a new garbage collection object.  If C<failfn> is not
+C<NULL>, it will be called with C<failctx> as its sole argument on any internal
+error or if C<mgc_add> is called with a C<NULL> pointer.  This is
+primarily intended for programs, such as tests, that need to cleanup and
+immediately exit on failure.
+
+=item void *mgc_add(mgc_t *mgc, void *ptr, mgc_fn_free_t* fn);
+
+Append an item to C<mgc> with an associated free function.  If C<mgc> has an
+associated fail function and C<ptr> is C<NULL>, the fail function will be
+called.  Otherwise, if C<ptr> is C<NULL>, it will be discarded and C<fn> will
+not be called on cleanup.
+
+=item mgc_fn_free_t *mgc_remove_item(mgc_t *mgc, void *ptr);
+
+Search C<mgc> for C<ptr> and remove it without freeing it.  The associated free
+function is returned if the C<ptr> is found, else C<NULL> is returned.
+
+=item void mgc_free_item(mgc_t *mgc, void *ptr);
+
+Immediately free C<ptr> using its associated free function.
+
+=item void mgc_clear(mgc_t *mgc);
+
+Free all items associated with C<mgc> without freeing C<mgc> itself.
+
+=item void mgc_free(mgc_t *mgc);
+
+Clear and free C<mgc>.
+
+=back
+
+=head3 Helpers
+
+Each of these functions behaves the same as its standard counterpart without
+the C<mgc_> prefix or leading C<mgc_t> argument except that the result is
+automatically tracked by C<mgc> and may cause C<failfn> to be called if one was
+used.
+
+=over
+
+=item void *mgc_malloc(mgc_t *mgc, size_t size);
+
+=item void *mgc_calloc(mgc_t *mgc, size_t nelem, size_t elsize);
+
+=item void *mgc_realloc_ptr(mgc_t *mgc, void *ptr, size_t size);
+
+=item char *mgc_strdup(mgc_t *mgc, const char *s);
+
+=item char *mgc_strndup(mgc_t *mgc, const char *s, size_t size);
+
+=item char *mgc_vasprintf(mgc_t *mgc, const char *restrict fmt, va_list ap);
+
+=item char *mgc_asprintf(mgc_t *mgc, const char *restrict fmt, ...);
+
+=item int mgc_openat(mgc_t *mgc, int fd, const char *path, int oflag, ...);
+
+=item int mgc_open(mgc_t *mgc, const char *path, int oflag, ...);
+
+=item FILE *mgc_fopen(mgc_t *mgc, const char *restrict pathname, const char *restrict mode);
+
+=item FILE *mgc_fdopen(mgc_t *mgc, int fildes, const char *mode);
+
+=item FILE *mgc_fmemopen(mgc_t *mgc, void *restrict buf, size_t size, const char *mode);
+
+=item FILE *mgc_open_memstream(mgc_t *mgc, char **ptr, size_t *sizeloc);
+
+=item void mgc_close(void *fdp);
+
+C<close> wrapper that takes a pointer to a C<malloc>d file descriptor to close
+and retries on C<EINTR>.
+
+=item void mgc_fclose(void *stream);
+
+C<fclose> wrapper that retries in C<EINTR>.
+
+=back
+
+=head1 EXAMPLES
+
+ mgc_t *mgc = NULL;
+
+ void cleanup(void) {
+     mp_free(mgc);
+ }
+
+ void die(void *unused) {
+     perror("setup failed");
+     cleanup();
+     exit(EXIT_FAIL);
+ }
+
+ int main(int argc, char *argv[]) {
+     mgc = mgc_new(die, NULL);
+
+     char *str = mgc_strdup("foobar");
+     /* str is guaranteed to be valid */
+     assert(strcmp("foobar", str) == 0);
+
+     cleanup();
+     return 0;
+ }
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2020 Andrew Gregory <andrew.gregory.8@gmail.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+=head1 SEE ALSO
+
+Project URL: L<http://github.com/andrewgregory/mGarbageCollector.c>
