@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 Andrew Gregory <andrew.gregory.8@gmail.com>
+ * Copyright 2017-2020 Andrew Gregory <andrew.gregory.8@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -27,6 +27,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <fnmatch.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -35,19 +36,19 @@
 
 #include "globdir.h"
 
-char *_globat_strchrnul(const char *haystack, int c) {
+static char *_globat_strchrnul(const char *haystack, int c) {
     while(*haystack && *haystack != c) { haystack++; }
     return (char *)haystack;
 }
 
-void _globdir_freepattern(char **parts) {
+static void _globdir_freepattern(char **parts) {
     char **p;
     if(parts == NULL) { return; }
     for(p = parts; *p != NULL; p++) { free(*p); }
     free(parts);
 }
 
-char **_globdir_split_pattern(const char *pattern) {
+static char **_globdir_split_pattern(const char *pattern) {
     size_t i, count = 1;
     char **parts = NULL;
     const char *c;
@@ -97,19 +98,19 @@ error:
     return NULL;
 }
 
-int _globdir_append(globdir_t *pglob, char *path, int flags) {
+static int _globdir_append(globdir_t *pglob, char *path, int flags) {
     char **newmem;
     size_t newsize = pglob->gl_pathc + 2;
 
     if(flags & GLOB_DOOFFS) { newsize += pglob->gl_offs; }
 
-    if(newsize < pglob->gl_pathc) { errno = ENOMEM; return -1; }
+    if(newsize < pglob->gl_pathc) { errno = ENOMEM; return GLOB_NOSPACE; }
     if(pglob->gl_pathv) {
         newmem = realloc(pglob->gl_pathv, newsize * sizeof(char*));
     } else {
         newmem = calloc(newsize, sizeof(char*));
     }
-    if(newmem ==  NULL) { return -1; }
+    if(newmem ==  NULL) { return GLOB_NOSPACE; }
 
     pglob->gl_pathv = newmem;
     pglob->gl_pathv[pglob->gl_offs + pglob->gl_pathc] = path;
@@ -119,11 +120,11 @@ int _globdir_append(globdir_t *pglob, char *path, int flags) {
     return 0;
 }
 
-int _globcmp(const void *p1, const void *p2) {
+static int _globcmp(const void *p1, const void *p2) {
     return strcmp(* (char * const *) p1, * (char * const *) p2);
 }
 
-int _globat(int fd, char **pattern, int flags,
+static int _globat(int fd, char **pattern, int flags,
         int (*errfunc) (const char *epath, int eerrno),
         globdir_t *pglob, const char *base) {
     const char *epath = (base && base[0]) ? base : ".";
@@ -175,13 +176,19 @@ int _globat(int fd, char **pattern, int flags,
         if(pattern[1] == NULL) {
             /* pattern is exhausted: match */
             if(S_ISDIR(sbuf.st_mode) && flags & GLOB_MARK) { strcat(path, "/"); }
-            _globdir_append(pglob, strdup(path), flags);
+            if(_globdir_append(pglob, strdup(path), flags) != 0) {
+                closedir(dir);
+                return GLOB_NOSPACE;
+            }
         } else if(!S_ISDIR(sbuf.st_mode)) {
             /* pattern is not exhausted, but entry is a file: no match */
         } else if(pattern[1][0] == '/') {
             /* pattern requires a directory and is exhausted: match */
             strcat(path, "/");
-            _globdir_append(pglob, strdup(path), flags);
+            if(_globdir_append(pglob, strdup(path), flags) != 0) {
+                closedir(dir);
+                return GLOB_NOSPACE;
+            }
         } else {
             /* pattern is not yet exhausted: check directory contents */
             int child = openat(fd, entry->d_name, O_DIRECTORY);
@@ -248,8 +255,7 @@ int globat(int fd, const char *pattern, int flags,
     if(ret != 0 || pglob->gl_pathc > 0) {
         return ret;
     } else if(flags & GLOB_NOCHECK) {
-        _globdir_append(pglob, strdup(pattern), flags);
-        return 0;
+        return _globdir_append(pglob, strdup(pattern), flags);
     } else {
         return GLOB_NOMATCH;
     }
@@ -261,6 +267,75 @@ int globdir(const char *dir, const char *pattern, int flags,
     int ret = globat(fd, pattern, flags, errfunc, pglob);
     close(fd);
     return ret;
+}
+
+int mglob(const char *pattern, int flags,
+        int (*errfunc) (const char *epath, int eerrno), globdir_t *pglob) {
+    return globat(AT_FDCWD, pattern, flags, errfunc, pglob);
+}
+
+int globdir_str_is_pattern(const char *string, int noescape) {
+    int escape = !noescape;
+    for(const char *c = string; *c; c++) {
+        switch(*c) {
+            case '\\':
+                if( escape && *(c + 1) ) { c++; }
+                break;
+            case '*':
+            case '?':
+            case '[':
+                return 1;
+        }
+    }
+    return 0;
+}
+
+char *globdir_escape_pattern(const char *pattern) {
+    size_t len, pattern_chars;
+    const char *c;
+    char *escaped, *e;
+
+    if(pattern == NULL) {
+        return NULL;
+    }
+
+    len = strlen(pattern);
+    pattern_chars = 0;
+    for(c = pattern; *c; c++) {
+        switch(*c) {
+            case '\\':
+            case '*':
+            case '?':
+            case '[':
+                pattern_chars++;
+        }
+    }
+
+    if(pattern_chars == 0) {
+        return strdup(pattern);
+    }
+
+    if(SIZE_MAX - len < pattern_chars || !(escaped = malloc(len + pattern_chars))) {
+        errno = ENOMEM;
+        return NULL;
+    }
+
+    for(c = pattern, e = escaped; *c; c++, e++) {
+        switch(*c) {
+            case '\\':
+            case '*':
+            case '?':
+            case '[':
+                *e = '\\';
+                e++;
+                /* fall through */
+            default:
+                *e = *c;
+        }
+    }
+    *e = '\0';
+
+    return escaped;
 }
 
 #endif /* GLOBDIR_C */

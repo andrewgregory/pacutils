@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2016 Andrew Gregory <andrew.gregory.8@gmail.com>
+ * Copyright 2017-2020 Andrew Gregory <andrew.gregory.8@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -34,5 +34,9 @@ int globat(int fd, const char *pattern, int flags,
 
 int globdir(const char *dir, const char *pattern, int flags,
         int (*errfunc) (const char *epath, int eerrno), globdir_t *pglob);
+
+int globdir_str_is_pattern(const char *string, int noescape);
+
+char *globdir_escape_pattern(const char *pattern);
 
 #endif /* GLOBDIR_H */
