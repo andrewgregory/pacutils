@@ -2,11 +2,11 @@
 
 gdb=0
 valgrind=0
-cmd=()
+prefix=()
 
 extend() {
     if which "$1" &>/dev/null; then
-        cmd+=("$@")
+        prefix+=("$@")
     else
         # bailing out would be counted as a failure by test harnesses,
         # ignore missing programs so that tests can be gracefully skipped
@@ -15,7 +15,7 @@ extend() {
 }
 
 usage() {
-    printf "runtest.sh - run an executable pacman test\n"
+    printf "runtest.sh - run an executable test\n"
     printf "usage: runtest.sh [options] <testfile> [test-options]\n"
     printf "\n"
     printf "Options:\n"
@@ -39,4 +39,4 @@ done
 shift $(($OPTIND - 1)) # remove our options from the stack
 
 prog="$(realpath "$1")"; shift
-"${cmd[@]}" "$prog" "$@"
+"${prefix[@]}" "$prog" "$@"

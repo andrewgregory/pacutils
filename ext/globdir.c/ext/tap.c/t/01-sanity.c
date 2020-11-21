@@ -1,6 +1,4 @@
-#include "../ext/tap.c/tap.c"
-
-#include "../globdir.c"
+#include "../tap.c"
 
 /* just verify the library compiles */
 

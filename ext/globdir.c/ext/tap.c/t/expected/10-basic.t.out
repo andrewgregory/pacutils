@@ -1,0 +1,116 @@
+1..0
+1..1
+1..2
+1..0 # SKIP
+1..0 # SKIP foo bar
+ok 1 # SKIP foo bar
+ok 2 # SKIP
+ok 3 # SKIP
+# foo
+# foo bar
+Bail out!
+Bail out! foo bar
+not ok 4
+#   Failed test at 10-basic.c line 29.
+ok 5
+not ok 6 - foo
+#   Failed test at 10-basic.c line 31.
+ok 7 - foo
+ok 8
+not ok 9
+#   Failed test at 10-basic.c line 35.
+#          got: 'foo'
+#     expected: 'bar'
+ok 10 - foo bar
+not ok 11 - foo bar
+#   Failed test at 10-basic.c line 37.
+#          got: 'foo'
+#     expected: 'bar'
+ok 12
+not ok 13
+#   Failed test at 10-basic.c line 39.
+#          got: '(null)'
+#     expected: 'bar'
+ok 14
+not ok 15
+#   Failed test at 10-basic.c line 42.
+#          got: '1'
+#     expected: '0'
+ok 16 - foo bar
+not ok 17 - foo bar
+#   Failed test at 10-basic.c line 44.
+#          got: '1'
+#     expected: '0'
+ok 18
+not ok 19
+#   Failed test at 10-basic.c line 47.
+#          got: '1.000000'
+#     expected: '2.000000'
+#        delta: '1.000000'
+#      allowed: '0.100000'
+ok 20 - foo bar
+not ok 21 - foo bar
+#   Failed test at 10-basic.c line 49.
+#          got: '1.000000'
+#     expected: '2.000000'
+#        delta: '1.000000'
+#      allowed: '0.100000'
+1..21
+1..0
+1..1
+1..2
+1..0 # SKIP
+1..0 # SKIP foo bar
+ok 22 # SKIP foo bar
+ok 23 # SKIP
+ok 24 # SKIP
+# foo
+# foo bar
+Bail out!
+Bail out! foo bar
+not ok 25 # TODO FOO TODO
+#   Failed (TODO) test at 10-basic.c line 29.
+ok 26 # TODO FOO TODO
+not ok 27 - foo # TODO FOO TODO
+#   Failed (TODO) test at 10-basic.c line 31.
+ok 28 - foo # TODO FOO TODO
+ok 29 # TODO FOO TODO
+not ok 30 # TODO FOO TODO
+#   Failed (TODO) test at 10-basic.c line 35.
+#          got: 'foo'
+#     expected: 'bar'
+ok 31 - foo bar # TODO FOO TODO
+not ok 32 - foo bar # TODO FOO TODO
+#   Failed (TODO) test at 10-basic.c line 37.
+#          got: 'foo'
+#     expected: 'bar'
+ok 33 # TODO FOO TODO
+not ok 34 # TODO FOO TODO
+#   Failed (TODO) test at 10-basic.c line 39.
+#          got: '(null)'
+#     expected: 'bar'
+ok 35 # TODO FOO TODO
+not ok 36 # TODO FOO TODO
+#   Failed (TODO) test at 10-basic.c line 42.
+#          got: '1'
+#     expected: '0'
+ok 37 - foo bar # TODO FOO TODO
+not ok 38 - foo bar # TODO FOO TODO
+#   Failed (TODO) test at 10-basic.c line 44.
+#          got: '1'
+#     expected: '0'
+ok 39 # TODO FOO TODO
+not ok 40 # TODO FOO TODO
+#   Failed (TODO) test at 10-basic.c line 47.
+#          got: '1.000000'
+#     expected: '2.000000'
+#        delta: '1.000000'
+#      allowed: '0.100000'
+ok 41 - foo bar # TODO FOO TODO
+not ok 42 - foo bar # TODO FOO TODO
+#   Failed (TODO) test at 10-basic.c line 49.
+#          got: '1.000000'
+#     expected: '2.000000'
+#        delta: '1.000000'
+#      allowed: '0.100000'
+1..42
