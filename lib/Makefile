@@ -47,6 +47,7 @@ HEADERS = \
 					pacutils.h \
 					pacutils/config.h \
 					pacutils/depends.h \
+					pacutils/info.h \
 					pacutils/log.h \
 					pacutils/mtree.h \
 					pacutils/ui.h \
@@ -55,9 +56,11 @@ HEADERS = \
 SOURCES = \
 					../ext/globdir.c/globdir.c \
 					../ext/mini.c/mini.c \
+					../ext/mFmt.c/mfmt.c \
 					pacutils.c \
 					pacutils/config.c \
 					pacutils/depends.c \
+					pacutils/info.c \
 					pacutils/log.c \
 					pacutils/mtree.c \
 					pacutils/ui.c \

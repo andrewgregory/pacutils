@@ -34,6 +34,7 @@ const char *myname = "pacinfo", *myver = BUILDVER;
 enum format {
 	FORMAT_SHORT = 1,
 	FORMAT_LONG = 2,
+	FORMAT_TEMPLATE = 3,
 };
 
 pu_config_t *config = NULL;
@@ -42,7 +43,7 @@ alpm_list_t *allpkgs = NULL;
 
 int format = FORMAT_LONG, verbosity = 1, removable_size = 0, raw = 0;
 int isep = '\n';
-const char *dbext = NULL, *sysroot = NULL;
+const char *dbext = NULL, *sysroot = NULL, *template = NULL;
 alpm_loglevel_t log_level = ALPM_LOG_ERROR | ALPM_LOG_WARNING;
 
 enum longopt_flags {
@@ -50,6 +51,7 @@ enum longopt_flags {
 	FLAG_DBEXT,
 	FLAG_DBPATH,
 	FLAG_DEBUG,
+	FLAG_FORMAT,
 	FLAG_HELP,
 	FLAG_NOTIMEOUT,
 	FLAG_NULL,
@@ -216,7 +218,6 @@ void usage(int ret)
 	exit(ret);
 }
 
-
 pu_config_t *parse_opts(int argc, char **argv)
 {
 	char *config_file = PACMANCONF;
@@ -239,6 +240,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 
 		{ "short"         , no_argument       , &format    , FORMAT_SHORT      } ,
 		{ "raw"           , no_argument       , &raw       , 1                 } ,
+		{ "format"        , required_argument , NULL       , FLAG_FORMAT       } ,
 
 		{ "verbose"       , no_argument       , NULL       , FLAG_VERBOSE      } ,
 
@@ -297,6 +299,10 @@ pu_config_t *parse_opts(int argc, char **argv)
 				config->disabledownloadtimeout = PU_CONFIG_BOOL_TRUE;
 				break;
 
+			case FLAG_FORMAT:
+				format = FORMAT_TEMPLATE;
+				template = optarg;
+				break;
 			case FLAG_VERBOSE:
 				verbosity++;
 				break;
@@ -323,6 +329,9 @@ void print_pkg_info(alpm_pkg_t *pkg) {
 		alpm_list_t *i = NULL;
 
 		switch(format) {
+			case FORMAT_TEMPLATE:
+				pu_info_print_pkg(template, pkg);
+				break;
 			case FORMAT_SHORT:
 				printf("%s/%s %s", alpm_db_get_name(db), alpm_pkg_get_name(pkg),
 						alpm_pkg_get_version(pkg));
