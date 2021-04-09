@@ -398,7 +398,7 @@ int main(int argc, char **argv)
 			}
 		}
 	} else {
-		pkgs = alpm_db_get_pkgcache(alpm_get_localdb(handle));
+		pkgs = alpm_list_copy(alpm_db_get_pkgcache(alpm_get_localdb(handle)));
 	}
 
 	while(optind < argc) {
