@@ -260,6 +260,7 @@ alpm_list_t *load_cache_pkgs(alpm_handle_t *handle) {
 alpm_list_t *find_cached_pkg(alpm_pkg_t *pkg, alpm_list_t *cache_pkgs) {
 	const char *name = alpm_pkg_get_name(pkg), *ver = alpm_pkg_get_version(pkg);
 	alpm_list_t *i, *found = NULL;
+	alpm_list_t *allowed_arch = alpm_option_get_architectures(handle);
 	for(i = cache_pkgs; i; i = i->next) {
 		if(strcmp(name, alpm_pkg_get_name(i->data)) != 0
 				|| strcmp(ver, alpm_pkg_get_version(i->data)) != 0) {
@@ -271,7 +272,8 @@ alpm_list_t *find_cached_pkg(alpm_pkg_t *pkg, alpm_list_t *cache_pkgs) {
 			continue;
 		} else if(alpm_pkg_get_arch(pkg) == NULL
 				&& alpm_pkg_get_arch(i->data) != NULL
-				&& strcmp(alpm_pkg_get_arch(i->data), alpm_option_get_arch(handle)) != 0
+				&& allowed_arch
+				&& !alpm_list_find_str(allowed_arch, alpm_pkg_get_arch(i->data))
 				&& strcmp(alpm_pkg_get_arch(i->data), "any") != 0) {
 			/* needle has no architecture and package is not installable */
 			continue;
@@ -526,7 +528,8 @@ transcleanup:
 	return ret;
 }
 
-void cb_log(alpm_loglevel_t level, const char *fmt, va_list args) {
+void cb_log(void *ctx, alpm_loglevel_t level, const char *fmt, va_list args) {
+	(void)ctx;
 	if(level & log_level) {
 		vprintf(fmt, args);
 	}
@@ -551,10 +554,10 @@ int main(int argc, char **argv) {
 	if(nohooks) {
 		alpm_option_set_hookdirs(handle, NULL);
 	}
-	alpm_option_set_questioncb(handle, pu_ui_cb_question);
-	alpm_option_set_progresscb(handle, pu_ui_cb_progress);
-	alpm_option_set_dlcb(handle, pu_ui_cb_download);
-	alpm_option_set_logcb(handle, cb_log);
+	alpm_option_set_questioncb(handle, pu_ui_cb_question, NULL);
+	alpm_option_set_progresscb(handle, pu_ui_cb_progress, NULL);
+	alpm_option_set_dlcb(handle, pu_ui_cb_download, NULL);
+	alpm_option_set_logcb(handle, cb_log, NULL);
 	alpm_option_add_overwrite_file(handle, "*");
 
 	localdb = alpm_get_localdb(handle);

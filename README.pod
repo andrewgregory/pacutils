@@ -8,8 +8,8 @@ pacutils - utility library for libalpm front-ends
  alpm_handle_t *handle = pu_initialize_handle_from_config(config);
  alpm_list_t *syncdbs = pu_register_syncdbs(config->repos);
 
- alpm_option_set_progresscb(handle, pu_cb_progress);
- alpm_option_set_dlcb(handle, pu_cb_download);
+ alpm_option_set_progresscb(handle, pu_cb_progress, NULL);
+ alpm_option_set_dlcb(handle, pu_cb_download, NULL);
 
  /* do something with handle... */
 

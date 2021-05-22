@@ -37,6 +37,7 @@ char buf[] =
 " IgnoreGroup = ignoregroupa ignoregroupb \n"
 "Architecture = i686\n"
 "Architecture = x86_64\n"
+"ParallelDownloads = 3\n"
 "XferCommand = xcommand\n"
 "XferCommand = xcommand2\n"
 "NoUpgrade = /tmp/noupgrade*\n"
@@ -44,7 +45,6 @@ char buf[] =
 "CleanMethod = KeepInstalled KeepCurrent\n"
 "UseSyslog\n"
 "Color\n"
-"TotalDownload\n"
 "CheckSpace\n"
 "VerbosePkgLists\n"
 "ILoveCandy\n"
@@ -109,7 +109,7 @@ int main(void) {
 
 	while(pu_config_reader_next(reader) != -1);
 
-	tap_plan(38);
+	tap_plan(40);
 
 	tap_ok(reader->eof, "eof reached");
 	tap_ok(!reader->error, "no error");
@@ -119,17 +119,22 @@ int main(void) {
 	tap_is_str(config->dbpath, "/dbpath1/", "DBPath");
 	tap_is_str(config->gpgdir, "gpgdir", "GPGDir");
 	tap_is_str(config->logfile, "/logfile", "LogFile");
-	tap_is_str(config->architecture, "i686", "Arch");
 	tap_is_str(config->xfercommand, "xcommand2", "XferCommand");
+
+	tap_is_int(config->paralleldownloads, 3, "ParallelDownloads");
 
 	tap_ok(config->usesyslog, "UseSyslog");
 	tap_ok(config->color, "Color");
-	tap_ok(config->totaldownload, "TotalDownload");
 	tap_ok(config->checkspace, "CheckSpace");
 	tap_ok(config->verbosepkglists, "VerbosePkgLists");
 	tap_ok(config->ilovecandy, "ILoveCandy");
 
 	is_siglevel(config->siglevel, 0, "SigLevel");
+
+	i = config->architectures;
+	is_str_list(i, "i686", "Arch i686");
+	is_str_list(i, "x86_64", "Arch x86_64");
+	is_list_exhausted(i, "architectures");
 
 	i = config->ignorepkgs;
 	is_str_list(i, "ignorepkga", "IgnorePkg a");

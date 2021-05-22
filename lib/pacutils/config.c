@@ -46,12 +46,12 @@ struct _pu_config_setting {
   {"CleanMethod",     PU_CONFIG_OPTION_CLEANMETHOD},
   {"Color",           PU_CONFIG_OPTION_COLOR},
   {"UseSyslog",       PU_CONFIG_OPTION_USESYSLOG},
-  {"TotalDownload",   PU_CONFIG_OPTION_TOTALDOWNLOAD},
   {"CheckSpace",      PU_CONFIG_OPTION_CHECKSPACE},
   {"VerbosePkgLists", PU_CONFIG_OPTION_VERBOSEPKGLISTS},
   {"ILoveCandy",      PU_CONFIG_OPTION_ILOVECANDY},
 
   {"DisableDownloadTimeout", PU_CONFIG_OPTION_DISABLEDOWNLOADTIMEOUT},
+  {"ParallelDownloads",      PU_CONFIG_OPTION_PARALLELDOWNLOADS},
 
   {"SigLevel",        PU_CONFIG_OPTION_SIGLEVEL},
   {"LocalFileSigLevel",  PU_CONFIG_OPTION_LOCAL_SIGLEVEL},
@@ -267,7 +267,6 @@ pu_config_t *pu_config_new(void)
   config->color = PU_CONFIG_BOOL_UNSET;
   config->disabledownloadtimeout = PU_CONFIG_BOOL_UNSET;
   config->ilovecandy = PU_CONFIG_BOOL_UNSET;
-  config->totaldownload = PU_CONFIG_BOOL_UNSET;
   config->usesyslog = PU_CONFIG_BOOL_UNSET;
   config->verbosepkglists = PU_CONFIG_BOOL_UNSET;
 
@@ -305,9 +304,9 @@ void pu_config_free(pu_config_t *config)
   free(config->dbpath);
   free(config->logfile);
   free(config->gpgdir);
-  free(config->architecture);
   free(config->xfercommand);
 
+  FREELIST(config->architectures);
   FREELIST(config->holdpkgs);
   FREELIST(config->hookdirs);
   FREELIST(config->ignorepkgs);
@@ -332,11 +331,12 @@ static int _pu_subst_server_vars(pu_config_t *config)
       char *rrepo;
 
       if(strstr(s->data, "$arch")) {
-        if(config->architecture == NULL) {
+        if(config->architectures == NULL) {
           errno = EINVAL;
           return -1;
         } else {
-          char *rarch = _pu_strreplace(s->data, "$arch", config->architecture);
+          char *arch = config->architectures->data;
+          char *rarch = _pu_strreplace(s->data, "$arch", arch);
           if(rarch == NULL) { return -1; }
           free(s->data);
           s->data = rarch;
@@ -369,7 +369,7 @@ alpm_handle_t *pu_initialize_handle_from_config(pu_config_t *config)
   alpm_option_set_logfile(handle, config->logfile);
   alpm_option_set_gpgdir(handle, config->gpgdir);
   alpm_option_set_usesyslog(handle, config->usesyslog);
-  alpm_option_set_arch(handle, config->architecture);
+  alpm_option_set_architectures(handle, config->architectures);
   alpm_option_set_disable_dl_timeout(handle, config->disabledownloadtimeout);
 
   alpm_option_set_default_siglevel(handle, config->siglevel);
@@ -377,6 +377,8 @@ alpm_handle_t *pu_initialize_handle_from_config(pu_config_t *config)
   alpm_option_set_remote_file_siglevel(handle, config->remotefilesiglevel);
 
   alpm_option_set_dbext(handle, DBEXT);
+
+  alpm_option_set_parallel_downloads(handle, config->paralleldownloads);
 
   /* add hook directories 1-by-1 to avoid overwriting the system directory */
   if(config->hookdirs != NULL) {
@@ -472,13 +474,16 @@ int pu_config_resolve(pu_config_t *config)
   SETDEFAULT(config->cachedirs, alpm_list_add(NULL, strdup(CACHEDIR)));
   SETDEFAULT(config->hookdirs, alpm_list_add(NULL, strdup(HOOKDIR)));
   SETDEFAULT(config->cleanmethod, PU_CONFIG_CLEANMETHOD_KEEP_INSTALLED);
+  SETDEFAULT(config->paralleldownloads, 1);
 
-  if(config->architecture && strcmp(config->architecture, "auto") == 0) {
-    struct utsname un;
-    char *arch;
-    if(uname(&un) != 0 || (arch = strdup(un.machine)) == NULL) { return -1; }
-    free(config->architecture);
-    config->architecture = arch;
+  for(i = config->architectures; i; i = i->next) {
+    if(strcmp(i->data, "auto") == 0) {
+      struct utsname un;
+      char *arch;
+      if(uname(&un) != 0 || (arch = strdup(un.machine)) == NULL) { return -1; }
+      free(i->data);
+      i->data = arch;
+    }
   }
 
 #define SETBOOL(opt) if(opt == -1) { opt = 0; }
@@ -486,7 +491,6 @@ int pu_config_resolve(pu_config_t *config)
   SETBOOL(config->color);
   SETBOOL(config->disabledownloadtimeout);
   SETBOOL(config->ilovecandy);
-  SETBOOL(config->totaldownload);
   SETBOOL(config->usesyslog);
   SETBOOL(config->verbosepkglists);
 
@@ -525,7 +529,6 @@ void pu_config_merge(pu_config_t *dest, pu_config_t *src)
 #define MERGEBOOL(dv, sv) if(dv == -1) { dv = sv; }
 
   MERGEBOOL(dest->usesyslog, src->usesyslog);
-  MERGEBOOL(dest->totaldownload, src->totaldownload);
   MERGEBOOL(dest->checkspace, src->checkspace);
   MERGEBOOL(dest->verbosepkglists, src->verbosepkglists);
   MERGEBOOL(dest->color, src->color);
@@ -533,14 +536,15 @@ void pu_config_merge(pu_config_t *dest, pu_config_t *src)
   MERGEBOOL(dest->disabledownloadtimeout, src->disabledownloadtimeout);
 
   MERGEVAL(dest->cleanmethod, src->cleanmethod);
+  MERGEVAL(dest->paralleldownloads, src->paralleldownloads);
 
   MERGESTR(dest->rootdir, src->rootdir);
   MERGESTR(dest->dbpath, src->dbpath);
   MERGESTR(dest->logfile, src->logfile);
   MERGESTR(dest->gpgdir, src->gpgdir);
   MERGESTR(dest->xfercommand, src->xfercommand);
-  MERGESTR(dest->architecture, src->architecture);
 
+  MERGELIST(dest->architectures, src->architectures);
   MERGELIST(dest->cachedirs, src->cachedirs);
   MERGELIST(dest->holdpkgs, src->holdpkgs);
   MERGELIST(dest->hookdirs, src->hookdirs);
@@ -761,7 +765,7 @@ int pu_config_reader_next(pu_config_reader_t *reader)
           SETSTROPT(config->logfile, mini->value);
           break;
         case PU_CONFIG_OPTION_ARCHITECTURE:
-          SETSTROPT(config->architecture, mini->value);
+          APPENDLIST(&config->architectures, mini->value);
           break;
         case PU_CONFIG_OPTION_XFERCOMMAND:
           free(config->xfercommand);
@@ -813,6 +817,17 @@ int pu_config_reader_next(pu_config_reader_t *reader)
         case PU_CONFIG_OPTION_CACHEDIRS:
           APPENDLIST(&config->cachedirs, mini->value);
           break;
+        case PU_CONFIG_OPTION_PARALLELDOWNLOADS:
+          {
+            char *end;
+            long pd = strtol(mini->value, &end, 10);
+            if(pd < 1 || pd > INT_MAX || *end) {
+              _PU_ERR(reader, PU_CONFIG_READER_STATUS_INVALID_VALUE);
+            }
+            config->paralleldownloads = (int) pd;
+            break;
+          }
+          break;
         default:
           reader->status = PU_CONFIG_READER_STATUS_UNKNOWN_OPTION;
           break;
@@ -824,9 +839,6 @@ int pu_config_reader_next(pu_config_reader_t *reader)
           break;
         case PU_CONFIG_OPTION_USESYSLOG:
           config->usesyslog = 1;
-          break;
-        case PU_CONFIG_OPTION_TOTALDOWNLOAD:
-          config->totaldownload = 1;
           break;
         case PU_CONFIG_OPTION_CHECKSPACE:
           config->checkspace = 1;

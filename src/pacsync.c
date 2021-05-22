@@ -146,8 +146,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 	return config;
 }
 
-void cb_log(alpm_loglevel_t level, const char *fmt, va_list args)
+void cb_log(void *ctx, alpm_loglevel_t level, const char *fmt, va_list args)
 {
+	(void)ctx;
 	if(level & log_level) {
 		vprintf(fmt, args);
 	}
@@ -175,9 +176,9 @@ int main(int argc, char **argv)
 		goto cleanup;
 	}
 
-	alpm_option_set_progresscb(handle, pu_ui_cb_progress);
-	alpm_option_set_dlcb(handle, pu_ui_cb_download);
-	alpm_option_set_logcb(handle, cb_log);
+	alpm_option_set_progresscb(handle, pu_ui_cb_progress, NULL);
+	alpm_option_set_dlcb(handle, pu_ui_cb_download, NULL);
+	alpm_option_set_logcb(handle, cb_log, NULL);
 
 	sync_dbs = pu_register_syncdbs(handle, config->repos);
 	if(!sync_dbs) {
@@ -211,20 +212,14 @@ int main(int argc, char **argv)
 
 	pu_log_command(handle, LOG_PREFIX, argc, argv);
 
-	for(i = targets; i; i = i->next) {
-		alpm_db_t *db = i->data;
-		int res = alpm_db_update(force, db);
-		if(res < 0) {
-			ret = 1;
-			fprintf(stderr, "error: could not sync db '%s' (%s)\n",
-					alpm_db_get_name(db), alpm_strerror(alpm_errno(handle)));
-		} else if(res == 1) {
-			/* db was already up to date */
-			printf("%s is up to date\n", alpm_db_get_name(db));
-		} else {
-			/* callbacks display relevant information */
-			updated = 1;
-		}
+	int res = alpm_db_update(handle, targets, force);
+	if(res == -1) {
+		ret = 1;
+		fprintf(stderr, "error: could not sync dbs (%s)\n",
+				alpm_strerror(alpm_errno(handle)));
+	} else {
+		/* callbacks display relevant information */
+		updated = 1;
 	}
 
 cleanup:

@@ -29,8 +29,6 @@
 #include "util.h"
 #include "../pacutils.h"
 
-#define PU_MAX_REFRESH_MS 200
-
 void pu_ui_vwarn(const char *fmt, va_list args)
 {
   fputs("warning: ", stderr);
@@ -79,10 +77,18 @@ void pu_ui_notice(const char *fmt, ...)
   va_end(args);
 }
 
-static long long _pu_ui_time_diff(struct timeval *t1, struct timeval *t2)
+static int64_t _pu_ui_get_time_ms(void)
 {
-  long long s1 = t1->tv_sec, s2 = t2->tv_sec, u1 = t1->tv_usec, u2 = t2->tv_usec;
-  return (s1 - s2) * 1000 + (u1 - u2) / 1000;
+#if defined(_POSIX_TIMERS) && (_POSIX_TIMERS > 0) && defined(CLOCK_MONOTONIC_COARSE)
+	struct timespec ts = {0, 0};
+	clock_gettime(CLOCK_MONOTONIC_COARSE, &ts);
+	return (ts.tv_sec * 1000) + (ts.tv_nsec / 1000000);
+#else
+	/* darwin doesn't support clock_gettime, fallback to gettimeofday */
+	struct timeval tv = {0, 0};
+	gettimeofday(&tv, NULL);
+	return (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
+#endif
 }
 
 const char *pu_ui_msg_progress(alpm_progress_t event)
@@ -113,11 +119,12 @@ const char *pu_ui_msg_progress(alpm_progress_t event)
   }
 }
 
-void pu_ui_cb_progress(alpm_progress_t event, const char *pkgname, int percent,
-    size_t total, size_t current)
+void pu_ui_cb_progress(void *ctx, alpm_progress_t event, const char *pkgname,
+    int percent, size_t total, size_t current)
 {
   const char *opr = pu_ui_msg_progress(event);
   static int percent_last = -1;
+  (void)ctx;
 
   /* don't update if nothing has changed */
   if(percent_last == percent) {
@@ -140,8 +147,9 @@ void pu_ui_cb_progress(alpm_progress_t event, const char *pkgname, int percent,
   percent_last = percent;
 }
 
-void pu_ui_cb_event(alpm_event_t *event)
+void pu_ui_cb_event(void *ctx, alpm_event_t *event)
 {
+  (void)ctx;
   switch(event->type) {
     case ALPM_EVENT_CHECKDEPS_START:
       puts("Checking dependencies...");
@@ -181,7 +189,7 @@ void pu_ui_cb_event(alpm_event_t *event)
     case ALPM_EVENT_RESOLVEDEPS_START:
       puts("Resolving dependencies...");
       break;
-    case ALPM_EVENT_RETRIEVE_START:
+    case ALPM_EVENT_PKG_RETRIEVE_START:
       puts("Downloading packages...");
       break;
     case ALPM_EVENT_SCRIPTLET_INFO:
@@ -197,6 +205,9 @@ void pu_ui_cb_event(alpm_event_t *event)
 
     /* Ignored */
     case ALPM_EVENT_CHECKDEPS_DONE:
+    case ALPM_EVENT_DB_RETRIEVE_DONE:
+    case ALPM_EVENT_DB_RETRIEVE_FAILED:
+    case ALPM_EVENT_DB_RETRIEVE_START:
     case ALPM_EVENT_DISKSPACE_DONE:
     case ALPM_EVENT_DISKSPACE_START:
     case ALPM_EVENT_FILECONFLICTS_DONE:
@@ -212,12 +223,9 @@ void pu_ui_cb_event(alpm_event_t *event)
     case ALPM_EVENT_LOAD_DONE:
     case ALPM_EVENT_LOAD_START:
     case ALPM_EVENT_PACKAGE_OPERATION_START:
-    case ALPM_EVENT_PKGDOWNLOAD_DONE:
-    case ALPM_EVENT_PKGDOWNLOAD_FAILED:
-    case ALPM_EVENT_PKGDOWNLOAD_START:
+    case ALPM_EVENT_PKG_RETRIEVE_DONE:
+    case ALPM_EVENT_PKG_RETRIEVE_FAILED:
     case ALPM_EVENT_RESOLVEDEPS_DONE:
-    case ALPM_EVENT_RETRIEVE_DONE:
-    case ALPM_EVENT_RETRIEVE_FAILED:
     case ALPM_EVENT_TRANSACTION_DONE:
       /* ignore */
       break;
@@ -296,8 +304,9 @@ long pu_ui_select_index(long def, long min, long max, const char *prompt, ...)
   }
 }
 
-void pu_ui_cb_question(alpm_question_t *question)
+void pu_ui_cb_question(void *ctx, alpm_question_t *question)
 {
+  (void)ctx;
   switch(question->type) {
     case ALPM_QUESTION_INSTALL_IGNOREPKG:
       {
@@ -391,43 +400,137 @@ void pu_ui_cb_question(alpm_question_t *question)
   }
 }
 
-void pu_ui_cb_download(const char *filename, off_t xfered, off_t total)
+typedef struct _pu_ui_download_status_t {
+  char *filename;
+  int optional;
+  off_t initial_size; /* for resuming partial downloads */
+  off_t downloaded;
+  off_t total;
+} _pu_ui_download_status_t;
+
+static void _pu_ui_clear_line(FILE *out)
 {
-  static struct timeval last_update = {0, 0};
-  char end = '\r';
+  fputs("\x1B[K", out);
+}
 
-  if(xfered == 0 && total == 0) {
-    /* non-transfer event; ignore */
-    return;
-  } else if(xfered < 0) {
-    /* uh-oh, something has gone wrong */
-    return;
-  } else if(xfered == 0 && total == -1) {
-    /* new download is starting, always print the initial status */
-    gettimeofday(&last_update, NULL);
-  } else if(xfered == total) {
-    /* download is done, wrap to the next line */
-    end = '\n';
-  } else {
-    /* mid-download, check if enough time has elapsed to update the status */
-    struct timeval now;
-    gettimeofday(&now, NULL);
-    if(_pu_ui_time_diff(&now, &last_update) < PU_MAX_REFRESH_MS) {
-      return;
+void pu_ui_cb_download(void *ctx, const char *filename,
+    alpm_download_event_type_t event, void *data)
+{
+  static pu_ui_ctx_download_t default_ctx = {
+    .update_interval_same = 200,
+    .update_interval_next = 1000
+  };
+  pu_ui_ctx_download_t *c = ctx ? ctx : &default_ctx;
+
+  int64_t now;
+  int should_update = 0;
+
+  if(c->out == NULL) { c->out = stdout; }
+
+  switch(event) {
+    case ALPM_DOWNLOAD_INIT: {
+      _pu_ui_download_status_t *s = calloc(sizeof(_pu_ui_download_status_t), 1);
+      alpm_list_append(&c->active_downloads, s);
+      s->filename = strdup(filename);
+      s->optional = ((alpm_download_event_init_t*)data)->optional;
+      break;
     }
-    last_update = now;
+    case ALPM_DOWNLOAD_PROGRESS: {
+      for(alpm_list_t *i = c->active_downloads; i; i = i->next) {
+        _pu_ui_download_status_t *s = i->data;
+        if(strcmp(s->filename, filename) == 0) {
+          alpm_download_event_progress_t *d = data;
+          s->downloaded = d->downloaded;
+          s->total      = d->total;
+          break;
+        }
+      }
+      break;
+    }
+    case ALPM_DOWNLOAD_RETRY: {
+      alpm_download_event_retry_t *r = data;
+      for(alpm_list_t *i = c->active_downloads; i; i = i->next) {
+        _pu_ui_download_status_t *s = i->data;
+        if(strcmp(s->filename, filename) == 0) {
+          if(r->resume) {
+            s->initial_size = s->downloaded;
+          } else {
+            s->downloaded = 0;
+          }
+          break;
+        }
+      }
+      break;
+    }
+    case ALPM_DOWNLOAD_COMPLETED: {
+      alpm_download_event_completed_t *d = data;
+      int optional = 0;
+
+      should_update = 1;
+
+      for(alpm_list_t *i = c->active_downloads; i; i = i->next) {
+        _pu_ui_download_status_t *s = i->data;
+        if(strcmp(s->filename, filename) == 0) {
+          optional = s->optional;
+          c->active_downloads = alpm_list_remove_item(c->active_downloads, i);
+          free(s->filename);
+          free(s);
+          free(i);
+          break;
+        }
+      }
+
+      switch(d->result) {
+        case 0:
+          _pu_ui_clear_line(c->out);
+          fprintf(c->out, "%s (%jd/%jd) 100%%\n", filename,
+              (intmax_t)d->total, (intmax_t)d->total);
+          break;
+        case 1:
+          _pu_ui_clear_line(c->out);
+          fprintf(c->out, "%s is up to date\n", filename);
+          break;
+        default:
+          if(!optional) {
+            _pu_ui_clear_line(c->out);
+            fprintf(c->out, "%s failed to download\n", filename);
+          }
+          break;
+      }
+
+      break;
+    }
   }
 
-  if(total <= 0) {
-    /* server has not provided a valid total download size */
-    printf("downloading %s (%lld)%c", filename, (long long)xfered, end);
-  } else {
-    int percent = 100 * xfered / total;
-    printf("downloading %s (%lld/%lld) %d%%%c",
-        filename, (long long)xfered, (long long)total, percent, end);
+  now = _pu_ui_get_time_ms();
+  if(should_update || now - c->last_advance >= c->update_interval_next) {
+    c->index++;
+    should_update = 1;
+    c->last_update = c->last_advance = now;
+  } else if(now - c->last_update >= c->update_interval_same) {
+    should_update = 1;
+    c->last_update = now;
   }
 
-  fflush(stdout);
+  if(should_update) {
+    int num = alpm_list_count(c->active_downloads);
+    alpm_list_t *n;
+    if(c->index >= num) { c->index = 0; }
+    if((n = alpm_list_nth(c->active_downloads, c->index))) {
+      _pu_ui_download_status_t *s = n->data;
+      intmax_t downloaded = s->initial_size + s->downloaded;
+      _pu_ui_clear_line(c->out);
+      if(s->total) {
+        fprintf(c->out, "(%d/%d) %s (%jd/%jd) %d%%\r",
+            c->index + 1, num, s->filename, downloaded, (intmax_t)s->total,
+            (int)(100 * downloaded / s->total));
+      } else {
+        fprintf(c->out, "(%d/%d) %s (%jd)\r",
+            c->index + 1, num, s->filename, s->downloaded);
+      }
+    }
+    fflush(c->out);
+  }
 }
 
 void pu_ui_display_transaction(alpm_handle_t *handle)

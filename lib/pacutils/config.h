@@ -36,11 +36,11 @@ typedef enum pu_config_option_t {
   PU_CONFIG_OPTION_CLEANMETHOD,
   PU_CONFIG_OPTION_COLOR,
   PU_CONFIG_OPTION_USESYSLOG,
-  PU_CONFIG_OPTION_TOTALDOWNLOAD,
   PU_CONFIG_OPTION_CHECKSPACE,
   PU_CONFIG_OPTION_VERBOSEPKGLISTS,
   PU_CONFIG_OPTION_ILOVECANDY,
   PU_CONFIG_OPTION_DISABLEDOWNLOADTIMEOUT,
+  PU_CONFIG_OPTION_PARALLELDOWNLOADS,
 
   PU_CONFIG_OPTION_SIGLEVEL,
   PU_CONFIG_OPTION_LOCAL_SIGLEVEL,
@@ -79,13 +79,13 @@ typedef struct pu_config_t {
   char *dbpath;
   char *gpgdir;
   char *logfile;
-  char *architecture;
   char *xfercommand;
+
+  int paralleldownloads;
 
   pu_config_bool_t checkspace;
   pu_config_bool_t color;
   pu_config_bool_t ilovecandy;
-  pu_config_bool_t totaldownload;
   pu_config_bool_t usesyslog;
   pu_config_bool_t verbosepkglists;
   pu_config_bool_t disabledownloadtimeout;
@@ -98,6 +98,7 @@ typedef struct pu_config_t {
   int localfilesiglevel_mask;
   int remotefilesiglevel_mask;
 
+  alpm_list_t *architectures;
   alpm_list_t *cachedirs;
   alpm_list_t *holdpkgs;
   alpm_list_t *hookdirs;

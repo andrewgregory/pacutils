@@ -112,8 +112,7 @@ pu_config_t *parse_opts(int argc, char **argv)
 	while((c = getopt_long(argc, argv, short_opts, long_opts, NULL)) != -1) {
 		switch(c) {
 			case FLAG_ARCH:
-				free(config->architecture);
-				config->architecture = strdup(optarg);
+				alpm_list_append_strdup(&config->architectures, optarg);
 				break;
 			case FLAG_CONFIG:
 				config_file = optarg;
@@ -178,15 +177,15 @@ void list_repos(void)
 	}
 }
 
-void show_float(const char *directive, float val)
+void show_int(const char *directive, int val)
 {
-	if(val == -1.0) {
+	if(val == 0) {
 		return;
 	}
 	if(verbose) {
 		printf("%s = ", directive);
 	}
-	printf("%f%c", val, sep);
+	printf("%d%c", val, sep);
 }
 
 void show_bool(const char *directive, short unsigned int val)
@@ -312,17 +311,18 @@ void dump_options(void)
 	show_list_str("IgnoreGroup", config->ignoregroups);
 	show_list_str("NoUpgrade", config->noupgrade);
 	show_list_str("NoExtract", config->noextract);
+	show_list_str("Architecture", config->architectures);
 
-	show_str("Architecture", config->architecture);
 	show_str("XferCommand", config->xfercommand);
 
 	show_bool("UseSyslog", config->usesyslog);
 	show_bool("Color", config->color);
-	show_bool("TotalDownload", config->totaldownload);
 	show_bool("DisableDownloadTimeout", config->disabledownloadtimeout);
 	show_bool("CheckSpace", config->checkspace);
 	show_bool("VerbosePkgLists", config->verbosepkglists);
 	show_bool("ILoveCandy", config->ilovecandy);
+
+	show_int("ParallelDownloads", config->paralleldownloads);
 
 	show_cleanmethod("CleanMethod", config->cleanmethod);
 
@@ -421,19 +421,19 @@ int list_directives(alpm_list_t *directives)
 			show_list_str("NoUpgrade", config->noupgrade);
 		} else if(strcasecmp(i->data, "NoExtract") == 0) {
 			show_list_str("NoExtract", config->noextract);
-
-
 		} else if(strcasecmp(i->data, "Architecture") == 0) {
-			show_str("Architecture", config->architecture);
+			show_list_str("Architecture", config->architectures);
+
 		} else if(strcasecmp(i->data, "XferCommand") == 0) {
 			show_str("XferCommand", config->xfercommand);
+
+		} else if(strcasecmp(i->data, "ParallelDownloads") == 0) {
+			show_int("ParallelDownloads", config->paralleldownloads);
 
 		} else if(strcasecmp(i->data, "UseSyslog") == 0) {
 			show_bool("UseSyslog", config->usesyslog);
 		} else if(strcasecmp(i->data, "Color") == 0) {
 			show_bool("Color", config->color);
-		} else if(strcasecmp(i->data, "TotalDownload") == 0) {
-			show_bool("TotalDownload", config->totaldownload);
 		} else if(strcasecmp(i->data, "CheckSpace") == 0) {
 			show_bool("CheckSpace", config->checkspace);
 		} else if(strcasecmp(i->data, "VerbosePkgLists") == 0) {
