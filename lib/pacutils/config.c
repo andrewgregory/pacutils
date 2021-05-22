@@ -46,7 +46,6 @@ struct _pu_config_setting {
   {"CleanMethod",     PU_CONFIG_OPTION_CLEANMETHOD},
   {"Color",           PU_CONFIG_OPTION_COLOR},
   {"UseSyslog",       PU_CONFIG_OPTION_USESYSLOG},
-  {"TotalDownload",   PU_CONFIG_OPTION_TOTALDOWNLOAD},
   {"CheckSpace",      PU_CONFIG_OPTION_CHECKSPACE},
   {"VerbosePkgLists", PU_CONFIG_OPTION_VERBOSEPKGLISTS},
   {"ILoveCandy",      PU_CONFIG_OPTION_ILOVECANDY},
@@ -268,7 +267,6 @@ pu_config_t *pu_config_new(void)
   config->color = PU_CONFIG_BOOL_UNSET;
   config->disabledownloadtimeout = PU_CONFIG_BOOL_UNSET;
   config->ilovecandy = PU_CONFIG_BOOL_UNSET;
-  config->totaldownload = PU_CONFIG_BOOL_UNSET;
   config->usesyslog = PU_CONFIG_BOOL_UNSET;
   config->verbosepkglists = PU_CONFIG_BOOL_UNSET;
 
@@ -493,7 +491,6 @@ int pu_config_resolve(pu_config_t *config)
   SETBOOL(config->color);
   SETBOOL(config->disabledownloadtimeout);
   SETBOOL(config->ilovecandy);
-  SETBOOL(config->totaldownload);
   SETBOOL(config->usesyslog);
   SETBOOL(config->verbosepkglists);
 
@@ -532,7 +529,6 @@ void pu_config_merge(pu_config_t *dest, pu_config_t *src)
 #define MERGEBOOL(dv, sv) if(dv == -1) { dv = sv; }
 
   MERGEBOOL(dest->usesyslog, src->usesyslog);
-  MERGEBOOL(dest->totaldownload, src->totaldownload);
   MERGEBOOL(dest->checkspace, src->checkspace);
   MERGEBOOL(dest->verbosepkglists, src->verbosepkglists);
   MERGEBOOL(dest->color, src->color);
@@ -843,9 +839,6 @@ int pu_config_reader_next(pu_config_reader_t *reader)
           break;
         case PU_CONFIG_OPTION_USESYSLOG:
           config->usesyslog = 1;
-          break;
-        case PU_CONFIG_OPTION_TOTALDOWNLOAD:
-          config->totaldownload = 1;
           break;
         case PU_CONFIG_OPTION_CHECKSPACE:
           config->checkspace = 1;

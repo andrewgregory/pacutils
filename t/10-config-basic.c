@@ -45,7 +45,6 @@ char buf[] =
 "CleanMethod = KeepInstalled KeepCurrent\n"
 "UseSyslog\n"
 "Color\n"
-"TotalDownload\n"
 "CheckSpace\n"
 "VerbosePkgLists\n"
 "ILoveCandy\n"
@@ -110,7 +109,7 @@ int main(void) {
 
 	while(pu_config_reader_next(reader) != -1);
 
-	tap_plan(41);
+	tap_plan(40);
 
 	tap_ok(reader->eof, "eof reached");
 	tap_ok(!reader->error, "no error");
@@ -126,7 +125,6 @@ int main(void) {
 
 	tap_ok(config->usesyslog, "UseSyslog");
 	tap_ok(config->color, "Color");
-	tap_ok(config->totaldownload, "TotalDownload");
 	tap_ok(config->checkspace, "CheckSpace");
 	tap_ok(config->verbosepkglists, "VerbosePkgLists");
 	tap_ok(config->ilovecandy, "ILoveCandy");
