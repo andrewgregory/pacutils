@@ -268,6 +268,7 @@ alpm_list_t *find_cached_pkg(alpm_pkg_t *pkg, alpm_list_t *cache_pkgs) {
 				&& strcmp(alpm_pkg_get_arch(pkg), alpm_pkg_get_arch(i->data)) != 0) {
 			continue;
 		} else if(alpm_pkg_get_arch(pkg) == NULL
+				&& alpm_pkg_get_arch(i->data) != NULL
 				&& strcmp(alpm_pkg_get_arch(i->data), alpm_option_get_arch(handle)) != 0
 				&& strcmp(alpm_pkg_get_arch(i->data), "any") != 0) {
 			continue;
