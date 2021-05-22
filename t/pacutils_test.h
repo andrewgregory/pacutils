@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#include "tap.c/tap.c"
+#include "../ext/tap.c/tap.c"
 
 #ifndef PACUTILS_TEST_H
 #define PACUTILS_TEST_H

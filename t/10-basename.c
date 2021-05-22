@@ -1,6 +1,6 @@
 #include "pacutils/util.h"
 
-#include "tap.h"
+#include "pacutils_test.h"
 
 int main(void) {
     tap_plan(5);

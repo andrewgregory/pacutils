@@ -2,7 +2,7 @@
 
 #include "pacutils.h"
 
-#include "tap.h"
+#include "pacutils_test.h"
 
 int main(void) {
 	alpm_file_t files[] = {{.name="foo/bar"}, {.name="foo/baz/"}};

@@ -26,7 +26,7 @@ TESTS += \
 		 40-ui-cb-download-progress.t \
 		 99-pu_list_shift.t
 
-%.t: %.c ../lib/libpacutils.so tap.c/tap.c Makefile
+%.t: %.c ../lib/libpacutils.so ../ext/tap.c/tap.c Makefile
 	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $< $(LDLIBS) -o $@
 
 check: tests
@@ -38,9 +38,6 @@ all: tests
 
 valgrind: tests
 	LD_LIBRARY_PATH=../lib $(PROVE) --exec="./runtest.sh -v" $(TESTS)
-
-tap.c/tap.c:
-	$(GIT) submodule update tap.c
 
 gcov: CC = gcc
 gcov: CFLAGS += -fprofile-arcs -ftest-coverage

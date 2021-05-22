@@ -1,8 +1,8 @@
 #include <alpm.h>
 
-#include "tap.h"
-
 #include "pacutils.h"
+
+#include "pacutils_test.h"
 
 int main(void) {
     alpm_list_t *l = NULL;
