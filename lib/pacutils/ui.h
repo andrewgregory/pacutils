@@ -27,6 +27,25 @@
 #ifndef PACUTILS_UI_H
 #define PACUTILS_UI_H
 
+typedef struct pu_ui_ctx_download_t {
+  /* settings */
+
+  /* FILE to write to */
+  FILE *out;
+  /* how frequently to update the current download (ms),
+   * setting too low a value can cause flickering */
+  uint64_t update_interval_same;
+  /* how frequently to advance to the next download (ms),
+   * setting too low a value can cause flickering */
+  uint64_t update_interval_next;
+
+  /* context */
+  uint64_t last_update;
+  uint64_t last_advance;
+  alpm_list_t *active_downloads;
+  int index;
+} pu_ui_ctx_download_t;
+
 void pu_ui_error(const char *fmt, ...);
 void pu_ui_warn(const char *fmt, ...);
 void pu_ui_notice(const char *fmt, ...);
@@ -42,7 +61,8 @@ const char *pu_ui_msg_progress(alpm_progress_t event);
 
 void pu_ui_display_transaction(alpm_handle_t *handle);
 
-void pu_ui_cb_download(void *ctx, const char *filename, off_t xfered, off_t total);
+void pu_ui_cb_download(void *ctx, const char *filename,
+    alpm_download_event_type_t event, void *data);
 void pu_ui_cb_progress(void *ctx, alpm_progress_t event, const char *pkgname,
     int percent, size_t total, size_t current);
 void pu_ui_cb_question(void *ctx, alpm_question_t *question);

@@ -560,29 +560,38 @@ alpm_pkg_t *find_sync_pkg(char *pkgspec)
 	return NULL;
 }
 
-int load_pkg_files()
+int load_pkg_files(void)
 {
-	alpm_list_t *i;
+	alpm_list_t *i, *remote = NULL, *remote_paths = NULL;
 	int ret = 0;
 	alpm_siglevel_t slr = alpm_option_get_remote_file_siglevel(handle);
 	alpm_siglevel_t sll = alpm_option_get_local_file_siglevel(handle);
+
+	for(i = files; i; i = i->next) {
+		if(strstr(i->data, "://") && !alpm_list_append(&remote, i->data)) {
+			alpm_list_free(remote);
+			return 1;
+		}
+	}
+	if(remote) {
+		if( alpm_fetch_pkgurl(handle, remote, &remote_paths) != 0
+				|| alpm_list_count(remote) != alpm_list_count(remote_paths)) {
+			pu_ui_error("unable to download remote packages");
+			alpm_list_free(remote);
+			alpm_list_free(remote_paths);
+			return 1;
+		}
+	}
 
 	for(i = files; i; i = i->next) {
 		alpm_siglevel_t sl = sll;
 		alpm_pkg_t *pkg;
 
 		if(strstr(i->data, "://")) {
-			char *path = alpm_fetch_pkgurl(handle, i->data);
-			if(!path) {
-				fprintf(stderr, "error: could not load '%s' (%s)\n",
-						(char*) i->data, alpm_strerror(alpm_errno(handle)));
-				ret++;
-				continue;
-			} else {
-				free(i->data);
-				i->data = path;
-				sl = slr;
-			}
+			char *path = _pu_list_shift(&remote_paths);
+			free(i->data);
+			i->data = path;
+			sl = slr;
 		}
 
 		if( alpm_pkg_load(handle, i->data, 1, sl, &pkg) != 0) {
@@ -889,18 +898,7 @@ int main(int argc, char **argv)
 	}
 
 	if(dbsync) {
-		for(i = alpm_get_syncdbs(handle); i; i = i->next) {
-			alpm_db_t *db = i->data;
-			int res = alpm_db_update(0, db);
-			if(res < 0) {
-				fprintf(stderr, "error: could not sync db '%s' (%s)\n",
-						alpm_db_get_name(db), alpm_strerror(alpm_errno(handle)));
-			} else if(res == 1) {
-				/* db was already up to date */
-				printf("%s is up to date\n", alpm_db_get_name(db));
-			}
-			/* else: callbacks display relevant information */
-		}
+		alpm_db_update(handle, alpm_get_syncdbs(handle), 0);
 	}
 
 	for(i = add; i; i = i->next) {

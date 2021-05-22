@@ -74,6 +74,18 @@ alpm_file_t *pu_filelist_contains_path(alpm_filelist_t *files, const char *path)
 			(int(*)(const void*, const void*)) _pu_filelist_path_cmp);
 }
 
+static char *pu_fetch_pkgurl(alpm_handle_t *handle, const char *url)
+{
+		alpm_list_t l = { .data = (void*)url }, *result = NULL;
+		if(alpm_fetch_pkgurl(handle, &l, &result) == 0 && result) {
+			char *path = result->data;
+			alpm_list_free(result);
+			return path;
+		} else {
+			return NULL;
+		}
+}
+
 alpm_pkg_t *pu_find_pkgspec(alpm_handle_t *handle, const char *pkgspec)
 {
 	char *c;
@@ -84,7 +96,7 @@ alpm_pkg_t *pu_find_pkgspec(alpm_handle_t *handle, const char *pkgspec)
 			= strncmp(pkgspec, "file://", 7) == 0
 			? alpm_option_get_local_file_siglevel(handle)
 			: alpm_option_get_remote_file_siglevel(handle);
-		char *path = alpm_fetch_pkgurl(handle, pkgspec);
+		char *path = pu_fetch_pkgurl(handle, pkgspec);
 		int err = alpm_pkg_load(handle, path ? path : pkgspec, 1, sl, &pkg);
 		free(path);
 		if(!err) {

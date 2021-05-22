@@ -212,20 +212,14 @@ int main(int argc, char **argv)
 
 	pu_log_command(handle, LOG_PREFIX, argc, argv);
 
-	for(i = targets; i; i = i->next) {
-		alpm_db_t *db = i->data;
-		int res = alpm_db_update(force, db);
-		if(res < 0) {
-			ret = 1;
-			fprintf(stderr, "error: could not sync db '%s' (%s)\n",
-					alpm_db_get_name(db), alpm_strerror(alpm_errno(handle)));
-		} else if(res == 1) {
-			/* db was already up to date */
-			printf("%s is up to date\n", alpm_db_get_name(db));
-		} else {
-			/* callbacks display relevant information */
-			updated = 1;
-		}
+	int res = alpm_db_update(handle, targets, force);
+	if(res == -1) {
+		ret = 1;
+		fprintf(stderr, "error: could not sync dbs (%s)\n",
+				alpm_strerror(alpm_errno(handle)));
+	} else {
+		/* callbacks display relevant information */
+		updated = 1;
 	}
 
 cleanup:
