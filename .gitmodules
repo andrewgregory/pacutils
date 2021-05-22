@@ -1,9 +1,0 @@
-[submodule "ext/mini.c"]
-	path = ext/mini.c
-	url = https://github.com/andrewgregory/mINI.c.git
-[submodule "t/tap.c"]
-	path = t/tap.c
-	url = https://github.com/andrewgregory/tap.c.git
-[submodule "ext/globdir.c"]
-	path = ext/globdir.c
-	url = https://github.com/andrewgregory/globdir.c.git
