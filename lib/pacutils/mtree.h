@@ -52,7 +52,8 @@ alpm_list_t *pu_mtree_load_pkg_mtree(alpm_handle_t *handle, alpm_pkg_t *pkg);
 
 pu_mtree_reader_t *pu_mtree_reader_open_stream(FILE *stream);
 pu_mtree_reader_t *pu_mtree_reader_open_file(const char *path);
-pu_mtree_reader_t *pu_mtree_reader_open_package(alpm_handle_t *h, alpm_pkg_t *p);
+pu_mtree_reader_t *pu_mtree_reader_open_package(alpm_handle_t *h,
+    alpm_pkg_t *p);
 pu_mtree_t *pu_mtree_reader_next(pu_mtree_reader_t *reader, pu_mtree_t *dest);
 pu_mtree_t *pu_mtree_new(void);
 void pu_mtree_reader_free(pu_mtree_reader_t *reader);

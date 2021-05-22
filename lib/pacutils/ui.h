@@ -71,8 +71,10 @@ void pu_ui_cb_event(void *ctx, alpm_event_t *event);
 pu_config_t *pu_ui_config_parse(pu_config_t *dest, const char *file);
 pu_config_t *pu_ui_config_load(pu_config_t *dest, const char *file);
 
-pu_config_t *pu_ui_config_parse_sysroot(pu_config_t *dest, const char *file, const char *root);
-pu_config_t *pu_ui_config_load_sysroot(pu_config_t *dest, const char *file, const char *root);
+pu_config_t *pu_ui_config_parse_sysroot(pu_config_t *dest, const char *file,
+    const char *root);
+pu_config_t *pu_ui_config_load_sysroot(pu_config_t *dest, const char *file,
+    const char *root);
 
 #endif /* PACUTILS_UI_H */
 

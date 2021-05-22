@@ -33,25 +33,23 @@
 
 #include "util.h"
 
-char *pu_basename(char *path)
-{
+char *pu_basename(char *path) {
   char *c;
-  if(!path) { return NULL; }
-  for(c = path + strlen(path); c > path && *(c - 1) != '/'; --c);
+  if (!path) { return NULL; }
+  for (c = path + strlen(path); c > path && *(c - 1) != '/'; --c);
   return c;
 }
 
-char *pu_hr_size(off_t bytes, char *dest)
-{
+char *pu_hr_size(off_t bytes, char *dest) {
   static char *suff[] = {"B", "K", "M", "G", "T", "P", "E", NULL};
   float hrsize;
   int s = 0;
-  while((bytes >= 1000000 || bytes <= -1000000) && suff[s + 1]) {
+  while ((bytes >= 1000000 || bytes <= -1000000) && suff[s + 1]) {
     bytes /= 1024;
     ++s;
   }
   hrsize = bytes;
-  if((hrsize >= 1000 || hrsize <= -1000) && suff[s + 1]) {
+  if ((hrsize >= 1000 || hrsize <= -1000) && suff[s + 1]) {
     hrsize /= 1024;
     ++s;
   }
@@ -59,27 +57,25 @@ char *pu_hr_size(off_t bytes, char *dest)
   return dest;
 }
 
-void *_pu_list_shift(alpm_list_t **list)
-{
+void *_pu_list_shift(alpm_list_t **list) {
   alpm_list_t *l = *list;
   void *data;
-  if(l == NULL) { return NULL; }
+  if (l == NULL) { return NULL; }
   data = l->data;
-  if(l->next) { l->next->prev = l->prev; }
+  if (l->next) { l->next->prev = l->prev; }
   *list = l->next;
   free(l);
   return data;
 }
 
-struct tm *pu_parse_datetime(const char *string, struct tm *stm)
-{
+struct tm *pu_parse_datetime(const char *string, struct tm *stm) {
   const char *c, *end;
   memset(stm, 0, sizeof(struct tm));
   stm->tm_isdst = -1;
   stm->tm_mday = 1;
 
   /* locate the end of the usable date */
-  if((c = strpbrk(string, " T")) && (c = strpbrk(c, ",.Z-+"))) {
+  if ((c = strpbrk(string, " T")) && (c = strpbrk(c, ",.Z-+"))) {
     /* ignore trailing timezone and/or fractional elements */
     end = c;
   } else {
@@ -102,7 +98,7 @@ struct tm *pu_parse_datetime(const char *string, struct tm *stm)
   pu_parse_bit(c, "%Y", stm);
   pu_parse_bit(c, "-%m", stm);
   pu_parse_bit(c, "-%d", stm);
-  if(c[0] == ' ' || c[0] == 'T') { c++; }
+  if (c[0] == ' ' || c[0] == 'T') { c++; }
   pu_parse_bit(c, "%H", stm);
   pu_parse_bit(c, ":%M", stm);
   pu_parse_bit(c, ":%S", stm);
@@ -111,11 +107,10 @@ struct tm *pu_parse_datetime(const char *string, struct tm *stm)
   return NULL;
 }
 
-alpm_list_t *pu_list_append_str(alpm_list_t **list, const char *str)
-{
+alpm_list_t *pu_list_append_str(alpm_list_t **list, const char *str) {
   alpm_list_t *ret;
   char *dup;
-  if((dup = strdup(str)) && (ret = alpm_list_append(list, dup))) {
+  if ((dup = strdup(str)) && (ret = alpm_list_append(list, dup))) {
     return ret;
   } else {
     free(dup);
@@ -123,8 +118,7 @@ alpm_list_t *pu_list_append_str(alpm_list_t **list, const char *str)
   }
 }
 
-char *pu_vasprintf(const char *fmt, va_list args)
-{
+char *pu_vasprintf(const char *fmt, va_list args) {
   va_list args_copy;
   char *p;
   int len;
@@ -134,17 +128,17 @@ char *pu_vasprintf(const char *fmt, va_list args)
   va_end(args_copy);
 
 #if SIZE_MAX <= INT_MAX
-  if(len >= SIZE_MAX) {
+  if (len >= SIZE_MAX) {
     errno = EOVERFLOW;
     return NULL;
   }
 #endif
 
-  if(len < 0) {
+  if (len < 0) {
     return NULL;
   }
 
-  if((p = malloc((size_t)len + 1)) == NULL) {
+  if ((p = malloc((size_t)len + 1)) == NULL) {
     return NULL;
   }
 
@@ -153,8 +147,7 @@ char *pu_vasprintf(const char *fmt, va_list args)
   return p;
 }
 
-char *pu_asprintf(const char *fmt, ...)
-{
+char *pu_asprintf(const char *fmt, ...) {
   char *p;
   va_list args;
 
@@ -165,18 +158,16 @@ char *pu_asprintf(const char *fmt, ...)
   return p;
 }
 
-char *pu_prepend_dir(const char *dir, const char *path)
-{
+char *pu_prepend_dir(const char *dir, const char *path) {
   const char *sep = dir[strlen(dir) - 1] == '/' ? "" : "/";
-  while(path[0] == '/') { path++; }
+  while (path[0] == '/') { path++; }
   return pu_asprintf("%s%s%s", dir, sep, path);
 }
 
-int pu_prepend_dir_list(const char *dir, alpm_list_t *paths)
-{
-  while(paths) {
+int pu_prepend_dir_list(const char *dir, alpm_list_t *paths) {
+  while (paths) {
     char *newval = pu_prepend_dir(dir, paths->data);
-    if(newval == NULL) { return -1; }
+    if (newval == NULL) { return -1; }
     free(paths->data);
     paths->data = newval;
     paths = paths->next;
@@ -184,27 +175,40 @@ int pu_prepend_dir_list(const char *dir, alpm_list_t *paths)
   return 0;
 }
 
-FILE *pu_fopenat(int dirfd, const char *path, const char *mode)
-{
+FILE *pu_fopenat(int dirfd, const char *path, const char *mode) {
   int fd, flags = 0, rwflag = 0;
   FILE *stream;
   const char *m = mode;
-  switch(*(m++)) {
-    case 'r': rwflag = O_RDONLY; break;
-    case 'w': rwflag = O_WRONLY; flags |= O_CREAT | O_TRUNC; break;
-    case 'a': rwflag = O_WRONLY; flags |= O_CREAT | O_APPEND; break;
-    default: errno = EINVAL; return NULL;
+  switch (*(m++)) {
+    case 'r':
+      rwflag = O_RDONLY;
+      break;
+    case 'w':
+      rwflag = O_WRONLY;
+      flags |= O_CREAT | O_TRUNC;
+      break;
+    case 'a':
+      rwflag = O_WRONLY;
+      flags |= O_CREAT | O_APPEND;
+      break;
+    default:
+      errno = EINVAL;
+      return NULL;
   }
-  if(m[1] == 'b') { m++; }
-  if(m[1] == '+') { m++; rwflag = O_RDWR; }
-  while(*m) {
-    switch(*(m++)) {
-      case 'e': flags |= O_CLOEXEC; break;
-      case 'x': flags |= O_EXCL; break;
+  if (m[1] == 'b') { m++; }
+  if (m[1] == '+') { m++; rwflag = O_RDWR; }
+  while (*m) {
+    switch (*(m++)) {
+      case 'e':
+        flags |= O_CLOEXEC;
+        break;
+      case 'x':
+        flags |= O_EXCL;
+        break;
     }
   }
-  if((fd = openat(dirfd, path, flags | rwflag, 0666)) < 0) { return NULL; }
-  if((stream = fdopen(fd, mode)) == NULL) { close(fd); return NULL; }
+  if ((fd = openat(dirfd, path, flags | rwflag, 0666)) < 0) { return NULL; }
+  if ((stream = fdopen(fd, mode)) == NULL) { close(fd); return NULL; }
   return stream;
 }
 

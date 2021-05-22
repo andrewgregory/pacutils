@@ -32,12 +32,17 @@ int pu_pkg_optdepends_on(alpm_pkg_t *pkg, alpm_pkg_t *dpkg);
 int pu_pkg_checkdepends_on(alpm_pkg_t *pkg, alpm_pkg_t *dpkg);
 int pu_pkg_makedepends_on(alpm_pkg_t *pkg, alpm_pkg_t *dpkg);
 
-int pu_pkg_find_requiredby(alpm_pkg_t *pkg, alpm_list_t *pkgs, alpm_list_t **ret);
-int pu_pkg_find_optionalfor(alpm_pkg_t *pkg, alpm_list_t *pkgs, alpm_list_t **ret);
-int pu_pkg_find_makedepfor(alpm_pkg_t *pkg, alpm_list_t *pkgs, alpm_list_t **ret);
-int pu_pkg_find_checkdepfor(alpm_pkg_t *pkg, alpm_list_t *pkgs, alpm_list_t **ret);
+int pu_pkg_find_requiredby(alpm_pkg_t *pkg, alpm_list_t *pkgs,
+    alpm_list_t **ret);
+int pu_pkg_find_optionalfor(alpm_pkg_t *pkg, alpm_list_t *pkgs,
+    alpm_list_t **ret);
+int pu_pkg_find_makedepfor(alpm_pkg_t *pkg, alpm_list_t *pkgs,
+    alpm_list_t **ret);
+int pu_pkg_find_checkdepfor(alpm_pkg_t *pkg, alpm_list_t *pkgs,
+    alpm_list_t **ret);
 
-alpm_pkg_t *pu_pkglist_find_dep_satisfier(alpm_list_t *pkgs, alpm_depend_t *dep);
+alpm_pkg_t *pu_pkglist_find_dep_satisfier(alpm_list_t *pkgs,
+    alpm_depend_t *dep);
 alpm_pkg_t *pu_db_find_dep_satisfier(alpm_db_t *db, alpm_depend_t *dep);
 alpm_pkg_t *pu_dblist_find_dep_satisfier(alpm_list_t *dbs, alpm_depend_t *dep);
 

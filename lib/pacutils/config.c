@@ -74,26 +74,24 @@ struct _pu_config_setting {
   {NULL, 0}
 };
 
-static mini_t *_pu_mini_openat(int fd, const char *path)
-{
+static mini_t *_pu_mini_openat(int fd, const char *path) {
   FILE *f;
   mini_t *m;
 
-  if(fd != -1) {
-    while(path[0] == '/') { path++; }
+  if (fd != -1) {
+    while (path[0] == '/') { path++; }
     f = pu_fopenat(fd, path, "r");
   } else {
     f = fopen(path, "r");
   }
-  if(f == NULL) { return NULL; }
-  if((m = mini_finit(f)) == NULL) { fclose(f); return NULL; }
+  if (f == NULL) { return NULL; }
+  if ((m = mini_finit(f)) == NULL) { fclose(f); return NULL; }
 
   m->_free_stream = 1;
   return m;
 }
 
-static char *_pu_strjoin(const char *sep, ...)
-{
+static char *_pu_strjoin(const char *sep, ...) {
   char *c, *next, *dest;
   size_t tlen = 0, sep_len = (sep && *sep) ? strlen(sep) : 0;
   int argc = 0;
@@ -102,24 +100,24 @@ static char *_pu_strjoin(const char *sep, ...)
   va_start(args, sep);
 
   va_copy(calc, args);
-  for(tlen = 0; (c = va_arg(calc, char*)); argc++, tlen += strlen(c) + sep_len);
+  for (tlen = 0; (c = va_arg(calc, char *)); argc++, tlen += strlen(c) + sep_len);
   tlen -= sep_len;
   va_end(calc);
 
-  if(argc == 0) {
+  if (argc == 0) {
     va_end(args);
     return strdup("");
-  } else if((dest = malloc(tlen + 1)) == NULL) {
+  } else if ((dest = malloc(tlen + 1)) == NULL) {
     va_end(args);
     return NULL;
   }
 
   c = dest;
-  next = va_arg(args, char*);
-  while(next) {
+  next = va_arg(args, char *);
+  while (next) {
     c = stpcpy(c, next);
-    next = va_arg(args, char*);
-    if(next && sep_len) {
+    next = va_arg(args, char *);
+    if (next && sep_len) {
       c = stpcpy(c, sep);
     }
   }
@@ -129,8 +127,7 @@ static char *_pu_strjoin(const char *sep, ...)
 }
 
 static char *_pu_strreplace(const char *str,
-    const char *target, const char *replacement)
-{
+    const char *target, const char *replacement) {
   const char *ptr;
   char *newstr, *c;
   size_t found = 0;
@@ -140,7 +137,7 @@ static char *_pu_strreplace(const char *str,
 
   /* count the number of occurrences */
   ptr = str;
-  while((ptr = strstr(ptr, target))) {
+  while ((ptr = strstr(ptr, target))) {
     found++;
     ptr += tlen;
   }
@@ -148,13 +145,13 @@ static char *_pu_strreplace(const char *str,
   /* calculate the length of our new string */
   newlen += (found * (rlen - tlen));
 
-  if((newstr = malloc(newlen + 1)) == NULL) { return NULL; }
+  if ((newstr = malloc(newlen + 1)) == NULL) { return NULL; }
   newstr[0] = '\0';
 
   /* copy the string with the replacements */
   ptr = str;
   c = newstr;
-  while((ptr = strstr(ptr, target))) {
+  while ((ptr = strstr(ptr, target))) {
     c = stpncpy(c, str, ptr - str);
     c = stpcpy(c, replacement);
     ptr += tlen;
@@ -165,14 +162,13 @@ static char *_pu_strreplace(const char *str,
   return newstr;
 }
 
-static int _pu_config_parse_cleanmethod(char *val, int *dest)
-{
+static int _pu_config_parse_cleanmethod(char *val, int *dest) {
   char *v, *ctx;
   int ret = 0;
-  for(v = strtok_r(val, " ", &ctx); v; v = strtok_r(NULL, " ", &ctx)) {
-    if(strcmp(v, "KeepInstalled") == 0) {
+  for (v = strtok_r(val, " ", &ctx); v; v = strtok_r(NULL, " ", &ctx)) {
+    if (strcmp(v, "KeepInstalled") == 0) {
       *dest |= PU_CONFIG_CLEANMETHOD_KEEP_INSTALLED;
-    } else if(strcmp(v, "KeepCurrent") == 0) {
+    } else if (strcmp(v, "KeepCurrent") == 0) {
       *dest |= PU_CONFIG_CLEANMETHOD_KEEP_CURRENT;
     } else {
       ret = -1;
@@ -181,20 +177,19 @@ static int _pu_config_parse_cleanmethod(char *val, int *dest)
   return ret;
 }
 
-static int _pu_config_parse_usage(char *val, int *dest)
-{
+static int _pu_config_parse_usage(char *val, int *dest) {
   char *v, *ctx;
   int ret = 0;
-  for(v = strtok_r(val, " ", &ctx); v; v = strtok_r(NULL, " ", &ctx)) {
-    if(strcmp(v, "Sync") == 0) {
+  for (v = strtok_r(val, " ", &ctx); v; v = strtok_r(NULL, " ", &ctx)) {
+    if (strcmp(v, "Sync") == 0) {
       *dest |= ALPM_DB_USAGE_SYNC;
-    } else if(strcmp(v, "Search") == 0) {
+    } else if (strcmp(v, "Search") == 0) {
       *dest |= ALPM_DB_USAGE_SEARCH;
-    } else if(strcmp(v, "Install") == 0) {
+    } else if (strcmp(v, "Install") == 0) {
       *dest |= ALPM_DB_USAGE_INSTALL;
-    } else if(strcmp(v, "Upgrade") == 0) {
+    } else if (strcmp(v, "Upgrade") == 0) {
       *dest |= ALPM_DB_USAGE_UPGRADE;
-    } else if(strcmp(v, "All") == 0) {
+    } else if (strcmp(v, "All") == 0) {
       *dest |= ALPM_DB_USAGE_ALL;
     } else {
       ret = -1;
@@ -203,39 +198,38 @@ static int _pu_config_parse_usage(char *val, int *dest)
   return ret;
 }
 
-static int _pu_config_parse_siglevel(char *val, int *level, int *mask)
-{
+static int _pu_config_parse_siglevel(char *val, int *level, int *mask) {
   char *v, *ctx;
   int ret = 0;
 
-  for(v = strtok_r(val, " ", &ctx); v; v = strtok_r(NULL, " ", &ctx)) {
+  for (v = strtok_r(val, " ", &ctx); v; v = strtok_r(NULL, " ", &ctx)) {
     int pkg = 1, db = 1;
 
-    if(strncmp(v, "Package", 7) == 0) {
+    if (strncmp(v, "Package", 7) == 0) {
       v += 7;
       db = 0;
-    } else if(strncmp(v, "Database", 8) == 0) {
+    } else if (strncmp(v, "Database", 8) == 0) {
       v += 8;
       pkg = 0;
     }
 
 #define SET(siglevel) do { *level |= (siglevel); *mask |= (siglevel); } while(0)
 #define UNSET(siglevel) do { *level &= ~(siglevel); *mask |= (siglevel); } while(0)
-    if(strcmp(v, "Never") == 0) {
-      if(pkg) { UNSET(ALPM_SIG_PACKAGE | ALPM_SIG_PACKAGE_OPTIONAL); }
-      if(db) { UNSET(ALPM_SIG_DATABASE | ALPM_SIG_DATABASE_OPTIONAL); }
-    } else if(strcmp(v, "Optional") == 0) {
-      if(pkg) { SET(ALPM_SIG_PACKAGE | ALPM_SIG_PACKAGE_OPTIONAL); }
-      if(db) { SET(ALPM_SIG_DATABASE | ALPM_SIG_DATABASE_OPTIONAL); }
-    } else if(strcmp(v, "Required") == 0) {
-      if(pkg) { SET(ALPM_SIG_PACKAGE); UNSET(ALPM_SIG_PACKAGE_OPTIONAL); }
-      if(db) { SET(ALPM_SIG_DATABASE); UNSET(ALPM_SIG_DATABASE_OPTIONAL); }
-    } else if(strcmp(v, "TrustedOnly") == 0) {
-      if(pkg) { UNSET(ALPM_SIG_PACKAGE_MARGINAL_OK | ALPM_SIG_PACKAGE_UNKNOWN_OK); }
-      if(db) { UNSET(ALPM_SIG_DATABASE_MARGINAL_OK | ALPM_SIG_DATABASE_UNKNOWN_OK); }
-    } else if(strcmp(v, "TrustAll") == 0) {
-      if(pkg) { SET(ALPM_SIG_PACKAGE_MARGINAL_OK | ALPM_SIG_PACKAGE_UNKNOWN_OK); }
-      if(db) { SET(ALPM_SIG_DATABASE_MARGINAL_OK | ALPM_SIG_DATABASE_UNKNOWN_OK); }
+    if (strcmp(v, "Never") == 0) {
+      if (pkg) { UNSET(ALPM_SIG_PACKAGE | ALPM_SIG_PACKAGE_OPTIONAL); }
+      if (db) { UNSET(ALPM_SIG_DATABASE | ALPM_SIG_DATABASE_OPTIONAL); }
+    } else if (strcmp(v, "Optional") == 0) {
+      if (pkg) { SET(ALPM_SIG_PACKAGE | ALPM_SIG_PACKAGE_OPTIONAL); }
+      if (db) { SET(ALPM_SIG_DATABASE | ALPM_SIG_DATABASE_OPTIONAL); }
+    } else if (strcmp(v, "Required") == 0) {
+      if (pkg) { SET(ALPM_SIG_PACKAGE); UNSET(ALPM_SIG_PACKAGE_OPTIONAL); }
+      if (db) { SET(ALPM_SIG_DATABASE); UNSET(ALPM_SIG_DATABASE_OPTIONAL); }
+    } else if (strcmp(v, "TrustedOnly") == 0) {
+      if (pkg) { UNSET(ALPM_SIG_PACKAGE_MARGINAL_OK | ALPM_SIG_PACKAGE_UNKNOWN_OK); }
+      if (db) { UNSET(ALPM_SIG_DATABASE_MARGINAL_OK | ALPM_SIG_DATABASE_UNKNOWN_OK); }
+    } else if (strcmp(v, "TrustAll") == 0) {
+      if (pkg) { SET(ALPM_SIG_PACKAGE_MARGINAL_OK | ALPM_SIG_PACKAGE_UNKNOWN_OK); }
+      if (db) { SET(ALPM_SIG_DATABASE_MARGINAL_OK | ALPM_SIG_DATABASE_UNKNOWN_OK); }
     } else {
       ret = -1;
     }
@@ -247,21 +241,20 @@ static int _pu_config_parse_siglevel(char *val, int *level, int *mask)
   return ret;
 }
 
-static struct _pu_config_setting *_pu_config_lookup_setting(const char *optname)
-{
+static struct _pu_config_setting *_pu_config_lookup_setting(
+    const char *optname) {
   int i;
-  for(i = 0; _pu_config_settings[i].name; ++i) {
-    if(strcmp(optname, _pu_config_settings[i].name) == 0) {
+  for (i = 0; _pu_config_settings[i].name; ++i) {
+    if (strcmp(optname, _pu_config_settings[i].name) == 0) {
       return &_pu_config_settings[i];
     }
   }
   return NULL;
 }
 
-pu_config_t *pu_config_new(void)
-{
+pu_config_t *pu_config_new(void) {
   pu_config_t *config = calloc(sizeof(pu_config_t), 1);
-  if(config == NULL) { return NULL; }
+  if (config == NULL) { return NULL; }
 
   config->checkspace = PU_CONFIG_BOOL_UNSET;
   config->color = PU_CONFIG_BOOL_UNSET;
@@ -277,9 +270,8 @@ pu_config_t *pu_config_new(void)
   return config;
 }
 
-void pu_repo_free(pu_repo_t *repo)
-{
-  if(!repo) {
+void pu_repo_free(pu_repo_t *repo) {
+  if (!repo) {
     return;
   }
 
@@ -289,14 +281,12 @@ void pu_repo_free(pu_repo_t *repo)
   free(repo);
 }
 
-pu_repo_t *pu_repo_new(void)
-{
+pu_repo_t *pu_repo_new(void) {
   return calloc(sizeof(pu_repo_t), 1);
 }
 
-void pu_config_free(pu_config_t *config)
-{
-  if(!config) {
+void pu_config_free(pu_config_t *config) {
+  if (!config) {
     return;
   }
 
@@ -321,30 +311,29 @@ void pu_config_free(pu_config_t *config)
   free(config);
 }
 
-static int _pu_subst_server_vars(pu_config_t *config)
-{
+static int _pu_subst_server_vars(pu_config_t *config) {
   alpm_list_t *r;
-  for(r = config->repos; r; r = r->next) {
+  for (r = config->repos; r; r = r->next) {
     pu_repo_t *repo = r->data;
     alpm_list_t *s;
-    for(s = repo->servers; s; s = s->next) {
+    for (s = repo->servers; s; s = s->next) {
       char *rrepo;
 
-      if(strstr(s->data, "$arch")) {
-        if(config->architectures == NULL) {
+      if (strstr(s->data, "$arch")) {
+        if (config->architectures == NULL) {
           errno = EINVAL;
           return -1;
         } else {
           char *arch = config->architectures->data;
           char *rarch = _pu_strreplace(s->data, "$arch", arch);
-          if(rarch == NULL) { return -1; }
+          if (rarch == NULL) { return -1; }
           free(s->data);
           s->data = rarch;
         }
       }
 
       rrepo = _pu_strreplace(s->data, "$repo", repo->name);
-      if(rrepo == NULL) { return -1; }
+      if (rrepo == NULL) { return -1; }
       free(s->data);
       s->data = rrepo;
     }
@@ -352,11 +341,10 @@ static int _pu_subst_server_vars(pu_config_t *config)
   return 0;
 }
 
-alpm_handle_t *pu_initialize_handle_from_config(pu_config_t *config)
-{
+alpm_handle_t *pu_initialize_handle_from_config(pu_config_t *config) {
   alpm_handle_t *handle = alpm_initialize(config->rootdir, config->dbpath, NULL);
 
-  if(!handle) {
+  if (!handle) {
     return NULL;
   }
 
@@ -381,9 +369,9 @@ alpm_handle_t *pu_initialize_handle_from_config(pu_config_t *config)
   alpm_option_set_parallel_downloads(handle, config->paralleldownloads);
 
   /* add hook directories 1-by-1 to avoid overwriting the system directory */
-  if(config->hookdirs != NULL) {
+  if (config->hookdirs != NULL) {
     alpm_list_t *i;
-    for(i = config->hookdirs; i; i = alpm_list_next(i)) {
+    for (i = config->hookdirs; i; i = alpm_list_next(i)) {
       alpm_option_add_hookdir(handle, i->data);
     }
   }
@@ -391,32 +379,29 @@ alpm_handle_t *pu_initialize_handle_from_config(pu_config_t *config)
   return handle;
 }
 
-alpm_db_t *pu_register_syncdb(alpm_handle_t *handle, pu_repo_t *repo)
-{
+alpm_db_t *pu_register_syncdb(alpm_handle_t *handle, pu_repo_t *repo) {
   alpm_db_t *db = alpm_register_syncdb(handle, repo->name, repo->siglevel);
-  if(db) {
+  if (db) {
     alpm_db_set_servers(db, alpm_list_strdup(repo->servers));
     alpm_db_set_usage(db, repo->usage);
   }
   return db;
 }
 
-alpm_list_t *pu_register_syncdbs(alpm_handle_t *handle, alpm_list_t *repos)
-{
+alpm_list_t *pu_register_syncdbs(alpm_handle_t *handle, alpm_list_t *repos) {
   alpm_list_t *r;
-  for(r = repos; r; r = r->next) {
+  for (r = repos; r; r = r->next) {
     pu_register_syncdb(handle, r->data);
   }
   return alpm_get_syncdbs(handle);
 }
 
-int pu_config_resolve_sysroot(pu_config_t *config, const char *sysroot)
-{
+int pu_config_resolve_sysroot(pu_config_t *config, const char *sysroot) {
   alpm_list_t *i;
 
-  if(pu_config_resolve(config) == -1) { return -1; }
+  if (pu_config_resolve(config) == -1) { return -1; }
 
-  if(sysroot == NULL || sysroot[0] == '\0') { return 0; }
+  if (sysroot == NULL || sysroot[0] == '\0') { return 0; }
 
 #define PU_SETSYSROOT(opt) \
   if(opt) { \
@@ -430,17 +415,17 @@ int pu_config_resolve_sysroot(pu_config_t *config, const char *sysroot)
   PU_SETSYSROOT(config->logfile)
   PU_SETSYSROOT(config->gpgdir)
 
-  for(i = config->hookdirs; i; i = i->next) { PU_SETSYSROOT(i->data); }
-  for(i = config->cachedirs; i; i = i->next) { PU_SETSYSROOT(i->data); }
+  for (i = config->hookdirs; i; i = i->next) { PU_SETSYSROOT(i->data); }
+  for (i = config->cachedirs; i; i = i->next) { PU_SETSYSROOT(i->data); }
 
-  for(i = config->repos; i; i = i->next) {
+  for (i = config->repos; i; i = i->next) {
     pu_repo_t *r = i->data;
     alpm_list_t *s;
-    for(s = r->servers; s; s = s->next) {
-      if(strncmp("file://", s->data, 7) == 0) {
+    for (s = r->servers; s; s = s->next) {
+      if (strncmp("file://", s->data, 7) == 0) {
         char *newdir = NULL, *newsrv = NULL;
-        if((newdir = pu_prepend_dir(sysroot, (char*)s->data + 7)) == NULL
-              || (newsrv = pu_asprintf("file://%s", newdir)) == NULL) {
+        if ((newdir = pu_prepend_dir(sysroot, (char *)s->data + 7)) == NULL
+            || (newsrv = pu_asprintf("file://%s", newdir)) == NULL) {
           free(newdir);
           free(newsrv);
           return 1;
@@ -457,12 +442,11 @@ int pu_config_resolve_sysroot(pu_config_t *config, const char *sysroot)
   return 0;
 }
 
-int pu_config_resolve(pu_config_t *config)
-{
+int pu_config_resolve(pu_config_t *config) {
   alpm_list_t *i;
 
 #define SETDEFAULT(opt, val) if(!opt) { opt = val; if(!opt) { return -1; } }
-  if(config->rootdir) {
+  if (config->rootdir) {
     SETDEFAULT(config->dbpath, _pu_strjoin("/", config->rootdir, DBPATH, NULL));
     SETDEFAULT(config->logfile, _pu_strjoin("/", config->rootdir, LOGFILE, NULL));
   } else {
@@ -476,11 +460,11 @@ int pu_config_resolve(pu_config_t *config)
   SETDEFAULT(config->cleanmethod, PU_CONFIG_CLEANMETHOD_KEEP_INSTALLED);
   SETDEFAULT(config->paralleldownloads, 1);
 
-  for(i = config->architectures; i; i = i->next) {
-    if(strcmp(i->data, "auto") == 0) {
+  for (i = config->architectures; i; i = i->next) {
+    if (strcmp(i->data, "auto") == 0) {
       struct utsname un;
       char *arch;
-      if(uname(&un) != 0 || (arch = strdup(un.machine)) == NULL) { return -1; }
+      if (uname(&un) != 0 || (arch = strdup(un.machine)) == NULL) { return -1; }
       free(i->data);
       i->data = arch;
     }
@@ -498,15 +482,15 @@ int pu_config_resolve(pu_config_t *config)
   if(m) { l = (l & (m)) | (config->siglevel & ~(m)); } \
   else { l = ALPM_SIG_USE_DEFAULT; }
 
-  if(!config->siglevel_mask) {
+  if (!config->siglevel_mask) {
     config->siglevel = (
-        ALPM_SIG_PACKAGE | ALPM_SIG_PACKAGE_OPTIONAL |
-        ALPM_SIG_DATABASE | ALPM_SIG_DATABASE_OPTIONAL);
+            ALPM_SIG_PACKAGE | ALPM_SIG_PACKAGE_OPTIONAL |
+            ALPM_SIG_DATABASE | ALPM_SIG_DATABASE_OPTIONAL);
   }
   SETSIGLEVEL(config->localfilesiglevel, config->localfilesiglevel_mask);
   SETSIGLEVEL(config->remotefilesiglevel, config->remotefilesiglevel_mask);
 
-  for(i = config->repos; i; i = i->next) {
+  for (i = config->repos; i; i = i->next) {
     pu_repo_t *r = i->data;
     SETDEFAULT(r->usage, ALPM_DB_USAGE_ALL);
     SETSIGLEVEL(r->siglevel, r->siglevel_mask);
@@ -515,13 +499,12 @@ int pu_config_resolve(pu_config_t *config)
 #undef SETBOOL
 #undef SETDEFAULT
 
-  if(_pu_subst_server_vars(config) != 0) { return -1; }
+  if (_pu_subst_server_vars(config) != 0) { return -1; }
 
   return 0;
 }
 
-void pu_config_merge(pu_config_t *dest, pu_config_t *src)
-{
+void pu_config_merge(pu_config_t *dest, pu_config_t *src) {
 #define MERGESTR(ds, ss) if(!ds) { ds = ss; ss = NULL; }
 #define MERGELIST(dl, sl) do { dl = alpm_list_join(dl, sl); sl = NULL; } while(0)
 #define MERGEVAL(dv, sv) if(!dv) { dv = sv; }
@@ -570,27 +553,26 @@ void pu_config_merge(pu_config_t *dest, pu_config_t *src)
   pu_config_free(src);
 }
 
-static int _pu_glob_at(alpm_list_t **dest, const char *pattern, int sysrootfd)
-{
+static int _pu_glob_at(alpm_list_t **dest, const char *pattern, int sysrootfd) {
   globdir_t gbuf;
   size_t gindex;
   alpm_list_t *items = NULL;
   int basefd, gret;
 
-  if(sysrootfd >= 0) {
+  if (sysrootfd >= 0) {
     /* expand all patterns relative to sysroot */
     basefd = sysrootfd;
-    while(pattern[0] == '/') { pattern++; }
+    while (pattern[0] == '/') { pattern++; }
   } else {
     basefd = AT_FDCWD;
   }
 
   gret = globat(basefd, pattern, GLOB_NOCHECK, NULL, &gbuf);
 
-  if(gret != 0 && gret != GLOB_NOMATCH) { return -1; }
+  if (gret != 0 && gret != GLOB_NOMATCH) { return -1; }
 
-  for(gindex = 0; gindex < gbuf.gl_pathc; gindex++) {
-    if(pu_list_append_str(&items, gbuf.gl_pathv[gindex]) == NULL) {
+  for (gindex = 0; gindex < gbuf.gl_pathc; gindex++) {
+    if (pu_list_append_str(&items, gbuf.gl_pathv[gindex]) == NULL) {
       FREELIST(items);
       globdirfree(&gbuf);
       return -1;
@@ -604,29 +586,28 @@ static int _pu_glob_at(alpm_list_t **dest, const char *pattern, int sysrootfd)
 }
 
 #define SETSTROPT(dest, val) if(!dest) { \
-  char *dup = strdup(val); \
-  if(dup) { \
-    free(dest); \
-    dest = dup; \
-  } else { \
-    reader->status = PU_CONFIG_READER_STATUS_ERROR; \
-    reader->error = 1; \
-    return -1; \
-  } \
-}
-#define APPENDLIST(dest, str) do { \
-  char *v, *ctx; \
-  for(v = strtok_r(str, " ", &ctx); v; v = strtok_r(NULL, " ", &ctx)) { \
-    if(pu_list_append_str(dest, v) == NULL) { \
+    char *dup = strdup(val); \
+    if(dup) { \
+      free(dest); \
+      dest = dup; \
+    } else { \
       reader->status = PU_CONFIG_READER_STATUS_ERROR; \
       reader->error = 1; \
       return -1; \
     } \
-  } \
-} while(0)
+  }
+#define APPENDLIST(dest, str) do { \
+    char *v, *ctx; \
+    for(v = strtok_r(str, " ", &ctx); v; v = strtok_r(NULL, " ", &ctx)) { \
+      if(pu_list_append_str(dest, v) == NULL) { \
+        reader->status = PU_CONFIG_READER_STATUS_ERROR; \
+        reader->error = 1; \
+        return -1; \
+      } \
+    } \
+  } while(0)
 
-int pu_config_reader_next(pu_config_reader_t *reader)
-{
+int pu_config_reader_next(pu_config_reader_t *reader) {
   mini_t *mini = reader->_mini;
   pu_config_t *config = reader->config;
 
@@ -634,9 +615,9 @@ int pu_config_reader_next(pu_config_reader_t *reader)
 
 #define _PU_ERR(r, s) { r->status = s; r->error = 1; return -1; }
 
-  if(mini_next(mini) == NULL) {
-    if(mini->eof) {
-      if(reader->_parent == NULL) {
+  if (mini_next(mini) == NULL) {
+    if (mini->eof) {
+      if (reader->_parent == NULL) {
         reader->eof = 1;
         return -1;
       }
@@ -644,12 +625,12 @@ int pu_config_reader_next(pu_config_reader_t *reader)
       mini_free(mini);
       free(reader->file);
 
-      if(reader->_parent->_includes) {
+      if (reader->_parent->_includes) {
         /* switch to the next included file */
         reader->file = _pu_list_shift(&reader->_parent->_includes);
         reader->_includes = NULL;
         reader->_mini = _pu_mini_openat(reader->_sysroot_fd, reader->file);
-        if(reader->_mini == NULL) {
+        if (reader->_mini == NULL) {
           _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
         }
       } else {
@@ -671,21 +652,21 @@ int pu_config_reader_next(pu_config_reader_t *reader)
   reader->key = mini->key;
   reader->value = mini->value;
 
-  if(!mini->key) {
+  if (!mini->key) {
     free(reader->section);
-    if((reader->section = strdup(mini->section)) == NULL) {
+    if ((reader->section = strdup(mini->section)) == NULL) {
       _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
     }
 
-    if(strcmp(reader->section, "options") == 0) {
+    if (strcmp(reader->section, "options") == 0) {
       reader->repo = NULL;
     } else {
       pu_repo_t *r = pu_repo_new();
-      if(r == NULL || (r->name = strdup(reader->section)) == NULL) {
+      if (r == NULL || (r->name = strdup(reader->section)) == NULL) {
         _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
       }
       r->siglevel = ALPM_SIG_USE_DEFAULT;
-      if(alpm_list_append(&config->repos, r) == NULL) {
+      if (alpm_list_append(&config->repos, r) == NULL) {
         _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
       }
       reader->repo = r;
@@ -693,22 +674,22 @@ int pu_config_reader_next(pu_config_reader_t *reader)
   } else {
     struct _pu_config_setting *s;
 
-    if(!(s = _pu_config_lookup_setting(mini->key))) {
+    if (!(s = _pu_config_lookup_setting(mini->key))) {
       reader->status = PU_CONFIG_READER_STATUS_UNKNOWN_OPTION;
       return 0;
     }
 
-    if(s->type == PU_CONFIG_OPTION_INCLUDE) {
-      if(_pu_glob_at(&reader->_includes, mini->value, reader->_sysroot_fd) != 0) {
+    if (s->type == PU_CONFIG_OPTION_INCLUDE) {
+      if (_pu_glob_at(&reader->_includes, mini->value, reader->_sysroot_fd) != 0) {
         _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
-      } else if(reader->_includes == NULL) {
+      } else if (reader->_includes == NULL) {
         return pu_config_reader_next(reader);
       } else {
         char *file = _pu_list_shift(&reader->_includes);
         pu_config_reader_t *p = malloc(sizeof(pu_config_reader_t));
         mini_t *newmini = _pu_mini_openat(reader->_sysroot_fd, file);
 
-        if(p == NULL || newmini == NULL) {
+        if (p == NULL || newmini == NULL) {
           free(file);
           free(p);
           mini_free(newmini);
@@ -725,22 +706,22 @@ int pu_config_reader_next(pu_config_reader_t *reader)
       return 0;
     }
 
-    if(reader->repo) {
+    if (reader->repo) {
       pu_repo_t *r = reader->repo;
-      switch(s->type) {
+      switch (s->type) {
         case PU_CONFIG_OPTION_SIGLEVEL:
-          if(_pu_config_parse_siglevel(mini->value,
-                &r->siglevel, &r->siglevel_mask) != 0) {
+          if (_pu_config_parse_siglevel(mini->value,
+                  &r->siglevel, &r->siglevel_mask) != 0) {
             _PU_ERR(reader, PU_CONFIG_READER_STATUS_INVALID_VALUE);
           }
           break;
         case PU_CONFIG_OPTION_SERVER:
-          if(pu_list_append_str(&r->servers, mini->value) == NULL) {
+          if (pu_list_append_str(&r->servers, mini->value) == NULL) {
             _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
           }
           break;
         case PU_CONFIG_OPTION_USAGE:
-          if(_pu_config_parse_usage(mini->value, &r->usage) != 0) {
+          if (_pu_config_parse_usage(mini->value, &r->usage) != 0) {
             _PU_ERR(reader, PU_CONFIG_READER_STATUS_INVALID_VALUE);
           }
           break;
@@ -748,10 +729,10 @@ int pu_config_reader_next(pu_config_reader_t *reader)
           reader->status = PU_CONFIG_READER_STATUS_UNKNOWN_OPTION;
           break;
       }
-    } else if(reader->section == NULL) {
+    } else if (reader->section == NULL) {
       reader->status = PU_CONFIG_READER_STATUS_UNKNOWN_OPTION;
-    } else if(mini->value) {
-      switch(s->type) {
+    } else if (mini->value) {
+      switch (s->type) {
         case PU_CONFIG_OPTION_ROOTDIR:
           SETSTROPT(config->rootdir, mini->value);
           break;
@@ -769,30 +750,30 @@ int pu_config_reader_next(pu_config_reader_t *reader)
           break;
         case PU_CONFIG_OPTION_XFERCOMMAND:
           free(config->xfercommand);
-          if((config->xfercommand = strdup(mini->value)) == NULL) {
+          if ((config->xfercommand = strdup(mini->value)) == NULL) {
             _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
           }
           break;
         case PU_CONFIG_OPTION_CLEANMETHOD:
-          if(_pu_config_parse_cleanmethod(mini->value, &config->cleanmethod) != 0) {
-              _PU_ERR(reader, PU_CONFIG_READER_STATUS_INVALID_VALUE);
+          if (_pu_config_parse_cleanmethod(mini->value, &config->cleanmethod) != 0) {
+            _PU_ERR(reader, PU_CONFIG_READER_STATUS_INVALID_VALUE);
           }
           break;
         case PU_CONFIG_OPTION_SIGLEVEL:
-          if(_pu_config_parse_siglevel(mini->value, &(config->siglevel),
-                &(config->siglevel_mask)) != 0) {
+          if (_pu_config_parse_siglevel(mini->value, &(config->siglevel),
+                  &(config->siglevel_mask)) != 0) {
             _PU_ERR(reader, PU_CONFIG_READER_STATUS_INVALID_VALUE);
           }
           break;
         case PU_CONFIG_OPTION_LOCAL_SIGLEVEL:
-          if(_pu_config_parse_siglevel(mini->value, &(config->localfilesiglevel),
-                &(config->localfilesiglevel_mask)) != 0) {
+          if (_pu_config_parse_siglevel(mini->value, &(config->localfilesiglevel),
+                  &(config->localfilesiglevel_mask)) != 0) {
             _PU_ERR(reader, PU_CONFIG_READER_STATUS_INVALID_VALUE);
           }
           break;
         case PU_CONFIG_OPTION_REMOTE_SIGLEVEL:
-          if(_pu_config_parse_siglevel(mini->value, &(config->remotefilesiglevel),
-                &(config->remotefilesiglevel_mask)) != 0) {
+          if (_pu_config_parse_siglevel(mini->value, &(config->remotefilesiglevel),
+                  &(config->remotefilesiglevel_mask)) != 0) {
             _PU_ERR(reader, PU_CONFIG_READER_STATUS_INVALID_VALUE);
           }
           break;
@@ -817,23 +798,22 @@ int pu_config_reader_next(pu_config_reader_t *reader)
         case PU_CONFIG_OPTION_CACHEDIRS:
           APPENDLIST(&config->cachedirs, mini->value);
           break;
-        case PU_CONFIG_OPTION_PARALLELDOWNLOADS:
-          {
-            char *end;
-            long pd = strtol(mini->value, &end, 10);
-            if(pd < 1 || pd > INT_MAX || *end) {
-              _PU_ERR(reader, PU_CONFIG_READER_STATUS_INVALID_VALUE);
-            }
-            config->paralleldownloads = (int) pd;
-            break;
+        case PU_CONFIG_OPTION_PARALLELDOWNLOADS: {
+          char *end;
+          long pd = strtol(mini->value, &end, 10);
+          if (pd < 1 || pd > INT_MAX || *end) {
+            _PU_ERR(reader, PU_CONFIG_READER_STATUS_INVALID_VALUE);
           }
+          config->paralleldownloads = (int) pd;
           break;
+        }
+        break;
         default:
           reader->status = PU_CONFIG_READER_STATUS_UNKNOWN_OPTION;
           break;
       }
     } else {
-      switch(s->type) {
+      switch (s->type) {
         case PU_CONFIG_OPTION_COLOR:
           config->color = 1;
           break;
@@ -868,56 +848,58 @@ int pu_config_reader_next(pu_config_reader_t *reader)
 #undef APPENDLIST
 
 pu_config_reader_t *pu_config_reader_new_sysroot(pu_config_t *config,
-    const char *file, const char *sysroot)
-{
+    const char *file, const char *sysroot) {
   pu_config_reader_t *reader = calloc(sizeof(pu_config_reader_t), 1);
-  if(reader == NULL) { return NULL; }
+  if (reader == NULL) { return NULL; }
 
-  if((reader->file = strdup(file)) == NULL) {
-    pu_config_reader_free(reader); return NULL;
+  if ((reader->file = strdup(file)) == NULL) {
+    pu_config_reader_free(reader);
+    return NULL;
   }
 
-  if(sysroot && sysroot[0]) {
-    if((reader->sysroot = strdup(sysroot)) == NULL) {
-      pu_config_reader_free(reader); return NULL;
+  if (sysroot && sysroot[0]) {
+    if ((reader->sysroot = strdup(sysroot)) == NULL) {
+      pu_config_reader_free(reader);
+      return NULL;
     }
-    if((reader->_sysroot_fd = open(sysroot, O_DIRECTORY)) == -1) {
-      pu_config_reader_free(reader); return NULL;
+    if ((reader->_sysroot_fd = open(sysroot, O_DIRECTORY)) == -1) {
+      pu_config_reader_free(reader);
+      return NULL;
     }
   } else {
     reader->_sysroot_fd = -1;
   }
 
-  if((reader->_mini = _pu_mini_openat(reader->_sysroot_fd, file)) == NULL) {
-    pu_config_reader_free(reader); return NULL;
+  if ((reader->_mini = _pu_mini_openat(reader->_sysroot_fd, file)) == NULL) {
+    pu_config_reader_free(reader);
+    return NULL;
   }
   reader->config = config;
   return reader;
 }
 
-pu_config_reader_t *pu_config_reader_new(pu_config_t *config, const char *file)
-{
+pu_config_reader_t *pu_config_reader_new(pu_config_t *config,
+    const char *file) {
   return pu_config_reader_new_sysroot(config, file, NULL);
 }
 
-pu_config_reader_t *pu_config_reader_finit(pu_config_t *config, FILE *stream)
-{
+pu_config_reader_t *pu_config_reader_finit(pu_config_t *config, FILE *stream) {
   pu_config_reader_t *reader = calloc(sizeof(pu_config_reader_t), 1);
-  if(reader == NULL) { return NULL; }
-  if((reader->_mini = mini_finit(stream)) == NULL) {
-    pu_config_reader_free(reader); return NULL;
+  if (reader == NULL) { return NULL; }
+  if ((reader->_mini = mini_finit(stream)) == NULL) {
+    pu_config_reader_free(reader);
+    return NULL;
   }
   reader->config = config;
   reader->_sysroot_fd = -1;
   return reader;
 }
 
-void pu_config_reader_free(pu_config_reader_t *reader)
-{
-  if(!reader) { return; }
+void pu_config_reader_free(pu_config_reader_t *reader) {
+  if (!reader) { return; }
   free(reader->file);
   free(reader->sysroot);
-  if(reader->_sysroot_fd > -1) { close(reader->_sysroot_fd); }
+  if (reader->_sysroot_fd > -1) { close(reader->_sysroot_fd); }
   free(reader->section);
   mini_free(reader->_mini);
   FREELIST(reader->_includes);

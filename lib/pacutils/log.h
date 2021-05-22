@@ -29,53 +29,53 @@
 #include <alpm_list.h>
 
 typedef enum {
-	PU_LOG_OPERATION_INSTALL,
-	PU_LOG_OPERATION_REINSTALL,
-	PU_LOG_OPERATION_UPGRADE,
-	PU_LOG_OPERATION_DOWNGRADE,
-	PU_LOG_OPERATION_REMOVE,
+  PU_LOG_OPERATION_INSTALL,
+  PU_LOG_OPERATION_REINSTALL,
+  PU_LOG_OPERATION_UPGRADE,
+  PU_LOG_OPERATION_DOWNGRADE,
+  PU_LOG_OPERATION_REMOVE,
 } pu_log_operation_t;
 
 typedef struct {
-	pu_log_operation_t operation;
-	char *target;
-	char *old_version;
-	char *new_version;
+  pu_log_operation_t operation;
+  char *target;
+  char *old_version;
+  char *new_version;
 } pu_log_action_t;
 
 typedef struct {
-	struct tm tm;
-	int gmtoff;
-	unsigned int has_seconds:1;
-	unsigned int has_gmtoff:1;
+  struct tm tm;
+  int gmtoff;
+  unsigned int has_seconds: 1;
+  unsigned int has_gmtoff: 1;
 } pu_log_timestamp_t;
 
 typedef struct {
-	pu_log_timestamp_t timestamp;
-	char *caller;
-	char *message;
+  pu_log_timestamp_t timestamp;
+  char *caller;
+  char *message;
 } pu_log_entry_t;
 
 typedef enum {
-	PU_LOG_TRANSACTION_STARTED = 1,
-	PU_LOG_TRANSACTION_COMPLETED,
-	PU_LOG_TRANSACTION_INTERRUPTED,
-	PU_LOG_TRANSACTION_FAILED,
+  PU_LOG_TRANSACTION_STARTED = 1,
+  PU_LOG_TRANSACTION_COMPLETED,
+  PU_LOG_TRANSACTION_INTERRUPTED,
+  PU_LOG_TRANSACTION_FAILED,
 } pu_log_transaction_status_t;
 
 typedef struct {
-	pu_log_transaction_status_t status;
-	alpm_list_t *start, *end;
+  pu_log_transaction_status_t status;
+  alpm_list_t *start, *end;
 } pu_log_transaction_t;
 
 typedef struct {
-	FILE *stream;
-	int eof;
+  FILE *stream;
+  int eof;
 
-	char _buf[256];    /* read buffer */
-	char *_next;       /* next line indicator */
-	int _close_stream; /* close stream on free */
-	pu_log_timestamp_t _next_ts;
+  char _buf[256];    /* read buffer */
+  char *_next;       /* next line indicator */
+  int _close_stream; /* close stream on free */
+  pu_log_timestamp_t _next_ts;
 } pu_log_reader_t;
 
 pu_log_transaction_status_t pu_log_transaction_parse(const char *message);
