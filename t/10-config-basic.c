@@ -59,7 +59,7 @@ char buf[] =
     if(l) { \
       tap_diag("remaining elements:"); \
       while(l) { \
-        tap_diag(l->data); \
+        tap_diag("%s", (char*) l->data); \
         l = alpm_list_next(l); \
       } \
     } \
