@@ -189,7 +189,7 @@ void pu_ui_cb_event(void *ctx, alpm_event_t *event)
     case ALPM_EVENT_RESOLVEDEPS_START:
       puts("Resolving dependencies...");
       break;
-    case ALPM_EVENT_RETRIEVE_START:
+    case ALPM_EVENT_PKG_RETRIEVE_START:
       puts("Downloading packages...");
       break;
     case ALPM_EVENT_SCRIPTLET_INFO:
@@ -205,6 +205,9 @@ void pu_ui_cb_event(void *ctx, alpm_event_t *event)
 
     /* Ignored */
     case ALPM_EVENT_CHECKDEPS_DONE:
+    case ALPM_EVENT_DB_RETRIEVE_DONE:
+    case ALPM_EVENT_DB_RETRIEVE_FAILED:
+    case ALPM_EVENT_DB_RETRIEVE_START:
     case ALPM_EVENT_DISKSPACE_DONE:
     case ALPM_EVENT_DISKSPACE_START:
     case ALPM_EVENT_FILECONFLICTS_DONE:
@@ -220,12 +223,9 @@ void pu_ui_cb_event(void *ctx, alpm_event_t *event)
     case ALPM_EVENT_LOAD_DONE:
     case ALPM_EVENT_LOAD_START:
     case ALPM_EVENT_PACKAGE_OPERATION_START:
-    case ALPM_EVENT_PKGDOWNLOAD_DONE:
-    case ALPM_EVENT_PKGDOWNLOAD_FAILED:
-    case ALPM_EVENT_PKGDOWNLOAD_START:
+    case ALPM_EVENT_PKG_RETRIEVE_DONE:
+    case ALPM_EVENT_PKG_RETRIEVE_FAILED:
     case ALPM_EVENT_RESOLVEDEPS_DONE:
-    case ALPM_EVENT_RETRIEVE_DONE:
-    case ALPM_EVENT_RETRIEVE_FAILED:
     case ALPM_EVENT_TRANSACTION_DONE:
       /* ignore */
       break;
