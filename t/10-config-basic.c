@@ -110,7 +110,7 @@ int main(void) {
 
 	while(pu_config_reader_next(reader) != -1);
 
-	tap_plan(39);
+	tap_plan(41);
 
 	tap_ok(reader->eof, "eof reached");
 	tap_ok(!reader->error, "no error");
@@ -120,7 +120,6 @@ int main(void) {
 	tap_is_str(config->dbpath, "/dbpath1/", "DBPath");
 	tap_is_str(config->gpgdir, "gpgdir", "GPGDir");
 	tap_is_str(config->logfile, "/logfile", "LogFile");
-	tap_is_str(config->architecture, "i686", "Arch");
 	tap_is_str(config->xfercommand, "xcommand2", "XferCommand");
 
 	tap_is_int(config->paralleldownloads, 3, "ParallelDownloads");
@@ -133,6 +132,11 @@ int main(void) {
 	tap_ok(config->ilovecandy, "ILoveCandy");
 
 	is_siglevel(config->siglevel, 0, "SigLevel");
+
+	i = config->architectures;
+	is_str_list(i, "i686", "Arch i686");
+	is_str_list(i, "x86_64", "Arch x86_64");
+	is_list_exhausted(i, "architectures");
 
 	i = config->ignorepkgs;
 	is_str_list(i, "ignorepkga", "IgnorePkg a");

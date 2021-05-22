@@ -306,9 +306,9 @@ void pu_config_free(pu_config_t *config)
   free(config->dbpath);
   free(config->logfile);
   free(config->gpgdir);
-  free(config->architecture);
   free(config->xfercommand);
 
+  FREELIST(config->architectures);
   FREELIST(config->holdpkgs);
   FREELIST(config->hookdirs);
   FREELIST(config->ignorepkgs);
@@ -333,11 +333,12 @@ static int _pu_subst_server_vars(pu_config_t *config)
       char *rrepo;
 
       if(strstr(s->data, "$arch")) {
-        if(config->architecture == NULL) {
+        if(config->architectures == NULL) {
           errno = EINVAL;
           return -1;
         } else {
-          char *rarch = _pu_strreplace(s->data, "$arch", config->architecture);
+          char *arch = config->architectures->data;
+          char *rarch = _pu_strreplace(s->data, "$arch", arch);
           if(rarch == NULL) { return -1; }
           free(s->data);
           s->data = rarch;
@@ -370,7 +371,7 @@ alpm_handle_t *pu_initialize_handle_from_config(pu_config_t *config)
   alpm_option_set_logfile(handle, config->logfile);
   alpm_option_set_gpgdir(handle, config->gpgdir);
   alpm_option_set_usesyslog(handle, config->usesyslog);
-  alpm_option_set_arch(handle, config->architecture);
+  alpm_option_set_architectures(handle, config->architectures);
   alpm_option_set_disable_dl_timeout(handle, config->disabledownloadtimeout);
 
   alpm_option_set_default_siglevel(handle, config->siglevel);
@@ -477,12 +478,14 @@ int pu_config_resolve(pu_config_t *config)
   SETDEFAULT(config->cleanmethod, PU_CONFIG_CLEANMETHOD_KEEP_INSTALLED);
   SETDEFAULT(config->paralleldownloads, 1);
 
-  if(config->architecture && strcmp(config->architecture, "auto") == 0) {
-    struct utsname un;
-    char *arch;
-    if(uname(&un) != 0 || (arch = strdup(un.machine)) == NULL) { return -1; }
-    free(config->architecture);
-    config->architecture = arch;
+  for(i = config->architectures; i; i = i->next) {
+    if(strcmp(i->data, "auto") == 0) {
+      struct utsname un;
+      char *arch;
+      if(uname(&un) != 0 || (arch = strdup(un.machine)) == NULL) { return -1; }
+      free(i->data);
+      i->data = arch;
+    }
   }
 
 #define SETBOOL(opt) if(opt == -1) { opt = 0; }
@@ -544,8 +547,8 @@ void pu_config_merge(pu_config_t *dest, pu_config_t *src)
   MERGESTR(dest->logfile, src->logfile);
   MERGESTR(dest->gpgdir, src->gpgdir);
   MERGESTR(dest->xfercommand, src->xfercommand);
-  MERGESTR(dest->architecture, src->architecture);
 
+  MERGELIST(dest->architectures, src->architectures);
   MERGELIST(dest->cachedirs, src->cachedirs);
   MERGELIST(dest->holdpkgs, src->holdpkgs);
   MERGELIST(dest->hookdirs, src->hookdirs);
@@ -766,7 +769,7 @@ int pu_config_reader_next(pu_config_reader_t *reader)
           SETSTROPT(config->logfile, mini->value);
           break;
         case PU_CONFIG_OPTION_ARCHITECTURE:
-          SETSTROPT(config->architecture, mini->value);
+          APPENDLIST(&config->architectures, mini->value);
           break;
         case PU_CONFIG_OPTION_XFERCOMMAND:
           free(config->xfercommand);

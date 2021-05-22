@@ -80,7 +80,6 @@ typedef struct pu_config_t {
   char *dbpath;
   char *gpgdir;
   char *logfile;
-  char *architecture;
   char *xfercommand;
 
   int paralleldownloads;
@@ -101,6 +100,7 @@ typedef struct pu_config_t {
   int localfilesiglevel_mask;
   int remotefilesiglevel_mask;
 
+  alpm_list_t *architectures;
   alpm_list_t *cachedirs;
   alpm_list_t *holdpkgs;
   alpm_list_t *hookdirs;
