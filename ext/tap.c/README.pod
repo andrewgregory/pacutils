@@ -1,0 +1,257 @@
+=head1 NAME
+
+tap.c - lightweight TAP output generator for C/C++ test suites
+
+=head1 SYNOPSIS
+
+tap.c is intended to make writing TAP-based tests in C/C++ as easy as possible.
+It consists of a single file that can be included directly in test programs.
+The resulting test programs can be used with test harnesses such as
+L<AutoMake|https://www.gnu.org/software/automake/manual/html_node/Using-the-TAP-test-protocol.html>
+and L<prove>.
+
+=head1 DESCRIPTION
+
+=head2 Test Control
+
+=over
+
+=item void tap_plan(int count)
+
+Generate TAP plan.  If the number of tests is unknown, use C<tap_done_testing>
+instead.
+
+=item void tap_skip_all(const char *reason, ...)
+
+Skip all tests.
+
+ #ifdef RUN_DEVELOPER_TESTS
+     run_developer_tests();
+ #else
+     tap_skip_all("set -DRUN_DEVELOPER_TESTS to run");
+ #endif
+
+=item void tap_done_testing(void)
+
+Indicate the end of testing for tests without a plan.  If the number of tests
+is known, use C<tap_plan> instead.
+
+=item int tap_finish(void)
+
+Returns C<0> if all tests were run successfully, C<1> otherwise.  Additionally,
+a diagnostic message will be printed if the number of tests run does match the
+number of tests planned.  Provided as a convenience for test programs that
+should return non-zero on failure.
+
+=item void tap_todo(const char *reason)
+
+Indicate that the following tests are expected to fail.  Set to C<NULL> to
+disable.  B<Note:> the string passed is used as a diagnostic message and should
+not be free'd without updating C<tap_todo>.
+
+ tap_todo("make 1 equal 2");
+ tap_ok(1 == 2, "1 == 2"); // counted as success
+ tap_todo(NULL);
+ tap_ok(1 == 2, "1 == 2"); // counted as failure
+
+=item void tap_skip(int count, const char *reason, ...)
+
+Skip tests.
+
+ #ifdef BAZ
+     tap_ok(foo(), NULL);
+     tap_ok(bar(), NULL);
+ #else
+     tap_skip(2, "foo and bar require BAZ");
+ #endif
+
+=item void tap_bail(const char *reason, ...)
+
+Indicate an unrecoverable error.  It is up to the caller to actually exit the
+test.
+
+=item void tap_assert(int condition)
+
+If C<condition> is false C<tap_bail> will be called with an appropriate error
+message and the test program will immediately exit.  Useful for performing test
+setup.
+
+=item void tap_diag(const char *message, ...)
+
+Print a diagnostic message.  Harnesses should suppress the message for tests
+marked with C<tap_todo>.
+
+=item void tap_note(const char *message, ...)
+
+Like C<tap_diag> except harnesses should hide the message unless run in verbose
+mode.  Useful for debugging the test itself.
+
+=back
+
+=head2 Test Functions
+
+The following are implemented as macros that simply wrap the underlying
+functions in order to provide file name and line information for diagnostic
+messages following unsuccessful tests.  The underlying functions have a leading
+underscore (C<_>) and take the current file name and line number as their first
+two arguments.  For example, the following two are equivalent:
+
+ tap_ok(success, name);
+ _tap_ok(__FILE__, __LINE__, success, name);
+
+By using underlying functions, users can create their own test functions (see
+EXAMPLES).
+
+=over
+
+=item int tap_ok(int success, char *name, ...)
+
+Check test success.
+
+=item int tap_vok(int success, char *name, va_list ap)
+
+Equivalent to C<tap_ok> except a C<va_list> is used rather than a variable
+number of arguments.
+
+=item int tap_is_str(const char *got, const char *expected, const char *name, ...)
+
+Compare two strings with helpful diagnostic output.  C<NULL> safe.
+
+=item int tap_is_int(int got, int expected, const char *name, ...)
+
+Compare two integers with helpful diagnostic output.
+
+=item int tap_is_float(float got, float expected, float delta, const char *name, ...)
+
+Compare two floats with helpful diagnostic output.  Success requires that the
+difference between C<got> and C<expected> must be less than C<delta>.
+
+=back
+
+=head1 EXAMPLES
+
+=head2 Basic Usage
+
+ #include <stdlib.h>
+ #include <string.h>
+
+ #include "tap.c"
+
+ int main(int argc, char **argv) {
+    tap_plan(3);
+ #define IS(got, exp) { char *c = got; tap_is_str(got, exp, #got); free(c); }
+    IS(strndup("foo", 4), "foo");
+    IS(strndup("foo", 3), "foo");
+    IS(strndup("foo", 2), "fo");
+ #undef IS
+    return tap_finish();
+ }
+
+=head2 Custom Test Function
+
+ #include <string.h>
+
+ #include "tap.c"
+
+ #define is_array_str(...) _is_array_str(__FILE__, __LINE__, __VA_ARGS__)
+
+ int _is_array_str(const char *file, int lineno,
+        const char **got, const char **expected, const char *name, ...) {
+    size_t pos = 0;
+    int success = 1;
+    va_list ap;
+    va_start(ap, name);
+    while(*got && *expected && strcmp(*got, *expected) == 0) {
+        pos++;
+        got++;
+        expected++;
+    }
+    if(*got || *expected) { success = 0; }
+    if(!_tap_vok(file, lineno, success, name, ap)) {
+        tap_diag("    Arrays began differing at:");
+        if(*got) {
+            tap_diag("          got[%zu] = '%s'", pos, *got);
+        } else {
+            tap_diag("          got[%zu] = Does not exist", pos);
+        }
+        if(*expected) {
+            tap_diag("     expected[%zu] = '%s'", pos, *expected);
+        } else {
+            tap_diag("     expected[%zu] = Does not exist", pos);
+        }
+    }
+    va_end(ap);
+    return success;
+ }
+
+ int main(int argc, char **argv) {
+    char *got[]      = { "foo", "bar", "baz", NULL };
+    char *expected[] = { "foo", "bar", "baz", "quux", NULL };
+    tap_plan(2);
+    is_array_str(got, expected, "this will fail");
+    expected[3] = NULL;
+    is_array_str(got, expected, "this will succeed");
+    return tap_finish();
+ }
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright 2014-2015 Andrew Gregory <andrew.gregory.8@gmail.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+=head1 SEE ALSO
+
+Project URL: L<http://github.com/andrewgregory/tap.c>
+
+TAP Specification: L<http://testanything.org/>
+
+TAP Producers:
+
+=over
+
+=item L<Test::More>
+
+=item L<http://www.eyrie.org/~eagle/software/c-tap-harness/>
+
+=item L<https://github.com/f0rk/libtap>
+
+=item L<https://github.com/kawamuray/ctap>
+
+=item L<https://github.com/lpsantil/picotap>
+
+=item L<https://github.com/willemt/cutest>
+
+=item L<https://github.com/zorgnax/libtap>
+
+=item L<https://github.com/Leont/libtap--> (C++)
+
+=back
+
+TAP Consumers:
+
+=over
+
+=item L<prove>
+
+=item L<http://www.eyrie.org/~eagle/software/c-tap-harness/>
+
+=item L<https://github.com/chr15p/tap-harness>
+
+=back
