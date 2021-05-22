@@ -528,7 +528,8 @@ transcleanup:
 	return ret;
 }
 
-void cb_log(alpm_loglevel_t level, const char *fmt, va_list args) {
+void cb_log(void *ctx, alpm_loglevel_t level, const char *fmt, va_list args) {
+	(void)ctx;
 	if(level & log_level) {
 		vprintf(fmt, args);
 	}
@@ -553,10 +554,10 @@ int main(int argc, char **argv) {
 	if(nohooks) {
 		alpm_option_set_hookdirs(handle, NULL);
 	}
-	alpm_option_set_questioncb(handle, pu_ui_cb_question);
-	alpm_option_set_progresscb(handle, pu_ui_cb_progress);
-	alpm_option_set_dlcb(handle, pu_ui_cb_download);
-	alpm_option_set_logcb(handle, cb_log);
+	alpm_option_set_questioncb(handle, pu_ui_cb_question, NULL);
+	alpm_option_set_progresscb(handle, pu_ui_cb_progress, NULL);
+	alpm_option_set_dlcb(handle, pu_ui_cb_download, NULL);
+	alpm_option_set_logcb(handle, cb_log, NULL);
 	alpm_option_add_overwrite_file(handle, "*");
 
 	localdb = alpm_get_localdb(handle);

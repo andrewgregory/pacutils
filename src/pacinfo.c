@@ -466,8 +466,9 @@ int print_pkgspec_info(const char *pkgspec) {
 	return 0;
 }
 
-void cb_log(alpm_loglevel_t level, const char *fmt, va_list args)
+void cb_log(void *ctx, alpm_loglevel_t level, const char *fmt, va_list args)
 {
+	(void)ctx;
 	if(level & log_level) {
 		vprintf(fmt, args);
 	}
@@ -493,8 +494,8 @@ int main(int argc, char **argv) {
 		goto cleanup;
 	}
 
-	alpm_option_set_dlcb(handle, pu_ui_cb_download);
-	alpm_option_set_logcb(handle, cb_log);
+	alpm_option_set_dlcb(handle, pu_ui_cb_download, NULL);
+	alpm_option_set_logcb(handle, cb_log, NULL);
 
 	pu_register_syncdbs(handle, config->repos);
 	allpkgs = alpm_list_copy(alpm_db_get_pkgcache(alpm_get_localdb(handle)));

@@ -113,11 +113,12 @@ const char *pu_ui_msg_progress(alpm_progress_t event)
   }
 }
 
-void pu_ui_cb_progress(alpm_progress_t event, const char *pkgname, int percent,
-    size_t total, size_t current)
+void pu_ui_cb_progress(void *ctx, alpm_progress_t event, const char *pkgname,
+    int percent, size_t total, size_t current)
 {
   const char *opr = pu_ui_msg_progress(event);
   static int percent_last = -1;
+  (void)ctx;
 
   /* don't update if nothing has changed */
   if(percent_last == percent) {
@@ -140,8 +141,9 @@ void pu_ui_cb_progress(alpm_progress_t event, const char *pkgname, int percent,
   percent_last = percent;
 }
 
-void pu_ui_cb_event(alpm_event_t *event)
+void pu_ui_cb_event(void *ctx, alpm_event_t *event)
 {
+  (void)ctx;
   switch(event->type) {
     case ALPM_EVENT_CHECKDEPS_START:
       puts("Checking dependencies...");
@@ -296,8 +298,9 @@ long pu_ui_select_index(long def, long min, long max, const char *prompt, ...)
   }
 }
 
-void pu_ui_cb_question(alpm_question_t *question)
+void pu_ui_cb_question(void *ctx, alpm_question_t *question)
 {
+  (void)ctx;
   switch(question->type) {
     case ALPM_QUESTION_INSTALL_IGNOREPKG:
       {
@@ -391,7 +394,7 @@ void pu_ui_cb_question(alpm_question_t *question)
   }
 }
 
-void pu_ui_cb_download(const char *filename, off_t xfered, off_t total)
+void pu_ui_cb_download(void *ctx, const char *filename, off_t xfered, off_t total)
 {
   static struct timeval last_update = {0, 0};
   char end = '\r';

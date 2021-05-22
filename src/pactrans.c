@@ -518,8 +518,9 @@ pu_config_t *parse_opts(int argc, char **argv)
 	return config;
 }
 
-void cb_log(alpm_loglevel_t level, const char *fmt, va_list args)
+void cb_log(void* ctx, alpm_loglevel_t level, const char *fmt, va_list args)
 {
+	(void)ctx;
 	if(level & log_level) {
 		vprintf(fmt, args);
 	}
@@ -767,9 +768,10 @@ int set_bool_response(alpm_question_t *q, enum bool_disposition d) {
 	return 0; /* oh noes, something went wrong */
 }
 
-void cb_question(alpm_question_t *question)
+void cb_question(void *ctx, alpm_question_t *question)
 {
 	int autoset = 0;
+	(void)ctx;
 
 	switch(question->type) {
 		case ALPM_QUESTION_INSTALL_IGNOREPKG:
@@ -813,7 +815,7 @@ void cb_question(alpm_question_t *question)
 	if(autoset || noconfirm) {
 		print_q_resolution(question);
 	} else {
-		pu_ui_cb_question(question);
+		pu_ui_cb_question(NULL, question);
 	}
 }
 
@@ -867,11 +869,11 @@ int main(int argc, char **argv)
 		alpm_option_set_hookdirs(handle, NULL);
 	}
 
-	alpm_option_set_questioncb(handle, cb_question);
-	alpm_option_set_progresscb(handle, pu_ui_cb_progress);
-	alpm_option_set_eventcb(handle, pu_ui_cb_event);
-	alpm_option_set_dlcb(handle, pu_ui_cb_download);
-	alpm_option_set_logcb(handle, cb_log);
+	alpm_option_set_questioncb(handle, cb_question, NULL);
+	alpm_option_set_progresscb(handle, pu_ui_cb_progress, NULL);
+	alpm_option_set_eventcb(handle, pu_ui_cb_event, NULL);
+	alpm_option_set_dlcb(handle, pu_ui_cb_download, NULL);
+	alpm_option_set_logcb(handle, cb_log, NULL);
 
 	for(i = ignore_pkg; i; i = i->next) {
 		alpm_option_add_ignorepkg(handle, i->data);
