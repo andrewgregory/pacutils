@@ -37,6 +37,7 @@ char buf[] =
 " IgnoreGroup = ignoregroupa ignoregroupb \n"
 "Architecture = i686\n"
 "Architecture = x86_64\n"
+"ParallelDownloads = 3\n"
 "XferCommand = xcommand\n"
 "XferCommand = xcommand2\n"
 "NoUpgrade = /tmp/noupgrade*\n"
@@ -109,7 +110,7 @@ int main(void) {
 
 	while(pu_config_reader_next(reader) != -1);
 
-	tap_plan(38);
+	tap_plan(39);
 
 	tap_ok(reader->eof, "eof reached");
 	tap_ok(!reader->error, "no error");
@@ -121,6 +122,8 @@ int main(void) {
 	tap_is_str(config->logfile, "/logfile", "LogFile");
 	tap_is_str(config->architecture, "i686", "Arch");
 	tap_is_str(config->xfercommand, "xcommand2", "XferCommand");
+
+	tap_is_int(config->paralleldownloads, 3, "ParallelDownloads");
 
 	tap_ok(config->usesyslog, "UseSyslog");
 	tap_ok(config->color, "Color");

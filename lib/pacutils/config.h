@@ -41,6 +41,7 @@ typedef enum pu_config_option_t {
   PU_CONFIG_OPTION_VERBOSEPKGLISTS,
   PU_CONFIG_OPTION_ILOVECANDY,
   PU_CONFIG_OPTION_DISABLEDOWNLOADTIMEOUT,
+  PU_CONFIG_OPTION_PARALLELDOWNLOADS,
 
   PU_CONFIG_OPTION_SIGLEVEL,
   PU_CONFIG_OPTION_LOCAL_SIGLEVEL,
@@ -81,6 +82,8 @@ typedef struct pu_config_t {
   char *logfile;
   char *architecture;
   char *xfercommand;
+
+  int paralleldownloads;
 
   pu_config_bool_t checkspace;
   pu_config_bool_t color;

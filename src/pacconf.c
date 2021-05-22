@@ -178,15 +178,15 @@ void list_repos(void)
 	}
 }
 
-void show_float(const char *directive, float val)
+void show_int(const char *directive, int val)
 {
-	if(val == -1.0) {
+	if(val == 0) {
 		return;
 	}
 	if(verbose) {
 		printf("%s = ", directive);
 	}
-	printf("%f%c", val, sep);
+	printf("%d%c", val, sep);
 }
 
 void show_bool(const char *directive, short unsigned int val)
@@ -324,6 +324,8 @@ void dump_options(void)
 	show_bool("VerbosePkgLists", config->verbosepkglists);
 	show_bool("ILoveCandy", config->ilovecandy);
 
+	show_int("ParallelDownloads", config->paralleldownloads);
+
 	show_cleanmethod("CleanMethod", config->cleanmethod);
 
 	show_siglevel("SigLevel", config->siglevel, 0);
@@ -427,6 +429,9 @@ int list_directives(alpm_list_t *directives)
 			show_str("Architecture", config->architecture);
 		} else if(strcasecmp(i->data, "XferCommand") == 0) {
 			show_str("XferCommand", config->xfercommand);
+
+		} else if(strcasecmp(i->data, "ParallelDownloads") == 0) {
+			show_int("ParallelDownloads", config->paralleldownloads);
 
 		} else if(strcasecmp(i->data, "UseSyslog") == 0) {
 			show_bool("UseSyslog", config->usesyslog);

@@ -52,6 +52,7 @@ struct _pu_config_setting {
   {"ILoveCandy",      PU_CONFIG_OPTION_ILOVECANDY},
 
   {"DisableDownloadTimeout", PU_CONFIG_OPTION_DISABLEDOWNLOADTIMEOUT},
+  {"ParallelDownloads",      PU_CONFIG_OPTION_PARALLELDOWNLOADS},
 
   {"SigLevel",        PU_CONFIG_OPTION_SIGLEVEL},
   {"LocalFileSigLevel",  PU_CONFIG_OPTION_LOCAL_SIGLEVEL},
@@ -378,6 +379,8 @@ alpm_handle_t *pu_initialize_handle_from_config(pu_config_t *config)
 
   alpm_option_set_dbext(handle, DBEXT);
 
+  alpm_option_set_parallel_downloads(handle, config->paralleldownloads);
+
   /* add hook directories 1-by-1 to avoid overwriting the system directory */
   if(config->hookdirs != NULL) {
     alpm_list_t *i;
@@ -472,6 +475,7 @@ int pu_config_resolve(pu_config_t *config)
   SETDEFAULT(config->cachedirs, alpm_list_add(NULL, strdup(CACHEDIR)));
   SETDEFAULT(config->hookdirs, alpm_list_add(NULL, strdup(HOOKDIR)));
   SETDEFAULT(config->cleanmethod, PU_CONFIG_CLEANMETHOD_KEEP_INSTALLED);
+  SETDEFAULT(config->paralleldownloads, 1);
 
   if(config->architecture && strcmp(config->architecture, "auto") == 0) {
     struct utsname un;
@@ -533,6 +537,7 @@ void pu_config_merge(pu_config_t *dest, pu_config_t *src)
   MERGEBOOL(dest->disabledownloadtimeout, src->disabledownloadtimeout);
 
   MERGEVAL(dest->cleanmethod, src->cleanmethod);
+  MERGEVAL(dest->paralleldownloads, src->paralleldownloads);
 
   MERGESTR(dest->rootdir, src->rootdir);
   MERGESTR(dest->dbpath, src->dbpath);
@@ -812,6 +817,17 @@ int pu_config_reader_next(pu_config_reader_t *reader)
           break;
         case PU_CONFIG_OPTION_CACHEDIRS:
           APPENDLIST(&config->cachedirs, mini->value);
+          break;
+        case PU_CONFIG_OPTION_PARALLELDOWNLOADS:
+          {
+            char *end;
+            long pd = strtol(mini->value, &end, 10);
+            if(pd < 1 || pd > INT_MAX || *end) {
+              _PU_ERR(reader, PU_CONFIG_READER_STATUS_INVALID_VALUE);
+            }
+            config->paralleldownloads = (int) pd;
+            break;
+          }
           break;
         default:
           reader->status = PU_CONFIG_READER_STATUS_UNKNOWN_OPTION;
