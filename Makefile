@@ -12,6 +12,9 @@ check: lib src
 doc:
 	$(MAKE) -C doc/ $@
 
+tidy:
+	astyle --options=.astylerc --exclude=ext --recursive "*.c,*.h" --suffix=none
+
 install: lib
 	$(MAKE) -C doc/ $@
 	$(MAKE) -C lib/ $@
@@ -23,4 +26,4 @@ clean:
 	$(MAKE) -C src/ $@
 	$(MAKE) -C t/ $@
 
-.PHONY: all check clean doc install lib src
+.PHONY: all check clean doc install lib src tidy
