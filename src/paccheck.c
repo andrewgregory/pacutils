@@ -778,6 +778,7 @@ void add_deps(alpm_pkg_t *pkg) {
 int main(int argc, char **argv) {
   alpm_list_t *i;
   int ret = 0;
+  int have_stdin = !isatty(fileno(stdin)) && errno != EBADF;
 
   if (!(config = parse_opts(argc, argv))) {
     ret = 1;
@@ -800,7 +801,7 @@ int main(int argc, char **argv) {
   for (; optind < argc; ++optind) {
     if (load_pkg(argv[optind]) == NULL) { ret = 1; }
   }
-  if (!isatty(fileno(stdin)) && errno != EBADF) {
+  if (have_stdin) {
     char *buf = NULL;
     size_t len = 0;
     ssize_t read;

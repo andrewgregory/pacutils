@@ -341,6 +341,7 @@ int fix_file(const char *file) {
 
 int main(int argc, char **argv) {
   int ret = 0;
+  int have_stdin = !isatty(fileno(stdin)) && errno != EBADF;
 
   if (!(config = parse_opts(argc, argv))) {
     ret = 1;
@@ -380,7 +381,7 @@ int main(int argc, char **argv) {
   while (optind < argc) {
     if (fix_file(argv[optind++]) != 0 ) { ret = 1; }
   }
-  if (!isatty(fileno(stdin)) && errno != EBADF) {
+  if (have_stdin) {
     char *buf = NULL;
     size_t blen = 0;
     ssize_t len;

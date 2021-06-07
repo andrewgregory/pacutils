@@ -818,6 +818,7 @@ void cb_question(void *ctx, alpm_question_t *question) {
 int main(int argc, char **argv) {
   alpm_list_t *i, *err_data = NULL;
   int ret = 0;
+  int have_stdin = !isatty(fileno(stdin)) && errno != EBADF;
 
   myname = pu_basename(argv[0]);
   if (strcasecmp(myname, "pacinstall") == 0) {
@@ -830,7 +831,7 @@ int main(int argc, char **argv) {
     goto cleanup;
   }
 
-  if (!isatty(fileno(stdin)) && errno != EBADF) {
+  if (have_stdin) {
     char *buf = NULL;
     size_t len = 0;
     ssize_t read;

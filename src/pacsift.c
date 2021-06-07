@@ -895,6 +895,7 @@ void free_pkg(alpm_pkg_t *p) {
 int main(int argc, char **argv) {
   alpm_list_t *haystack = NULL, *matches = NULL, *i;
   int ret = 0;
+  int have_stdin = !isatty(fileno(stdin)) && errno != EBADF;
 
   if (!(config = parse_opts(argc, argv))) {
     goto cleanup;
@@ -923,7 +924,7 @@ int main(int argc, char **argv) {
     goto cleanup;
   }
 
-  if (!isatty(fileno(stdin)) && errno != EBADF) {
+  if (have_stdin) {
     char *buf = NULL;
     size_t len = 0;
     ssize_t read;

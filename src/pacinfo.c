@@ -474,6 +474,7 @@ void cb_log(void *ctx, alpm_loglevel_t level, const char *fmt, va_list args) {
 
 int main(int argc, char **argv) {
   int ret = 0;
+  int have_stdin = !isatty(fileno(stdin)) && errno != EBADF;
 
   if (!(config = parse_opts(argc, argv))) {
     goto cleanup;
@@ -506,7 +507,7 @@ int main(int argc, char **argv) {
     if (print_pkgspec_info(*argv) != 0) { ret = 1; }
   }
 
-  if (!isatty(fileno(stdin)) && errno != EBADF) {
+  if (have_stdin) {
     char *buf = NULL;
     size_t len = 0;
     ssize_t read;

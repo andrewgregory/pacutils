@@ -316,13 +316,14 @@ int main(int argc, char **argv) {
   alpm_list_t *i, *entries = NULL;
   FILE *f;
   int ret = 0;
+  int have_stdin = !isatty(fileno(stdin)) && errno != EBADF;
 
   parse_opts(argc, argv);
   if (color == 1 && !isatty(fileno(stdout))) {
     color = 0;
   }
 
-  if (!isatty(fileno(stdin)) && errno != EBADF) {
+  if (have_stdin) {
     free(logfile);
     logfile = strdup("<stdin>");
     f = stdin;

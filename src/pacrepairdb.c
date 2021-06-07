@@ -539,6 +539,7 @@ int main(int argc, char **argv) {
   int ret = 0;
   alpm_db_t *localdb;
   alpm_list_t *cache_pkgs = NULL, *packages = NULL, *i;
+  int have_stdin = !isatty(fileno(stdin)) && errno != EBADF;
 
   if (!(config = parse_opts(argc, argv))) {
     ret = 1;
@@ -576,7 +577,7 @@ int main(int argc, char **argv) {
     }
     optind++;
   }
-  if (!isatty(fileno(stdin)) && errno != EBADF) {
+  if (have_stdin) {
     char *buf = NULL;
     size_t len = 0;
     ssize_t read;
