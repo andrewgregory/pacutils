@@ -167,7 +167,7 @@ pu_mtree_t *pu_mtree_reader_next(pu_mtree_reader_t *reader, pu_mtree_t *dest) {
   if (reader->_buf[len - 1] == '\n') { reader->_buf[len - 1] = '\0'; }
 
   c = reader->_buf;
-  while (isspace(*c)) { c++; }
+  while (isspace((unsigned char)*c)) { c++; }
 
   if (c[0] == '#') {
     return pu_mtree_reader_next(reader, dest);
@@ -176,7 +176,7 @@ pu_mtree_t *pu_mtree_reader_next(pu_mtree_reader_t *reader, pu_mtree_t *dest) {
     c += 5;
   } else {
     char *sep = c, *path;
-    while (*sep && !isspace(*sep)) { sep++; }
+    while (*sep && !isspace((unsigned char)*sep)) { sep++; }
     if ((path = _pu_mtree_path(c, sep)) == NULL) { return NULL; }
     if (entry) {
       free(entry->path);
