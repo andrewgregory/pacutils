@@ -195,7 +195,7 @@ int fix_mtime(const char *path, struct archive_entry *entry) {
         path, strerror(errno));
     return 1;
   } else if (verbose) {
-    printf("%s: set modification time to %zu\n", path, t);
+    printf("%s: set modification time to %zu\n", path, (size_t)t);
   }
 
   return 0;
