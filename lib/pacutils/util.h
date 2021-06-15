@@ -28,6 +28,8 @@
 
 #include <alpm_list.h>
 
+int pu_iscspace(int c);
+
 char *pu_basename(char *path);
 char *pu_hr_size(off_t bytes, char *dest);
 struct tm *pu_parse_datetime(const char *string, struct tm *stm);

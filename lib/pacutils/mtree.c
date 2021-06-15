@@ -20,13 +20,13 @@
  * IN THE SOFTWARE.
  */
 
-#include <ctype.h>
 #include <limits.h>
 #include <string.h>
 
 #include <archive.h>
 
 #include "mtree.h"
+#include "util.h"
 
 alpm_list_t *pu_mtree_load_pkg_mtree(alpm_handle_t *handle, alpm_pkg_t *pkg) {
   alpm_list_t *entries = NULL;
@@ -167,7 +167,7 @@ pu_mtree_t *pu_mtree_reader_next(pu_mtree_reader_t *reader, pu_mtree_t *dest) {
   if (reader->_buf[len - 1] == '\n') { reader->_buf[len - 1] = '\0'; }
 
   c = reader->_buf;
-  while (isspace((unsigned char)*c)) { c++; }
+  while (pu_iscspace((unsigned char)*c)) { c++; }
 
   if (c[0] == '#') {
     return pu_mtree_reader_next(reader, dest);
@@ -176,7 +176,7 @@ pu_mtree_t *pu_mtree_reader_next(pu_mtree_reader_t *reader, pu_mtree_t *dest) {
     c += 5;
   } else {
     char *sep = c, *path;
-    while (*sep && !isspace((unsigned char)*sep)) { sep++; }
+    while (*sep && !pu_iscspace((unsigned char)*sep)) { sep++; }
     if ((path = _pu_mtree_path(c, sep)) == NULL) { return NULL; }
     if (entry) {
       free(entry->path);

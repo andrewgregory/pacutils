@@ -26,7 +26,6 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <limits.h>
-#include <ctype.h>
 #include <math.h>
 #include <fnmatch.h>
 #include <fcntl.h>

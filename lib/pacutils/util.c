@@ -33,6 +33,11 @@
 
 #include "util.h"
 
+int pu_iscspace(int c) {
+  return c == ' ' || c == '\f' || c == '\n'
+    || c == '\r' || c == '\t' || c == '\v';
+}
+
 char *pu_basename(char *path) {
   char *c;
   if (!path) { return NULL; }

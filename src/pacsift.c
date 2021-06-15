@@ -290,7 +290,7 @@ struct size_cmp *parse_size(const char *str) {
   }
 
   if (bytes > 0) {
-    while (isspace((unsigned char)*end)) { end++; }
+    while (pu_iscspace((unsigned char)*end)) { end++; }
     if (*end && !parse_size_units(&size.bytes, bytes, end)) {
       fprintf(stderr, "error: invalid size comparison '%s'\n", str);
       cleanup(1);
