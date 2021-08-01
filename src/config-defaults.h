@@ -23,7 +23,7 @@
 #ifndef CONFIG_DEFAULTS_H
 #define CONFIG_DEFAULTS_H
 
-#define BASEVER "0.11.0"
+#define BASEVER "0.11.1"
 
 #ifdef GITVER
 #define BUILDVER BASEVER "+" GITVER
