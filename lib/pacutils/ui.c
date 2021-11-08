@@ -515,7 +515,7 @@ void pu_ui_cb_download(void *ctx, const char *filename,
             (int)(100 * downloaded / s->total));
       } else {
         fprintf(c->out, "(%d/%d) %s (%jd)\r",
-            c->index + 1, num, s->filename, s->downloaded);
+            c->index + 1, num, s->filename, (intmax_t)s->downloaded);
       }
     }
     fflush(c->out);
