@@ -35,6 +35,7 @@ typedef enum pu_config_option_t {
 
   PU_CONFIG_OPTION_CLEANMETHOD,
   PU_CONFIG_OPTION_COLOR,
+  PU_CONFIG_OPTION_NOPROGRESSBAR,
   PU_CONFIG_OPTION_USESYSLOG,
   PU_CONFIG_OPTION_CHECKSPACE,
   PU_CONFIG_OPTION_VERBOSEPKGLISTS,
@@ -85,6 +86,7 @@ typedef struct pu_config_t {
 
   pu_config_bool_t checkspace;
   pu_config_bool_t color;
+  pu_config_bool_t noprogressbar;
   pu_config_bool_t ilovecandy;
   pu_config_bool_t usesyslog;
   pu_config_bool_t verbosepkglists;

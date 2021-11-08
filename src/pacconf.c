@@ -304,6 +304,7 @@ void dump_options(void) {
 
   show_bool("UseSyslog", config->usesyslog);
   show_bool("Color", config->color);
+  show_bool("NoProgressBar", config->noprogressbar);
   show_bool("DisableDownloadTimeout", config->disabledownloadtimeout);
   show_bool("CheckSpace", config->checkspace);
   show_bool("VerbosePkgLists", config->verbosepkglists);
@@ -418,6 +419,8 @@ int list_directives(alpm_list_t *directives) {
       show_bool("UseSyslog", config->usesyslog);
     } else if (strcasecmp(i->data, "Color") == 0) {
       show_bool("Color", config->color);
+    } else if (strcasecmp(i->data, "NoProgressBar") == 0) {
+      show_bool("NoProgressBar", config->noprogressbar);
     } else if (strcasecmp(i->data, "CheckSpace") == 0) {
       show_bool("CheckSpace", config->checkspace);
     } else if (strcasecmp(i->data, "VerbosePkgLists") == 0) {
