@@ -45,6 +45,7 @@ struct _pu_config_setting {
 
   {"CleanMethod",     PU_CONFIG_OPTION_CLEANMETHOD},
   {"Color",           PU_CONFIG_OPTION_COLOR},
+  {"NoProgressBar",   PU_CONFIG_OPTION_NOPROGRESSBAR},
   {"UseSyslog",       PU_CONFIG_OPTION_USESYSLOG},
   {"CheckSpace",      PU_CONFIG_OPTION_CHECKSPACE},
   {"VerbosePkgLists", PU_CONFIG_OPTION_VERBOSEPKGLISTS},
@@ -258,6 +259,7 @@ pu_config_t *pu_config_new(void) {
 
   config->checkspace = PU_CONFIG_BOOL_UNSET;
   config->color = PU_CONFIG_BOOL_UNSET;
+  config->noprogressbar = PU_CONFIG_BOOL_UNSET;
   config->disabledownloadtimeout = PU_CONFIG_BOOL_UNSET;
   config->ilovecandy = PU_CONFIG_BOOL_UNSET;
   config->usesyslog = PU_CONFIG_BOOL_UNSET;
@@ -473,6 +475,7 @@ int pu_config_resolve(pu_config_t *config) {
 #define SETBOOL(opt) if(opt == -1) { opt = 0; }
   SETBOOL(config->checkspace);
   SETBOOL(config->color);
+  SETBOOL(config->noprogressbar);
   SETBOOL(config->disabledownloadtimeout);
   SETBOOL(config->ilovecandy);
   SETBOOL(config->usesyslog);
@@ -515,6 +518,7 @@ void pu_config_merge(pu_config_t *dest, pu_config_t *src) {
   MERGEBOOL(dest->checkspace, src->checkspace);
   MERGEBOOL(dest->verbosepkglists, src->verbosepkglists);
   MERGEBOOL(dest->color, src->color);
+  MERGEBOOL(dest->noprogressbar, src->noprogressbar);
   MERGEBOOL(dest->ilovecandy, src->ilovecandy);
   MERGEBOOL(dest->disabledownloadtimeout, src->disabledownloadtimeout);
 
@@ -816,6 +820,9 @@ int pu_config_reader_next(pu_config_reader_t *reader) {
       switch (s->type) {
         case PU_CONFIG_OPTION_COLOR:
           config->color = 1;
+          break;
+        case PU_CONFIG_OPTION_NOPROGRESSBAR:
+          config->noprogressbar = 1;
           break;
         case PU_CONFIG_OPTION_USESYSLOG:
           config->usesyslog = 1;
