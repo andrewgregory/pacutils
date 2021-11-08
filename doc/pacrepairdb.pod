@@ -67,7 +67,7 @@ Disable low-speed timeouts for downloads.
 
 =item B<--print-only>
 
-Display the packages to be repaired and the cache packages to be used and exit.
+Display the packages to be repaired and the cached packages to be used and exit.
 
 =item B<--root>=F<path>
 
@@ -107,7 +107,7 @@ nonetheless has the same name and version, B<pacrepairdb> will blindly install
 it, worsening any database problems.
 
 B<pacrepairdb> does not check for leftover orphaned files.  It is the user's
-responsibility locate and handle orphaned files.
+responsibility to locate and handle orphaned files.
 
 B<pacrepairdb> determines whether or not to read package names from F<stdin>
 based on a naive check using L<isatty(3)>.  If B<pacrepairdb> is called in an
