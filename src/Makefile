@@ -5,6 +5,11 @@ ALPM_CFLAGS ?= $(shell pkg-config libalpm --cflags)
 
 CFLAGS ?= -Wall -Wextra -Wpedantic -Werror -g
 
+LBITS := $(shell getconf LONG_BIT)
+ifeq ($(LBITS),32)
+	CFLAGS += -D_FILE_OFFSET_BITS=64
+endif
+
 override CFLAGS   += $(ALPM_CFLAGS)
 override CPPFLAGS += -I../lib
 override LDFLAGS  += -L../lib
