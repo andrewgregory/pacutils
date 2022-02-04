@@ -350,6 +350,7 @@ void print_missing_files(alpm_handle_t *handle) {
   alpm_db_t *localdb = alpm_get_localdb(handle);
   alpm_list_t *matches = NULL, *p, *pkgs = alpm_db_get_pkgcache(localdb);
   char path[PATH_MAX], *tail;
+  struct stat statbuf;
   strncpy(path, alpm_option_get_root(handle), PATH_MAX);
   size_t len = strlen(path);
   size_t max = PATH_MAX - len;
@@ -360,7 +361,7 @@ void print_missing_files(alpm_handle_t *handle) {
     size_t i;
     for (i = 0; i < files->count; ++i) {
       strncpy(tail, files->files[i].name, max);
-      if (access(path, F_OK) != 0) {
+      if (lstat(path, &statbuf) != 0) {
         struct pkg_file_t *mf = pkg_file_new(p->data, &files->files[i]);
         matches = alpm_list_add(matches, mf);
       }
