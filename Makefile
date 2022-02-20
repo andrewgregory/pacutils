@@ -19,6 +19,7 @@ install: lib
 	$(MAKE) -C doc/ $@
 	$(MAKE) -C lib/ $@
 	$(MAKE) -C src/ $@
+	$(MAKE) -C completion/ $@
 
 clean:
 	$(MAKE) -C doc/ $@

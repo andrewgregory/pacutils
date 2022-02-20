@@ -1,0 +1,47 @@
+#compdef pacsift
+
+declare -a args
+args=(
+    + options
+    '--any[display packages matching any search criteria]'
+    '--build-date=[search package build date]:<val>: '
+    '--config=[set an alternate configuration file]:<path>:_files'
+    '--dbext=[set an alternate sync database extension]:<ext>: '
+    '--dbpath=[set an alternate database location]:<path>:_files'
+    '--exact[match search terms exactly]'
+    '(--not-exists)--exists[exit with a non-zero value if no matches were found]'
+    '(-)--help[display help information]'
+    '--invert[display packages which DO NOT match search criteria]'
+    '(--exists)--not-exists[exit with a non-zero value if matches were found]'
+    '--null=[use <sep> to separate values (default NUL)]::sep: '
+    '--regex[use regular expressions for matching]'
+    '--root=[set an alternate installation root]:<path>:_path_files -/'
+    '--sysroot=[set an alternate system root]:<path>:_path_files -/'
+    '(-)--version[display version information]'
+    + filters
+    '--cache[search packages in cache (EXPERIMENTAL)]'
+    '--local[search installed packages]'
+    '--sync[search packages in all sync repositories]'
+    + package-fields
+    '*--architecture=[search package architecture]:<val>: '
+    '*--base=[search package bases]:<val>: '
+    '*--repo=[search packages in repo <name>]:<val>:{_values repo $(pacconf --repo-list)}'
+    '*--name=[search package names]:<val>:{_values name $(pacman -Sql)}'
+    '*--description=[search package descriptions]:<val>: '
+    '*--packager=[search package packager field]:<val>: '
+    '*--group=[search package group field]:<val>:{_values group $(pacman -Sg)}'
+    '*--owns-file=[search package file lists]:<val>:_files'
+    '*--license=[search package licenses]:<val>: '
+    '*--provides=[search package provides]:<val>:{_values package $(pacman -Sql)}'
+    '*--depends=[search package dependencies]:<val>:{_values package $(pacman -Sql)}'
+    '*--optdepends=[search package dependencies]:<val>:{_values package $(pacman -Sql)}'
+    '*--conflicts=[search package conflicts]:<val>: '
+    '*--replaces=[search package replaces]:<val>:{_values package $(pacman -Sql)}'
+    '*--install-date=[search package install date]:<val>: '
+    '*--installed-size=[search package installed size]:<val>: '
+    '*--download-size=[search package download size]:<val>: '
+    '*--size=[search package size]:<val>: '
+    '*--url=[search package url]:<val>: '
+    '*--satisfies=[find packages satisfying dependency <val>]:<val>: '
+)
+_arguments $args

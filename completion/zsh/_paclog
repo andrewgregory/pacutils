@@ -1,0 +1,26 @@
+#compdef paclog
+
+declare -a args
+args=(
+    + options
+    '(--no-color)--color[color output]'
+    '--config=[set an alternate configuration file]:<path>:_files'
+    '--debug[enable extra debugging messages]'
+    '--logfile=[set an alternate log file]:<path>:_files'
+    '(--color)--no-color[do not color output]'
+    '(filters)--pkglist[list installed packages (EXPERIMENTAL)]'
+    '--root=[set an alternate installation root]:<path>:_path_files -/'
+    '--sysroot=[set an alternate installation system root]:<path>:_path_files -/'
+    '(-)--help[show help and exit]'
+    '(-)--version[show version and exit]'
+    + filters
+    '*--action=[show <action> entries]:<action>:(install reinstall upgrade downgrade remove all)'
+    '--after=[show entries after <date>]:<date>: '
+    '--before=[show entries before <date>]:<date>: '
+    '*--caller=[show entries from program <name>]:<name>: '
+    '--commandline[show command line entries]'
+    '*--grep=[show entries matching <regex>]:<regex>: '
+    '*--package=[show entries affecting <pkg>]:<pkg>:{_values package $(pacman -Sql)}'
+    '--warnings[show notes/warnings/errors]'
+)
+_arguments $args

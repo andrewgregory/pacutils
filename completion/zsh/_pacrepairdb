@@ -1,0 +1,24 @@
+#compdef pacrepairdb
+
+declare -a args
+args=(
+    '--cachedir=[set an alternate cache location]:<path>:_path_files -/'
+    '--config=[set an alternate configuration file]:<path>:_files'
+    '--dbonly[update database without reinstalling packages]'
+    '--dbpath=[set an alternate database location]:<path>:_files'
+    '--debug[enable extra debugging messages]'
+    '(-)--help[display help information]'
+    '--hookdir=[add additional user hook directory]:<path>:_path_files -/'
+    '--logfile=[set an alternate log file]:<path>:_files'
+    '--no-confirm[assume default responses to all prompts]'
+    '--no-hooks[do not run transaction hooks]'
+    '--no-scriptlet[do not run package install scripts]'
+    '--no-timeout[disable low speed timeouts for downloads]'
+    '--print-only[show steps without performing them]'
+    '--root=[set an alternate installation root]:<path>:_path_files -/'
+    '--sysroot=[set an alternate system root]:<path>:_path_files -/'
+    '--verbose[display additional progress information]'
+    '(-)--version[display version information]'
+    '*:packages:{_values packages $(pacman -Qq)}'
+)
+_arguments $args

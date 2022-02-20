@@ -1,0 +1,13 @@
+#compdef pacini
+
+declare -a args
+args=(
+    '(-)--help[display help information]'
+    '(-)--section-list[list configured sections]'
+    '--section=[query options for a specific section]:<name>: '
+    '--verbose[always show directive names]'
+    '(-)--version[display version information]'
+    ':file[File name]:_files'
+    '*:directives: '
+)
+_arguments $args

@@ -1,0 +1,15 @@
+How to mostly autogenerate the zsh auto complete definitions
+
+Write code like the following (using pacreport as an example):
+
+dummy() { pacreport }
+compdef _gnu_generic dummy
+[tab complete "dummy -<tab>" once to cache results]
+printf '%s\n' ${(onq-)_args_cache_dummy}
+
+This will print entries to put in $args. After that, the following needs to be done manually:
+* Completing arguments to flags (last optional field)
+* Exlusivity (in leading parenthesis) & grouping of the flags.
+* Repeatability (leading * after exlusivity)
+* Handling any positional arguments.
+* Any special handling (such as different modes, e.g. in pactrans or paclock).

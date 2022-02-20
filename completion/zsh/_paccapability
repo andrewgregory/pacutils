@@ -1,0 +1,9 @@
+#compdef paccapability
+
+declare -a args
+args=(
+    '(-)--help[display help information]'
+    '(-)--version[display version information]'
+    '*:capability: '
+)
+_arguments $args
