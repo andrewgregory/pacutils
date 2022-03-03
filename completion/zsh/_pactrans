@@ -1,7 +1,5 @@
 #compdef pactrans pacinstall pacremove
 
-local context state state_descr line
-typeset -A opt_args
 typeset -a args
 
 args=(
@@ -72,7 +70,6 @@ local install_comp='*:package:{_values package $(pacman -Sql)}'
 local remove_comp='*:package:{_values package $(pacman -Qq)}'
 
 # Detect what type of positional arguments we are currently completing (if any)
-declare -a current_words
 local mode word
 
 case $service in
