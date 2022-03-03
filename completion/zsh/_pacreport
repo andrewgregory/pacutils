@@ -13,6 +13,7 @@ args=(
     '--root=[set an alternate installation root]:<path>:_path_files -/'
     '--sysroot=[set an alternate system root]:<path>:_path_files -/'
     '--unowned-files[list unowned files]'
+    '--optional-deps[take optional dependencies into account when listing unneeded packages and dependency loops]'
     '(-)--version[display version information]'
 )
 _arguments $args
