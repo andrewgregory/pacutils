@@ -47,7 +47,7 @@ void usage(int ret) {
   FILE *stream = (ret ? stderr : stdout);
 #define hputs(x) fputs(x"\n", stream)
   hputs("pacini - query pacman-style configuration file");
-  hputs("usage:  pacini [options] <file> [<directive>...]");
+  hputs("usage:  pacini [options] [<file> [<directive>...]]");
   hputs("        pacini (--section-list|--help|--version)");
   hputs("options:");
   hputs("  --section=<name>  query options for a specific section");
