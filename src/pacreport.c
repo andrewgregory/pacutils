@@ -353,6 +353,7 @@ void print_missing_files(alpm_handle_t *handle) {
   strncpy(path, alpm_option_get_root(handle), PATH_MAX);
   size_t len = strlen(path);
   size_t max = PATH_MAX - len;
+  struct stat sbuf;
   tail = path + len;
 
   for (p = pkgs; p; p = p->next) {
@@ -360,9 +361,13 @@ void print_missing_files(alpm_handle_t *handle) {
     size_t i;
     for (i = 0; i < files->count; ++i) {
       strncpy(tail, files->files[i].name, max);
-      if (access(path, F_OK) != 0) {
-        struct pkg_file_t *mf = pkg_file_new(p->data, &files->files[i]);
-        matches = alpm_list_add(matches, mf);
+      if (lstat(path, &sbuf) != 0) {
+        if(errno == ENOENT) {
+          struct pkg_file_t *mf = pkg_file_new(p->data, &files->files[i]);
+          matches = alpm_list_add(matches, mf);
+        } else {
+          pu_ui_warn("unable to stat '%s' (%s)", path, strerror(errno));
+        }
       }
     }
   }
