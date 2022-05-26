@@ -169,6 +169,8 @@ int main(int argc, char **argv) {
 
   if (!ini) {
     ret = 1;
+    pu_ui_error("unable to open '%s' for reading (%s)",
+        input_file, strerror(errno));
     goto cleanup;
   }
 
