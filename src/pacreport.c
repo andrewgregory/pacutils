@@ -665,6 +665,7 @@ void usage(int ret) {
   hputs("   --group=<GROUP>    list missing group packages");
   hputs("   --missing-files    list missing package files");
   hputs("   --unowned-files    list unowned files");
+  hputs("   --optional-deps    treat optional dependencies as required");
   hputs("   --help             display this help information");
   hputs("   --version          display version information");
 #undef hputs
