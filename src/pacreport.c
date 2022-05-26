@@ -680,6 +680,7 @@ pu_config_t *parse_opts(int argc, char **argv) {
 
   struct option long_opts[] = {
     { "cachedir", required_argument, NULL, FLAG_CACHEDIR      },
+    { "cache-dir", required_argument, NULL, FLAG_CACHEDIR      },
     { "config", required_argument, NULL, FLAG_CONFIG        },
     { "dbext", required_argument, NULL, FLAG_DBEXT         },
     { "dbpath", required_argument, NULL, FLAG_DBPATH        },
