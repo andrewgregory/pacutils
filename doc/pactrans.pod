@@ -58,7 +58,7 @@ Upgrade installed packages.
 
 =over
 
-=item B<--cache-dir>=F<path>
+=item B<--cachedir>=F<path>
 
 Set an alternate cache directory path.
 

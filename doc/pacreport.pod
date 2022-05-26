@@ -62,7 +62,7 @@ Set an alternate installation root.
 
 Set an alternate system root.  See L<pacutils-sysroot(7)>.
 
-=item B<--cache-dir>=F<path>
+=item B<--cachedir>=F<path>
 
 Set an alternate cache directory path.
 
