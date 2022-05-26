@@ -76,6 +76,8 @@ void usage(int ret) {
   hputs("   --no-check-keys    skip check for matching lock file key before unlocking");
   hputs("   --enoent-ok        ignore unlock errors due to a missing lock file");
   hputs("   --fail-ok          always unlock the database following --run");
+  hputs("   --help             display this help information");
+  hputs("   --version          display version information");
 #undef hputs
   exit(ret);
 }
