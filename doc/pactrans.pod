@@ -143,6 +143,10 @@ Do not run package install scripts.
 
 Do not run transaction hooks.
 
+=item B<--assume-installed>=I<package>[=I<version>]
+
+Behave as if I<package> is installed.
+
 =back
 
 =head2 Sysupgrade Options
