@@ -1,0 +1,28 @@
+#compdef paccheck
+
+declare -a args
+args=(
+    '--backup[include backup files in modification checks]'
+    '--config=[set an alternate configuration file]:<path>:_files'
+    '--db-files[include database files in checks]'
+    '--dbpath=[set an alternate database location]:<path>:_files'
+    '--depends[check for missing dependencies]'
+    '--file-properties[check installed files against MTREE data]'
+    '--files[check installed files against package database]'
+    '(-)--help[display help information]'
+    '--list-broken[only print packages that fail checks]'
+    '--md5sum[check file md5sums against MTREE data]'
+    '--noextract[include NoExtract files in modification checks]'
+    '--noupgrade[include NoUpgrade files in modification checks]'
+    '--null=[parse stdin as <sep> separated values (default NUL)]::<sep>: '
+    '--opt-depends[check for missing optional dependencies]'
+    '--quiet[only display error messages]'
+    '--recursive[perform checks on package (opt-)depends]'
+    '--require-mtree[treat packages missing MTREE data as an error]'
+    '--root=[set an alternate installation root]:<path>:_path_files -/'
+    '--sha256sum[check file sha256sums against MTREE data]'
+    '--sysroot=[set an alternate system root]:<path>:_path_files -/'
+    '(-)--version[display version information]'
+    '*:packages:{_values packages $(pacman -Qq)}'
+)
+_arguments $args

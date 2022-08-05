@@ -1,0 +1,18 @@
+#compdef pacsync
+
+declare -a args
+args=(
+    '--config=[set an alternate configuration file]:<path>:_files'
+    '--dbext=[set an alternate sync database extension]:<ext>: '
+    '--dbpath=[set an alternate database location]:<path>:_files'
+    '--debug[enable extra debugging messages]'
+    '--force[sync repos even if already up-to-date]'
+    '(-)--help[display help information]'
+    '--logfile=[set an alternate log file]:<path>:_files'
+    '--no-timeout[disable low speed timeouts for downloads]'
+    '--sysroot=[set an alternate system root]:<path>:_path_files -/'
+    '--updated[return false unless a database was updated]'
+    '(-)--version[display version information]'
+    '*:repo:{_values repo $(pacconf --repo-list)}'
+)
+_arguments $args
