@@ -25,6 +25,7 @@ args=(
     '--no-confirm[assume default responses to all prompts]'
     '--no-deps[ignore dependency version restrictions]'
     '--no-hooks[do not run transaction hooks]'
+    '--assume-installed=[behave as if package is installed]:package:{_values package $(pacman -Sql)'
     '--no-scriptlet[do not run package install scripts]'
     '--null=[parse stdin as <sep> separated values (default NUL)]::sep: '
     '--root=[set an alternate installation root]:<path>:_path_files -/'
