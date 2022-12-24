@@ -416,8 +416,8 @@ alpm_handle_t *pu_initialize_handle_from_config(pu_config_t *config) {
 alpm_db_t *pu_register_syncdb(alpm_handle_t *handle, pu_repo_t *repo) {
   alpm_db_t *db = alpm_register_syncdb(handle, repo->name, repo->siglevel);
   if (db) {
-    alpm_db_set_servers(db, alpm_list_strdup(repo->servers));
-    alpm_db_set_cache_servers(db, alpm_list_strdup(repo->cacheservers));
+    alpm_db_set_servers(db, repo->servers);
+    alpm_db_set_cache_servers(db, repo->cacheservers);
     alpm_db_set_usage(db, repo->usage);
   }
   return db;
