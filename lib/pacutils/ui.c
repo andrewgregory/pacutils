@@ -643,3 +643,52 @@ pu_config_t *pu_ui_config_load_sysroot(pu_config_t *dest,
 pu_config_t *pu_ui_config_load(pu_config_t *dest, const char *file) {
   return pu_ui_config_load_sysroot(dest, file, "/");
 }
+
+int _pu_ui_parse_fd(const char *fdstr) {
+  int result = 0;
+  for(const char *c = fdstr; *c; c++) {
+    int cval = *c - '0';
+    int newval = result * 10 + cval;
+    if(cval < 0 || cval > 9) { errno = EINVAL; return -1; }     /* non-digit */
+    if(newval - result < result) { errno = ERANGE; return -1; }  /* overflow */
+    result = newval;
+  }
+  return result;
+}
+
+int pu_ui_read_list_from_fd(int fd, int sep, alpm_list_t **dest) {
+  if (pu_read_list_from_fd(fd, sep, dest) == -1) {
+    pu_ui_error("error reading list from file descriptor %d (%s)",
+        fd, strerror(errno));
+    return -1;
+  }
+  return 0;
+}
+
+int pu_ui_read_list_from_fdstr(const char *fdstr, int sep, alpm_list_t **dest) {
+  int fd;
+
+  if ((fd = _pu_ui_parse_fd(fdstr)) == -1) {
+    pu_ui_error("invalid file descriptor '%s' (%s)", fdstr, strerror(errno));
+    return -1;
+  }
+  return pu_ui_read_list_from_fd(fd, sep, dest);
+}
+
+int pu_ui_read_list_from_path(const char *file, int sep, alpm_list_t **dest) {
+  if (pu_read_list_from_path(file, sep, dest) == -1) {
+    pu_ui_error("error reading list from file '%s' (%s)",
+        file, strerror(errno));
+    return -1;
+  }
+  return 0;
+}
+
+int pu_ui_read_list_from_stream(FILE *file, int sep,
+    alpm_list_t **dest, const char *name) {
+  if (pu_read_list_from_stream(file, sep, dest) == -1) {
+    pu_ui_error("error reading from %s (%s)", name, strerror(errno));
+    return -1;
+  }
+  return 0;
+}

@@ -76,4 +76,9 @@ pu_config_t *pu_ui_config_parse_sysroot(pu_config_t *dest, const char *file,
 pu_config_t *pu_ui_config_load_sysroot(pu_config_t *dest, const char *file,
     const char *root);
 
+int pu_ui_read_list_from_fd(int fd, int sep, alpm_list_t **dest);
+int pu_ui_read_list_from_fdstr(const char *fdstr, int sep, alpm_list_t **dest);
+int pu_ui_read_list_from_path(const char *file, int sep, alpm_list_t **dest);
+int pu_ui_read_list_from_stream(FILE *file, int sep, alpm_list_t **dest, const char *name);
+
 #endif /* PACUTILS_UI_H */

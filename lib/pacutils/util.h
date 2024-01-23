@@ -45,4 +45,8 @@ int pu_prepend_dir_list(const char *dir, alpm_list_t *paths);
 
 FILE *pu_fopenat(int dirfd, const char *path, const char *mode);
 
+int pu_read_list_from_stream(FILE *f, int sep, alpm_list_t **dest);
+int pu_read_list_from_fd(int fd, int sep, alpm_list_t **dest);
+int pu_read_list_from_path(const char *path, int sep, alpm_list_t **dest);
+
 #endif /* PACUTILS_UTIL_H */
