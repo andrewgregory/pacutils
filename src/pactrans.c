@@ -723,18 +723,9 @@ void print_q_resolution(alpm_question_t *question) {
     case ALPM_QUESTION_IMPORT_KEY: {
       alpm_question_import_key_t *q = &question->import_key;
       if (q->import) {
-        alpm_pgpkey_t *key = q->key;
-        char created[16];
-        time_t time = (time_t) key->created;
-
-        if (strftime(created, 12, "%Y-%m-%d", localtime(&time)) == 0) {
-          strcpy(created, "(unknown)");
-        }
-
-        pu_ui_notice((key->revoked
-                ? "importing PGP key %u%c/%s '%s', created: %s (revoked)"
-                : "importing PGP key %u%c/%s '%s', created: %s"),
-            key->length, key->pubkey_algo, key->fingerprint, key->uid, created);
+        q->uid
+          ? pu_ui_notice( "importing PGP key %s (%s)", q->fingerprint, q->uid)
+          : pu_ui_notice( "importing PGP key %s", q->fingerprint);
       }
     }
     break;
