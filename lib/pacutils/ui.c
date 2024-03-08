@@ -311,7 +311,9 @@ void pu_ui_cb_question(void *ctx, alpm_question_t *question) {
       alpm_question_conflict_t *q = (alpm_question_conflict_t *) question;
       alpm_conflict_t *c = q->conflict;
       q->remove = pu_ui_confirm(1, "'%s' conflicts with '%s'.  Remove '%s'?",
-              c->package1, c->package2, c->package2);
+              alpm_pkg_get_name(c->package1),
+              alpm_pkg_get_name(c->package2),
+              alpm_pkg_get_name(c->package2));
     }
     break;
     case ALPM_QUESTION_REMOVE_PKGS: {

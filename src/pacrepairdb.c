@@ -476,7 +476,8 @@ int install_packages(alpm_handle_t *handle, alpm_list_t *packages) {
         for (i = err_data; i; i = alpm_list_next(i)) {
           alpm_conflict_t *conflict = i->data;
           pu_ui_error("package conflict (%s %s)",
-              conflict->package1, conflict->package2);
+              alpm_pkg_get_name(conflict->package1),
+              alpm_pkg_get_name(conflict->package2));
           alpm_conflict_free(conflict);
         }
         break;
