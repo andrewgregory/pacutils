@@ -60,5 +60,3 @@ void pu_mtree_reader_free(pu_mtree_reader_t *reader);
 void pu_mtree_free(pu_mtree_t *mtree);
 
 #endif /* PACUTILS_MTREE_H */
-
-/* vim: set ts=2 sw=2 et: */

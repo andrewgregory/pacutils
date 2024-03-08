@@ -218,5 +218,3 @@ pu_mtree_t *pu_mtree_reader_next(pu_mtree_reader_t *reader, pu_mtree_t *dest) {
 
   return entry;
 }
-
-/* vim: set ts=2 sw=2 et: */

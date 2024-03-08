@@ -51,5 +51,3 @@
 #endif
 
 #endif /* CONFIG_DEFAULTS_H */
-
-/* vim: set ts=2 sw=2 et: */

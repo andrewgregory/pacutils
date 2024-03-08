@@ -651,5 +651,3 @@ pu_config_t *pu_ui_config_load_sysroot(pu_config_t *dest,
 pu_config_t *pu_ui_config_load(pu_config_t *dest, const char *file) {
   return pu_ui_config_load_sysroot(dest, file, "/");
 }
-
-/* vim: set ts=2 sw=2 et: */

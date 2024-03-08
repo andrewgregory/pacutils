@@ -285,5 +285,3 @@ void pu_log_entry_free(pu_log_entry_t *entry) {
   free(entry->message);
   free(entry);
 }
-
-/* vim: set ts=2 sw=2 noet: */

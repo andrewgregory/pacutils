@@ -47,5 +47,3 @@ alpm_pkg_t *pu_db_find_dep_satisfier(alpm_db_t *db, alpm_depend_t *dep);
 alpm_pkg_t *pu_dblist_find_dep_satisfier(alpm_list_t *dbs, alpm_depend_t *dep);
 
 #endif /* PACUTILS_DEPENDS_H */
-
-/* vim: set ts=2 sw=2 et: */
