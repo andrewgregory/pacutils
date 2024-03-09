@@ -671,8 +671,8 @@ void print_q_resolution(alpm_question_t *question) {
       alpm_question_conflict_t *q = (alpm_question_conflict_t *) question;
       alpm_conflict_t *c = q->conflict;
       alpm_list_t *localpkgs = alpm_db_get_pkgcache(alpm_get_localdb(handle));
-      alpm_pkg_t *newpkg = alpm_pkg_find(alpm_trans_get_add(handle), c->package1);
-      alpm_pkg_t *oldpkg = alpm_pkg_find(localpkgs, c->package2);
+      alpm_pkg_t *newpkg = alpm_pkg_find(alpm_trans_get_add(handle), alpm_pkg_get_name(c->package1));
+      alpm_pkg_t *oldpkg = alpm_pkg_find(localpkgs, alpm_pkg_get_name(c->package2));
 
       if (q->remove) {
         pu_ui_notice("uninstalling package '%s-%s' due to conflict with '%s-%s'",
@@ -723,18 +723,7 @@ void print_q_resolution(alpm_question_t *question) {
     case ALPM_QUESTION_IMPORT_KEY: {
       alpm_question_import_key_t *q = &question->import_key;
       if (q->import) {
-        alpm_pgpkey_t *key = q->key;
-        char created[16];
-        time_t time = (time_t) key->created;
-
-        if (strftime(created, 12, "%Y-%m-%d", localtime(&time)) == 0) {
-          strcpy(created, "(unknown)");
-        }
-
-        pu_ui_notice((key->revoked
-                ? "importing PGP key %u%c/%s '%s', created: %s (revoked)"
-                : "importing PGP key %u%c/%s '%s', created: %s"),
-            key->length, key->pubkey_algo, key->fingerprint, key->uid, created);
+        pu_ui_notice("Import PGP key %s, '%s'", q->fingerprint, q->uid);
       }
     }
     break;
@@ -794,8 +783,8 @@ void cb_question(void *ctx, alpm_question_t *question) {
         alpm_question_conflict_t *q = (alpm_question_conflict_t *) question;
         alpm_conflict_t *c = q->conflict;
         alpm_list_t *localpkgs = alpm_db_get_pkgcache(alpm_get_localdb(handle));
-        alpm_pkg_t *newpkg = alpm_pkg_find(alpm_trans_get_add(handle), c->package1);
-        alpm_pkg_t *oldpkg = alpm_pkg_find(localpkgs, c->package2);
+        alpm_pkg_t *newpkg = alpm_pkg_find(alpm_trans_get_add(handle), alpm_pkg_get_name(c->package1));
+        alpm_pkg_t *oldpkg = alpm_pkg_find(localpkgs, alpm_pkg_get_name(c->package2));
 
         q->remove = should_remove_conflict(resolve_conflict, newpkg, oldpkg);
       }
@@ -1013,7 +1002,7 @@ int main(int argc, char **argv) {
         for (i = err_data; i; i = alpm_list_next(i)) {
           alpm_conflict_t *conflict = i->data;
           fprintf(stderr, "error: package conflict (%s %s)\n",
-              conflict->package1, conflict->package2);
+              alpm_pkg_get_name(conflict->package1), alpm_pkg_get_name(conflict->package2));
           alpm_conflict_free(conflict);
         }
         break;

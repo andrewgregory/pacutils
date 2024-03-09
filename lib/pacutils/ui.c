@@ -311,7 +311,7 @@ void pu_ui_cb_question(void *ctx, alpm_question_t *question) {
       alpm_question_conflict_t *q = (alpm_question_conflict_t *) question;
       alpm_conflict_t *c = q->conflict;
       q->remove = pu_ui_confirm(1, "'%s' conflicts with '%s'.  Remove '%s'?",
-              c->package1, c->package2, c->package2);
+              alpm_pkg_get_name(c->package1), alpm_pkg_get_name(c->package2), alpm_pkg_get_name(c->package2));
     }
     break;
     case ALPM_QUESTION_REMOVE_PKGS: {
@@ -373,19 +373,10 @@ void pu_ui_cb_question(void *ctx, alpm_question_t *question) {
     break;
     case ALPM_QUESTION_IMPORT_KEY: {
       alpm_question_import_key_t *q = &question->import_key;
-      alpm_pgpkey_t *key = q->key;
-      char created[12];
-      time_t time = (time_t) key->created;
-
-      if (strftime(created, 12, "%Y-%m-%d", localtime(&time)) == 0) {
-        strcpy(created, "(unknown)");
-      }
 
       q->import = pu_ui_confirm(1,
-              (key->revoked
-                  ? "Import PGP key %u%c/%s, '%s', created: %s (revoked)"
-                  : "Import PGP key %u%c/%s, '%s', created: %s"),
-              key->length, key->pubkey_algo, key->fingerprint, key->uid, created);
+                  "Import PGP key %s, '%s'",
+                  q->fingerprint, q->uid);
     }
     break;
   }
