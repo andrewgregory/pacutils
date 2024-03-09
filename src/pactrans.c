@@ -670,7 +670,6 @@ void print_q_resolution(alpm_question_t *question) {
     case ALPM_QUESTION_CONFLICT_PKG: {
       alpm_question_conflict_t *q = (alpm_question_conflict_t *) question;
       alpm_conflict_t *c = q->conflict;
-      alpm_list_t *localpkgs = alpm_db_get_pkgcache(alpm_get_localdb(handle));
       alpm_pkg_t *newpkg = c->package1;
       alpm_pkg_t *oldpkg = c->package2;
 
@@ -784,7 +783,6 @@ void cb_question(void *ctx, alpm_question_t *question) {
       if ((autoset = (resolve_conflict != RESOLVE_CONFLICT_PROMPT))) {
         alpm_question_conflict_t *q = (alpm_question_conflict_t *) question;
         alpm_conflict_t *c = q->conflict;
-        alpm_list_t *localpkgs = alpm_db_get_pkgcache(alpm_get_localdb(handle));
         alpm_pkg_t *newpkg = c->package1;
         alpm_pkg_t *oldpkg = c->package2;
 
