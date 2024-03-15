@@ -58,7 +58,7 @@ Upgrade installed packages.
 
 =over
 
-=item B<--cache-dir>=F<path>
+=item B<--cachedir>=F<path>
 
 Set an alternate cache directory path.
 
@@ -142,6 +142,10 @@ Do not run package install scripts.
 =item B<--no-hooks>
 
 Do not run transaction hooks.
+
+=item B<--assume-installed>=I<package>[=I<version>]
+
+Behave as if I<package> is installed.
 
 =back
 

@@ -40,7 +40,7 @@ alpm_transflag_t trans_flags = 0;
 
 alpm_list_t *spec = NULL, *add = NULL, *rem = NULL, *files = NULL;
 alpm_list_t **list = &spec;
-alpm_list_t *ignore_pkg = NULL, *ignore_group = NULL;
+alpm_list_t *ignore_pkg = NULL, *ignore_group = NULL, *assume_installed = NULL;
 int printonly = 0, noconfirm = 0, sysupgrade = 0, downgrade = 0, dbsync = 0;
 int nohooks = 0, isep = '\n';
 int resolve_conflict = 0, resolve_replacement = 0;
@@ -50,6 +50,7 @@ const char *dbext = NULL, *sysroot = NULL;
 
 enum longopt_flags {
   FLAG_ADD = 1000,
+  FLAG_ASSUME_INSTALLED,
   FLAG_ASDEPS,
   FLAG_ASEXPLICIT,
   FLAG_CACHEDIR,
@@ -156,6 +157,8 @@ void usage(int ret) {
   hputs("   --no-confirm       assume default responses to all prompts");
   hputs("   --no-deps          ignore dependency version restrictions");
   hputs("                      (pass twice to ignore dependencies altogether)");
+  hputs("   --assume-installed=<package[=version]>");
+  hputs("                      behave as if <package> is installed");
   hputs("   --no-hooks         do not run transaction hooks");
   hputs("   --no-scriptlet     do not run package install scripts");
   hputs("   --null=[sep]       parse stdin as <sep> separated values (default NUL)");
@@ -259,6 +262,7 @@ pu_config_t *parse_opts(int argc, char **argv) {
     { "file", no_argument, NULL, FLAG_FILE         },
     { "remove", no_argument, NULL, FLAG_REMOVE       },
 
+    { "assume-installed", required_argument, NULL, FLAG_ASSUME_INSTALLED     },
     { "cache-dir", required_argument, NULL, FLAG_CACHEDIR     },
     { "cachedir", required_argument, NULL, FLAG_CACHEDIR     },
     { "config", required_argument, NULL, FLAG_CONFIG       },
@@ -351,6 +355,9 @@ pu_config_t *parse_opts(int argc, char **argv) {
         break;
 
       /* general options */
+      case FLAG_ASSUME_INSTALLED:
+        alpm_list_append_strdup(&assume_installed, optarg);
+        break;
       case FLAG_CACHEDIR:
         FREELIST(config->cachedirs);
         config->cachedirs = alpm_list_add(NULL, strdup(optarg));
@@ -871,6 +878,16 @@ int main(int argc, char **argv) {
   alpm_option_set_dlcb(handle, pu_ui_cb_download, NULL);
   alpm_option_set_logcb(handle, cb_log, NULL);
 
+  for (i = assume_installed; i; i = i->next) {
+    alpm_depend_t *d = alpm_dep_from_string(i->data);
+    if(!d) {
+      pu_ui_error("unable to parse dependency string '%s'", i->data);
+      ret = 1;
+      goto cleanup;
+    }
+    alpm_option_add_assumeinstalled(handle, d);
+    alpm_dep_free(d);
+  }
   for (i = ignore_pkg; i; i = i->next) {
     alpm_option_add_ignorepkg(handle, i->data);
   }
@@ -1071,5 +1088,3 @@ cleanup:
 
   return ret;
 }
-
-/* vim: set ts=2 sw=2 noet: */

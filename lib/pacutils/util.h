@@ -46,5 +46,3 @@ int pu_prepend_dir_list(const char *dir, alpm_list_t *paths);
 FILE *pu_fopenat(int dirfd, const char *path, const char *mode);
 
 #endif /* PACUTILS_UTIL_H */
-
-/* vim: set ts=2 sw=2 et: */

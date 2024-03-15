@@ -353,6 +353,7 @@ void print_missing_files(alpm_handle_t *handle) {
   strncpy(path, alpm_option_get_root(handle), PATH_MAX);
   size_t len = strlen(path);
   size_t max = PATH_MAX - len;
+  struct stat sbuf;
   tail = path + len;
 
   for (p = pkgs; p; p = p->next) {
@@ -360,9 +361,13 @@ void print_missing_files(alpm_handle_t *handle) {
     size_t i;
     for (i = 0; i < files->count; ++i) {
       strncpy(tail, files->files[i].name, max);
-      if (access(path, F_OK) != 0) {
-        struct pkg_file_t *mf = pkg_file_new(p->data, &files->files[i]);
-        matches = alpm_list_add(matches, mf);
+      if (lstat(path, &sbuf) != 0) {
+        if(errno == ENOENT) {
+          struct pkg_file_t *mf = pkg_file_new(p->data, &files->files[i]);
+          matches = alpm_list_add(matches, mf);
+        } else {
+          pu_ui_warn("unable to stat '%s' (%s)", path, strerror(errno));
+        }
       }
     }
   }
@@ -660,6 +665,7 @@ void usage(int ret) {
   hputs("   --group=<GROUP>    list missing group packages");
   hputs("   --missing-files    list missing package files");
   hputs("   --unowned-files    list unowned files");
+  hputs("   --optional-deps    treat optional dependencies as required");
   hputs("   --help             display this help information");
   hputs("   --version          display version information");
 #undef hputs
@@ -674,6 +680,7 @@ pu_config_t *parse_opts(int argc, char **argv) {
 
   struct option long_opts[] = {
     { "cachedir", required_argument, NULL, FLAG_CACHEDIR      },
+    { "cache-dir", required_argument, NULL, FLAG_CACHEDIR      },
     { "config", required_argument, NULL, FLAG_CONFIG        },
     { "dbext", required_argument, NULL, FLAG_DBEXT         },
     { "dbpath", required_argument, NULL, FLAG_DBPATH        },
@@ -848,5 +855,3 @@ cleanup:
 
   return ret;
 }
-
-/* vim: set ts=2 sw=2 noet: */

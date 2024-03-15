@@ -164,5 +164,3 @@ int pu_config_reader_next(pu_config_reader_t *reader);
 void pu_config_reader_free(pu_config_reader_t *reader);
 
 #endif /* PACUTILS_CONFIG_H */
-
-/* vim: set ts=2 sw=2 et: */

@@ -77,5 +77,3 @@ pu_config_t *pu_ui_config_load_sysroot(pu_config_t *dest, const char *file,
     const char *root);
 
 #endif /* PACUTILS_UI_H */
-
-/* vim: set ts=2 sw=2 et: */

@@ -23,7 +23,7 @@
 #ifndef CONFIG_DEFAULTS_H
 #define CONFIG_DEFAULTS_H
 
-#define BASEVER "0.11.1"
+#define BASEVER "0.12.0"
 
 #ifdef GITVER
 #define BUILDVER BASEVER "+" GITVER
@@ -51,5 +51,3 @@
 #endif
 
 #endif /* CONFIG_DEFAULTS_H */
-
-/* vim: set ts=2 sw=2 et: */

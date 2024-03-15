@@ -216,5 +216,3 @@ FILE *pu_fopenat(int dirfd, const char *path, const char *mode) {
   if ((stream = fdopen(fd, mode)) == NULL) { close(fd); return NULL; }
   return stream;
 }
-
-/* vim: set ts=2 sw=2 et: */

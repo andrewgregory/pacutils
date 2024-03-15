@@ -107,6 +107,8 @@ void usage(int ret) {
   hputs("   --logfile=<path>    set an alternate log file");
   hputs("   --[no-]color        color output");
   hputs("   --pkglist           list installed packages (EXPERIMENTAL)");
+  hputs("   --help              display this help information");
+  hputs("   --version           display version information");
   hputs("");
   hputs("filters:");
   hputs("   --action=<action>   show <action> entries");
@@ -477,5 +479,3 @@ cleanup:
   free(logfile);
   return ret;
 }
-
-/* vim: set ts=2 sw=2 noet: */

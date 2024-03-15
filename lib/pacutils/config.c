@@ -913,4 +913,3 @@ void pu_config_reader_free(pu_config_reader_t *reader) {
   pu_config_reader_free(reader->_parent);
   free(reader);
 }
-/* vim: set ts=2 sw=2 et: */
