@@ -4,6 +4,11 @@ GIT ?= git
 
 CFLAGS += -Wall -Wextra -Wpedantic -g
 
+LBITS := $(shell getconf LONG_BIT)
+ifeq ($(LBITS),32)
+	CFLAGS += -D_FILE_OFFSET_BITS=64
+endif
+
 override CPPFLAGS += -I..
 
 TESTS = \
