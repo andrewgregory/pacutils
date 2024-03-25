@@ -72,6 +72,8 @@ struct _pu_config_setting {
 
   {"Server",          PU_CONFIG_OPTION_SERVER},
 
+  {"CacheServer",     PU_CONFIG_OPTION_CACHESERVER},
+
   {NULL, 0}
 };
 
@@ -279,6 +281,7 @@ void pu_repo_free(pu_repo_t *repo) {
 
   free(repo->name);
   FREELIST(repo->servers);
+  FREELIST(repo->cacheservers);
 
   free(repo);
 }
@@ -319,6 +322,27 @@ static int _pu_subst_server_vars(pu_config_t *config) {
     pu_repo_t *repo = r->data;
     alpm_list_t *s;
     for (s = repo->servers; s; s = s->next) {
+      char *rrepo;
+
+      if (strstr(s->data, "$arch")) {
+        if (config->architectures == NULL) {
+          errno = EINVAL;
+          return -1;
+        } else {
+          char *arch = config->architectures->data;
+          char *rarch = _pu_strreplace(s->data, "$arch", arch);
+          if (rarch == NULL) { return -1; }
+          free(s->data);
+          s->data = rarch;
+        }
+      }
+
+      rrepo = _pu_strreplace(s->data, "$repo", repo->name);
+      if (rrepo == NULL) { return -1; }
+      free(s->data);
+      s->data = rrepo;
+    }
+    for (s = repo->cacheservers; s; s = s->next) {
       char *rrepo;
 
       if (strstr(s->data, "$arch")) {
@@ -385,6 +409,7 @@ alpm_db_t *pu_register_syncdb(alpm_handle_t *handle, pu_repo_t *repo) {
   alpm_db_t *db = alpm_register_syncdb(handle, repo->name, repo->siglevel);
   if (db) {
     alpm_db_set_servers(db, alpm_list_strdup(repo->servers));
+    alpm_db_set_cache_servers(db, alpm_list_strdup(repo->cacheservers));
     alpm_db_set_usage(db, repo->usage);
   }
   return db;
@@ -424,6 +449,20 @@ int pu_config_resolve_sysroot(pu_config_t *config, const char *sysroot) {
     pu_repo_t *r = i->data;
     alpm_list_t *s;
     for (s = r->servers; s; s = s->next) {
+      if (strncmp("file://", s->data, 7) == 0) {
+        char *newdir = NULL, *newsrv = NULL;
+        if ((newdir = pu_prepend_dir(sysroot, (char *)s->data + 7)) == NULL
+            || (newsrv = pu_asprintf("file://%s", newdir)) == NULL) {
+          free(newdir);
+          free(newsrv);
+          return 1;
+        }
+        free(newdir);
+        free(s->data);
+        s->data = newsrv;
+      }
+    }
+    for (s = r->cacheservers; s; s = s->next) {
       if (strncmp("file://", s->data, 7) == 0) {
         char *newdir = NULL, *newsrv = NULL;
         if ((newdir = pu_prepend_dir(sysroot, (char *)s->data + 7)) == NULL
@@ -721,6 +760,11 @@ int pu_config_reader_next(pu_config_reader_t *reader) {
           break;
         case PU_CONFIG_OPTION_SERVER:
           if (pu_list_append_str(&r->servers, mini->value) == NULL) {
+            _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
+          }
+          break;
+        case PU_CONFIG_OPTION_CACHESERVER:
+          if (pu_list_append_str(&r->cacheservers, mini->value) == NULL) {
             _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
           }
           break;

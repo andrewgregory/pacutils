@@ -57,6 +57,7 @@ typedef enum pu_config_option_t {
   PU_CONFIG_OPTION_CACHEDIRS,
 
   PU_CONFIG_OPTION_SERVER,
+  PU_CONFIG_OPTION_CACHESERVER,
 
   PU_CONFIG_OPTION_USAGE,
 
@@ -118,6 +119,7 @@ typedef struct pu_config_t {
 typedef struct pu_repo_t {
   char *name;
   alpm_list_t *servers;
+  alpm_list_t *cacheservers;
   int usage;
   int siglevel;
   int siglevel_mask;
