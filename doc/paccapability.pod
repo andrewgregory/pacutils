@@ -9,7 +9,7 @@ paccapability - query libalpm capabilities
 
 =head1 DESCRIPTION
 
-B<paccapability> provides a way to query which features libalpm was built with.
+B<paccapability> provides a way to query which features L<libalpm(3)> was built with.
 Recognized capabilities are:
 
 =over
@@ -50,5 +50,13 @@ Display version information and exit.
 =item Check if libalpm was built with signature checking:
 
  paccapability signatures >/dev/null && ...
+
+=back
+
+=head1 SEE ALSO
+
+=over
+
+L<libalpm(3)>
 
 =back

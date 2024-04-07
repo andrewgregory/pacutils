@@ -2,6 +2,11 @@ CFLAGS += -Wall -g -Wextra -I../lib
 LDFLAGS += -L../lib
 LDLIBS += -lpacutils -lalpm -larchive
 
+LBITS := $(shell getconf LONG_BIT)
+ifeq ($(LBITS),32)
+	CFLAGS += -D_FILE_OFFSET_BITS=64
+endif
+
 ALPM_CFLAGS ?= $(shell pkg-config libalpm --cflags)
 override CFLAGS += $(ALPM_CFLAGS)
 
