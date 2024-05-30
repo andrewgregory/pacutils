@@ -1,0 +1,95 @@
+#compdef pactrans pacinstall pacremove
+
+typeset -a args
+
+args=(
+    + actions
+    '--spec[install sync/file specs, remove local specs (default)]'
+    '--install[install packages from sync database]'
+    '--remove[remove packages]'
+    '--file[install packages from files]'
+    '--sysupgrade[upgrade installed packages]'
+
+    + options
+    '--cachedir=[set an alternate cache location]:<path>:_path_files -/'
+    '--config=[set an alternate configuration file]:<path>:_files'
+    '--dbonly[make the requested changes only to the database]'
+    '--dbpath=[set an alternate database location]:<path>:_files'
+    '--dbsync[update sync databases prior to the transaction]'
+    '--dbext=[set an alternate sync database extension]:<ext>: '
+    '--debug[enable extra debugging messages]'
+    '--no-timeout[disable low speed timeouts for downloads]'
+    '--hookdir=[add additional user hook directory]:<path>:_path_files -/'
+    '--logfile=[set an alternate log file]:<path>:_files'
+    '--print-only[display transaction information and exit]'
+    '--no-confirm[assume default responses to all prompts]'
+    '--no-deps[ignore dependency version restrictions]'
+    '--no-hooks[do not run transaction hooks]'
+    '--assume-installed=[behave as if package is installed]:package:{_values package $(pacman -Sql)'
+    '--no-scriptlet[do not run package install scripts]'
+    '--null=[parse stdin as <sep> separated values (default NUL)]::sep: '
+    '--root=[set an alternate installation root]:<path>:_path_files -/'
+    '--sysroot=[set an alternate system root]:<path>:_path_files -/'
+    '(-)--help[display help information]'
+    '(-)--version[display version information]'
+
+    + sysupgrade_options
+    '--ignore-group=[ignore upgrades for packages in group <group>]:<group>:{_values group $(pacman -Sg)}'
+    '--ignore-pkg=[ignore upgrades for <package>]:<package>:{_values package $(pacman -Qq)}'
+
+    + install_file_options
+    '--as-deps[install packages as dependencies]'
+    '--as-explicit[install packages as explicit]'
+    '--download-only[download packages without installing]'
+
+    + remove_options
+    '--cascade[remove packages that depend on removed packages]'
+    '--no-backup[do not save configuration file backups]'
+    '--recursive[remove unneeded dependencies of removed packages]'
+    '--unneeded[only remove packages that are unneeded]'
+
+    + prompt_options
+    '--delete-corrupt-files=[enable/disable deletion of corrupt package archives]:value:(prompt yes no)'
+    '--import-pgp-keys=[enable/disable automatic importing of missing PGP keys]:value:(prompt yes no)'
+    '--install-ignored-packages=[enable/disable installation of ignored packages]:value:(prompt yes no)'
+    '--resolve-conflicts=[method to use for resolving conflicts-]:<method>:(prompt none all provided depends provided-depends)'
+    '--resolve-replacements=[method to use for resolving package replacements-]:<method>:(prompt none all provided depends provided-depends)'
+    '--skip-unresolvable=[enable/disable skipping packages with missing dependencies]:value:(prompt yes no)'
+    '--use-first-provider=[enable/disable automatic provider selection]:value:(prompt yes no)'
+    '(--no-confirm prompt_options)--yolo[set all prompt disposition options to all/yes and set --no-confirm]'
+
+    + positional
+)
+
+declare -a spec_alts
+spec_alts=(
+    'sync:package:{_values package $(pacman -Sql)}'
+    'files:files:_files'
+)
+local spec_comp='*:spec:{_alternative $spec_alts}'
+local install_comp='*:package:{_values package $(pacman -Sql)}'
+local remove_comp='*:package:{_values package $(pacman -Qq)}'
+
+# Detect what type of positional arguments we are currently completing (if any)
+local mode word
+
+case $service in
+    pactrans)   mode=$spec_comp ;;
+    pacinstall) mode=$install_comp ;;
+    pacremove)  mode=$remove_comp ;;
+esac
+
+for word in $words[1,$CURRENT]; do
+    case $word in
+        --spec)    mode=$spec_comp ;;
+        --install) mode=$install_comp ;;
+        --remove)  mode=$remove_comp ;;
+        --file)    mode='*:files:_files' ;;
+    esac
+done
+
+if [[ -n $mode ]]; then
+    _arguments $args $mode
+else
+    _arguments $args
+fi

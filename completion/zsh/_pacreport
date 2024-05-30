@@ -1,0 +1,19 @@
+#compdef pacreport
+
+declare -a args
+args=(
+    '--backups[list .pac{save,orig,new} files]'
+    '--cachedir=[set an alternate cache location]:<path>:_path_files -/'
+    '--config=[set an alternate pacman configuration file]:<path>:_files'
+    '--dbext=[set an alternate sync database extension]:<ext>: '
+    '--dbpath=[set an alternate database location]:<path>:_files'
+    '*--group=[list missing group packages]:<group>:{_values group $(pacman -Sg)}'
+    '(-)--help[display help information]'
+    '--missing-files[list missing package files]'
+    '--root=[set an alternate installation root]:<path>:_path_files -/'
+    '--sysroot=[set an alternate system root]:<path>:_path_files -/'
+    '--unowned-files[list unowned files]'
+    '--optional-deps[take optional dependencies into account when listing unneeded packages and dependency loops]'
+    '(-)--version[display version information]'
+)
+_arguments $args
