@@ -156,6 +156,8 @@ int pu_config_resolve(pu_config_t *config);
 int pu_config_resolve_sysroot(pu_config_t *config, const char *sysroot);
 void pu_config_free(pu_config_t *config);
 
+int pu_config_subst_server_vars(pu_config_t *config);
+
 alpm_handle_t *pu_initialize_handle_from_config(pu_config_t *config);
 
 pu_config_reader_t *pu_config_reader_new_sysroot(pu_config_t *config,
@@ -164,5 +166,7 @@ pu_config_reader_t *pu_config_reader_new(pu_config_t *config, const char *file);
 pu_config_reader_t *pu_config_reader_finit(pu_config_t *config, FILE *stream);
 int pu_config_reader_next(pu_config_reader_t *reader);
 void pu_config_reader_free(pu_config_reader_t *reader);
+
+int pu_config_add_architecture(pu_config_t *dest, char *arch);
 
 #endif /* PACUTILS_CONFIG_H */
