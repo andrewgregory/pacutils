@@ -59,7 +59,7 @@ pu_log_action_t *pu_log_action_parse(const char *message) {
   if (message[mlen - 1] != ')') { errno = EINVAL; return NULL; }
   mlen--; /* ignore trailing ')' */
 
-  if ((a = calloc(sizeof(pu_log_action_t), 1)) == NULL) { return NULL; }
+  if ((a = calloc(1, sizeof(pu_log_action_t))) == NULL) { return NULL; }
 
 #define PU_STARTSWITH(n) (mlen >= sizeof(n) && memcmp(message, n, sizeof(n) - 1) == 0)
   if (PU_STARTSWITH("upgraded ")) {
@@ -135,7 +135,7 @@ int pu_log_fprint_entry(FILE *stream, pu_log_entry_t *entry) {
 
 pu_log_reader_t *pu_log_reader_open_file(const char *path) {
   pu_log_reader_t *r;
-  if ((r = calloc(sizeof(pu_log_reader_t), 1)) == NULL) { return NULL; }
+  if ((r = calloc(1, sizeof(pu_log_reader_t))) == NULL) { return NULL; }
   if ((r->stream = fopen(path, "r")) == NULL) { free(r); return NULL; }
   r->_close_stream = 1;
   return r;
@@ -143,7 +143,7 @@ pu_log_reader_t *pu_log_reader_open_file(const char *path) {
 
 pu_log_reader_t *pu_log_reader_open_stream(FILE *stream) {
   pu_log_reader_t *reader;
-  if ((reader = calloc(sizeof(pu_log_reader_t), 1)) == NULL) { return NULL; }
+  if ((reader = calloc(1, sizeof(pu_log_reader_t))) == NULL) { return NULL; }
   reader->stream = stream;
   return reader;
 }
@@ -195,7 +195,7 @@ char *_pu_log_parse_timestamp(const char *buf, pu_log_timestamp_t *ts) {
 
 pu_log_entry_t *pu_log_reader_next(pu_log_reader_t *reader) {
   char *p, *c;
-  pu_log_entry_t *entry = calloc(sizeof(pu_log_entry_t), 1);
+  pu_log_entry_t *entry = calloc(1, sizeof(pu_log_entry_t));
 
   if (entry == NULL) { errno = ENOMEM; return NULL; }
 

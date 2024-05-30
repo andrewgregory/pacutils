@@ -109,7 +109,7 @@ pu_config_t *parse_opts(int argc, char **argv) {
   while ((c = getopt_long(argc, argv, short_opts, long_opts, NULL)) != -1) {
     switch (c) {
       case FLAG_ARCH:
-        alpm_list_append_strdup(&config->architectures, optarg);
+        pu_config_add_architecture(config, optarg);
         break;
       case FLAG_CONFIG:
         config_file = optarg;
@@ -156,11 +156,23 @@ pu_config_t *parse_opts(int argc, char **argv) {
     }
   }
 
+  pu_config_t *res;
   if (raw) {
-    return pu_ui_config_parse_sysroot(config, config_file, sysroot);
+    res = pu_ui_config_parse_sysroot(config, config_file, sysroot);
   } else {
-    return pu_ui_config_load_sysroot(config, config_file, sysroot);
+    res = pu_ui_config_load_sysroot(config, config_file, sysroot);
   }
+
+  if (!res) {
+    return NULL;
+  }
+
+  if (pu_config_subst_server_vars(config) != 0) {
+    fputs("error: substituting repo server values failed", stderr);
+    return NULL;
+  }
+
+  return config;
 }
 
 void list_repos(void) {

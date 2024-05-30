@@ -410,7 +410,7 @@ void pu_ui_cb_download(void *ctx, const char *filename,
 
   switch (event) {
     case ALPM_DOWNLOAD_INIT: {
-      _pu_ui_download_status_t *s = calloc(sizeof(_pu_ui_download_status_t), 1);
+      _pu_ui_download_status_t *s = calloc(1, sizeof(_pu_ui_download_status_t));
       alpm_list_append(&c->active_downloads, s);
       s->filename = strdup(filename);
       s->optional = ((alpm_download_event_init_t *)data)->optional;
@@ -643,3 +643,4 @@ pu_config_t *pu_ui_config_load_sysroot(pu_config_t *dest,
 pu_config_t *pu_ui_config_load(pu_config_t *dest, const char *file) {
   return pu_ui_config_load_sysroot(dest, file, "/");
 }
+

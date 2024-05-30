@@ -35,7 +35,7 @@
 mini_t *mini_finit(FILE *stream) {
     mini_t *mini;
 
-    if((mini = calloc(sizeof(mini_t), 1)) == NULL) { return NULL; }
+    if((mini = calloc(1, sizeof(mini_t))) == NULL) { return NULL; }
 
     mini->_buf_size = MINI_BUFFER_SIZE;
     mini->_buf = malloc(mini->_buf_size);

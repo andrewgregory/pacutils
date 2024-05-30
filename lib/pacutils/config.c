@@ -256,7 +256,7 @@ static struct _pu_config_setting *_pu_config_lookup_setting(
 }
 
 pu_config_t *pu_config_new(void) {
-  pu_config_t *config = calloc(sizeof(pu_config_t), 1);
+  pu_config_t *config = calloc(1, sizeof(pu_config_t));
   if (config == NULL) { return NULL; }
 
   config->checkspace = PU_CONFIG_BOOL_UNSET;
@@ -287,7 +287,7 @@ void pu_repo_free(pu_repo_t *repo) {
 }
 
 pu_repo_t *pu_repo_new(void) {
-  return calloc(sizeof(pu_repo_t), 1);
+  return calloc(1, sizeof(pu_repo_t));
 }
 
 void pu_config_free(pu_config_t *config) {
@@ -316,7 +316,7 @@ void pu_config_free(pu_config_t *config) {
   free(config);
 }
 
-static int _pu_subst_server_vars(pu_config_t *config) {
+int pu_config_subst_server_vars(pu_config_t *config) {
   alpm_list_t *r;
   for (r = config->repos; r; r = r->next) {
     pu_repo_t *repo = r->data;
@@ -540,8 +540,6 @@ int pu_config_resolve(pu_config_t *config) {
 #undef SETSIGLEVEL
 #undef SETBOOL
 #undef SETDEFAULT
-
-  if (_pu_subst_server_vars(config) != 0) { return -1; }
 
   return 0;
 }
@@ -900,7 +898,7 @@ int pu_config_reader_next(pu_config_reader_t *reader) {
 
 pu_config_reader_t *pu_config_reader_new_sysroot(pu_config_t *config,
     const char *file, const char *sysroot) {
-  pu_config_reader_t *reader = calloc(sizeof(pu_config_reader_t), 1);
+  pu_config_reader_t *reader = calloc(1, sizeof(pu_config_reader_t));
   if (reader == NULL) { return NULL; }
 
   if ((reader->file = strdup(file)) == NULL) {
@@ -935,7 +933,7 @@ pu_config_reader_t *pu_config_reader_new(pu_config_t *config,
 }
 
 pu_config_reader_t *pu_config_reader_finit(pu_config_t *config, FILE *stream) {
-  pu_config_reader_t *reader = calloc(sizeof(pu_config_reader_t), 1);
+  pu_config_reader_t *reader = calloc(1, sizeof(pu_config_reader_t));
   if (reader == NULL) { return NULL; }
   if ((reader->_mini = mini_finit(stream)) == NULL) {
     pu_config_reader_free(reader);
@@ -956,4 +954,9 @@ void pu_config_reader_free(pu_config_reader_t *reader) {
   FREELIST(reader->_includes);
   pu_config_reader_free(reader->_parent);
   free(reader);
+}
+
+pu_config_t *pu_config_add_architecture(pu_config_t *dest, char *arch) {
+  dest->architectures = alpm_list_add(dest->architectures, strdup(arch));
+  return dest;
 }
