@@ -409,11 +409,11 @@ off_t get_cache_size(alpm_handle_t *handle, int fd, const char *path,
   DIR *d;
 
   if ((dirfd = openat(fd, path, O_RDONLY | O_DIRECTORY)) < 0) {
-    pu_ui_warn("unable to open cachedir '%s' (%s)\n", path, strerror(errno));
+    pu_ui_warn("unable to open cachedir '%s' (%s)", path, strerror(errno));
     return 0;
   }
   if ((d = fdopendir(dirfd)) == NULL) {
-    pu_ui_warn("unable to open cachedir '%s' (%s)\n", path, strerror(errno));
+    pu_ui_warn("unable to open cachedir '%s' (%s)", path, strerror(errno));
     close(dirfd);
     return 0;
   }
