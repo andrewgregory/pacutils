@@ -302,6 +302,8 @@ void dump_options(void) {
   show_list_str("Architecture", config->architectures);
 
   show_str("XferCommand", config->xfercommand);
+  show_str("DownloadUser", config->downloaduser);
+  show_bool("DisableSandbox", config->disablesandbox);
 
   show_bool("UseSyslog", config->usesyslog);
   show_bool("Color", config->color);

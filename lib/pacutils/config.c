@@ -54,6 +54,9 @@ struct _pu_config_setting {
   {"DisableDownloadTimeout", PU_CONFIG_OPTION_DISABLEDOWNLOADTIMEOUT},
   {"ParallelDownloads",      PU_CONFIG_OPTION_PARALLELDOWNLOADS},
 
+  {"DisableSandbox", PU_CONFIG_OPTION_DISABLESANDBOX},
+  {"DownloadUser",   PU_CONFIG_OPTION_DOWNLOADUSER},
+
   {"SigLevel",        PU_CONFIG_OPTION_SIGLEVEL},
   {"LocalFileSigLevel",  PU_CONFIG_OPTION_LOCAL_SIGLEVEL},
   {"RemoteFileSigLevel", PU_CONFIG_OPTION_REMOTE_SIGLEVEL},
@@ -385,6 +388,9 @@ alpm_handle_t *pu_initialize_handle_from_config(pu_config_t *config) {
   alpm_option_set_usesyslog(handle, config->usesyslog);
   alpm_option_set_architectures(handle, config->architectures);
   alpm_option_set_disable_dl_timeout(handle, config->disabledownloadtimeout);
+
+  alpm_option_set_disable_sandbox(handle, config->disablesandbox);
+  alpm_option_set_sandboxuser(handle, config->downloaduser);
 
   alpm_option_set_default_siglevel(handle, config->siglevel);
   alpm_option_set_local_file_siglevel(handle, config->localfilesiglevel);
@@ -796,6 +802,12 @@ int pu_config_reader_next(pu_config_reader_t *reader) {
         case PU_CONFIG_OPTION_ARCHITECTURE:
           APPENDLIST(&config->architectures, mini->value);
           break;
+        case PU_CONFIG_OPTION_DOWNLOADUSER:
+          free(config->downloaduser);
+          if ((config->downloaduser = strdup(mini->value)) == NULL) {
+            _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
+          }
+          break;
         case PU_CONFIG_OPTION_XFERCOMMAND:
           free(config->xfercommand);
           if ((config->xfercommand = strdup(mini->value)) == NULL) {
@@ -882,6 +894,9 @@ int pu_config_reader_next(pu_config_reader_t *reader) {
           break;
         case PU_CONFIG_OPTION_DISABLEDOWNLOADTIMEOUT:
           config->disabledownloadtimeout = 1;
+          break;
+        case PU_CONFIG_OPTION_DISABLESANDBOX:
+          config->disablesandbox = 1;
           break;
         default:
           reader->status = PU_CONFIG_READER_STATUS_UNKNOWN_OPTION;
