@@ -53,7 +53,7 @@ error:
 }
 
 pu_mtree_t *pu_mtree_new(void) {
-  return calloc(sizeof(pu_mtree_t), 1);
+  return calloc(1, sizeof(pu_mtree_t));
 }
 
 void pu_mtree_free(pu_mtree_t *mtree) {
@@ -72,13 +72,13 @@ void pu_mtree_reader_free(pu_mtree_reader_t *reader) {
 }
 
 pu_mtree_reader_t *pu_mtree_reader_open_stream(FILE *stream) {
-  pu_mtree_reader_t *r = calloc(sizeof(pu_mtree_reader_t), 1);
+  pu_mtree_reader_t *r = calloc(1, sizeof(pu_mtree_reader_t));
   if (r) { r->stream = stream; }
   return r;
 }
 
 pu_mtree_reader_t *pu_mtree_reader_open_file(const char *path) {
-  pu_mtree_reader_t *r = calloc(sizeof(pu_mtree_reader_t), 1);
+  pu_mtree_reader_t *r = calloc(1, sizeof(pu_mtree_reader_t));
   if (r == NULL) { return NULL; }
   if ((r->stream = fopen(path, "r")) == NULL) { free(r); return NULL; }
   r->_close_stream = 1;

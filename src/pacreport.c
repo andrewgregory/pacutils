@@ -92,7 +92,7 @@ void pkg_ignore_free(struct pkg_ignore_t *pi) {
 }
 
 struct pkg_file_t *pkg_file_new(alpm_pkg_t *pkg, alpm_file_t *file) {
-  struct pkg_file_t *mf = calloc(sizeof(struct pkg_file_t), 1);
+  struct pkg_file_t *mf = calloc(1, sizeof(struct pkg_file_t));
   if (!mf) {
     return NULL;
   }

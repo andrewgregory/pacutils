@@ -211,7 +211,7 @@ void parse_opts(int argc, char **argv) {
         commandline = 1;
         break;
       case FLAG_GREP: {
-        regex_t *preg = calloc(sizeof(regex_t), 1);
+        regex_t *preg = calloc(1, sizeof(regex_t));
         if (regcomp(preg, optarg, REG_EXTENDED | REG_NOSUB | REG_ICASE) != 0) {
           fprintf(stderr, "Unable to compile regex '%s'\n", optarg);
           exit(1);
