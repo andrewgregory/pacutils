@@ -61,6 +61,9 @@ typedef enum pu_config_option_t {
 
   PU_CONFIG_OPTION_USAGE,
 
+  PU_CONFIG_OPTION_DOWNLOADUSER,
+  PU_CONFIG_OPTION_DISABLESANDBOX,
+
   PU_CONFIG_OPTION_INCLUDE
 } pu_config_option_t;
 
@@ -82,6 +85,7 @@ typedef struct pu_config_t {
   char *gpgdir;
   char *logfile;
   char *xfercommand;
+  char *downloaduser;
 
   int paralleldownloads;
 
@@ -92,6 +96,7 @@ typedef struct pu_config_t {
   pu_config_bool_t usesyslog;
   pu_config_bool_t verbosepkglists;
   pu_config_bool_t disabledownloadtimeout;
+  pu_config_bool_t disablesandbox;
 
   int siglevel;
   int localfilesiglevel;
