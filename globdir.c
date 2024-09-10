@@ -54,7 +54,7 @@ static char **_globdir_split_pattern(const char *pattern) {
     const char *c;
 
     if(pattern == NULL || pattern[0] == '\0') {
-        return calloc(sizeof(char*), 1);
+        return calloc(1, sizeof(char*));
     }
 
     for(c = pattern; *c != '\0'; c++) {
@@ -64,7 +64,7 @@ static char **_globdir_split_pattern(const char *pattern) {
         }
     }
 
-    if((parts = calloc(sizeof(char*), count + 1)) == NULL) {
+    if((parts = calloc(count + 1, sizeof(char*))) == NULL) {
         return NULL;
     }
 
@@ -108,7 +108,7 @@ static int _globdir_append(globdir_t *pglob, char *path, int flags) {
     if(pglob->gl_pathv) {
         newmem = realloc(pglob->gl_pathv, newsize * sizeof(char*));
     } else {
-        newmem = calloc(newsize, sizeof(char*));
+        newmem = calloc(sizeof(char*), newsize);
     }
     if(newmem ==  NULL) { return GLOB_NOSPACE; }
 
