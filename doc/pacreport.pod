@@ -84,6 +84,10 @@ Check for missing package files.
 Check for unowned files.  See F</etc/pacreport.conf> under L<FILES> for more
 information.
 
+=item B<--optional-for>
+
+Show which packages optionally depend on listed packages.
+
 =item B<--optional-deps>
 
 Take optional dependencies into account when listing unneeded packages and

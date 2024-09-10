@@ -42,6 +42,7 @@ pu_config_t *config = NULL;
 alpm_handle_t *handle;
 alpm_list_t *groups = NULL, *ignore = NULL, *pkg_ignore = NULL;
 int missing_files = 0, backup_files = 0, orphan_files = 0, optional_deps = 0;
+int show_optional_for = 0;
 char *dbext = NULL;
 const char *sysroot = NULL;
 
@@ -179,16 +180,13 @@ off_t get_pkg_chain_size(alpm_handle_t *handle, alpm_pkg_t *pkg) {
 void print_pkg_info(alpm_handle_t *handle, alpm_pkg_t *pkg,
     size_t pkgname_len) {
   char size[20];
-  alpm_list_t *group, *optional_for;
-  int is_optional = 0;
+  alpm_list_t *group, *optional_for = NULL;
 
-  if ((optional_for = alpm_pkg_compute_optionalfor(pkg))) {
-    is_optional = 1;
-    FREELIST(optional_for);
-  }
+  pu_pkg_find_optionalfor(pkg,
+      alpm_db_get_pkgcache(alpm_get_localdb(handle)), &optional_for);
 
   printf(" %c%-*s	%8s - %s",
-      is_optional ? '*' : ' ',
+      optional_for ? '*' : ' ',
       (int) pkgname_len, alpm_pkg_get_name(pkg),
       pu_hr_size( get_pkg_chain_size(handle, pkg), size),
       alpm_pkg_get_desc(pkg));
@@ -205,6 +203,21 @@ void print_pkg_info(alpm_handle_t *handle, alpm_pkg_t *pkg,
   }
 
   putchar('\n');
+
+  if(show_optional_for) {
+    for(alpm_list_t *i = optional_for; i; i = i->next) {
+      alpm_pkg_t *p = i->data;
+      for(alpm_list_t *j = alpm_pkg_get_optdepends(p); j; j = j->next) {
+        alpm_depend_t *d = j->data;
+        if(pu_pkg_satisfies_dep(pkg, d)) {
+          printf("    %s: %s\n",
+              alpm_pkg_get_name(p), d->desc ? d->desc : "(unknown)");
+        }
+      }
+    }
+  }
+
+  alpm_list_free(optional_for);
 }
 
 void print_pkglist(alpm_handle_t *handle, alpm_list_t *pkgs) {
@@ -665,6 +678,7 @@ void usage(int ret) {
   hputs("   --group=<GROUP>    list missing group packages");
   hputs("   --missing-files    list missing package files");
   hputs("   --unowned-files    list unowned files");
+  hputs("   --optional-for     list what optionally requires packages");
   hputs("   --optional-deps    treat optional dependencies as required");
   hputs("   --help             display this help information");
   hputs("   --version          display version information");
@@ -692,6 +706,7 @@ pu_config_t *parse_opts(int argc, char **argv) {
     {"missing-files", no_argument, NULL, FLAG_MISSING_FILES },
     {"unowned-files", no_argument, NULL, FLAG_ORPHANS       },
     {"optional-deps", no_argument, NULL, FLAG_OPTIONAL_DEPS },
+    {"optional-for", no_argument, &show_optional_for, 1 },
 
     {"help", no_argument, NULL, FLAG_HELP          },
     {"version", no_argument, NULL, FLAG_VERSION       },
