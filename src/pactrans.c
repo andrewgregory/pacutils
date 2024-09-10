@@ -521,6 +521,11 @@ pu_config_t *parse_opts(int argc, char **argv) {
     return NULL;
   }
 
+  while (optind < argc) {
+    /* non-option arguments */
+    *list = alpm_list_add(*list, strdup(argv[optind++]));
+  }
+
   return config;
 }
 
