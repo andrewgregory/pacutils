@@ -108,7 +108,7 @@ static int _globdir_append(globdir_t *pglob, char *path, int flags) {
     if(pglob->gl_pathv) {
         newmem = realloc(pglob->gl_pathv, newsize * sizeof(char*));
     } else {
-        newmem = calloc(sizeof(char*), newsize);
+        newmem = calloc(newsize, sizeof(char*));
     }
     if(newmem ==  NULL) { return GLOB_NOSPACE; }
 
