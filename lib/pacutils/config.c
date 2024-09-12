@@ -264,6 +264,7 @@ pu_config_t *pu_config_new(void) {
 
   config->checkspace = PU_CONFIG_BOOL_UNSET;
   config->color = PU_CONFIG_BOOL_UNSET;
+  config->disablesandbox = PU_CONFIG_BOOL_UNSET;
   config->noprogressbar = PU_CONFIG_BOOL_UNSET;
   config->disabledownloadtimeout = PU_CONFIG_BOOL_UNSET;
   config->ilovecandy = PU_CONFIG_BOOL_UNSET;
@@ -566,6 +567,7 @@ void pu_config_merge(pu_config_t *dest, pu_config_t *src) {
   MERGEBOOL(dest->noprogressbar, src->noprogressbar);
   MERGEBOOL(dest->ilovecandy, src->ilovecandy);
   MERGEBOOL(dest->disabledownloadtimeout, src->disabledownloadtimeout);
+  MERGEBOOL(dest->disablesandbox, src->disablesandbox);
 
   MERGEVAL(dest->cleanmethod, src->cleanmethod);
   MERGEVAL(dest->paralleldownloads, src->paralleldownloads);
@@ -575,6 +577,7 @@ void pu_config_merge(pu_config_t *dest, pu_config_t *src) {
   MERGESTR(dest->logfile, src->logfile);
   MERGESTR(dest->gpgdir, src->gpgdir);
   MERGESTR(dest->xfercommand, src->xfercommand);
+  MERGESTR(dest->downloaduser, src->downloaduser);
 
   MERGELIST(dest->architectures, src->architectures);
   MERGELIST(dest->cachedirs, src->cachedirs);
