@@ -400,6 +400,8 @@ int list_directives(alpm_list_t *directives) {
       show_str("GPGDir", config->gpgdir);
     } else if (strcasecmp(i->data, "LogFile") == 0) {
       show_str("LogFile", config->logfile);
+    } else if (strcasecmp(i->data, "DownloadUser") == 0) {
+      show_str("DownloadUser", config->downloaduser);
 
     } else if (strcasecmp(i->data, "HoldPkg") == 0) {
       show_list_str("HoldPkg", config->holdpkgs);
@@ -433,6 +435,8 @@ int list_directives(alpm_list_t *directives) {
     } else if (strcasecmp(i->data, "DisableDownloadTimeout") == 0) {
       show_bool("DisableDownloadTimeout", config->disabledownloadtimeout);
 
+    } else if (strcasecmp(i->data, "DisableSandbox") == 0) {
+      show_bool("DisableSandbox", config->disablesandbox);
     } else if (strcasecmp(i->data, "CleanMethod") == 0) {
       show_cleanmethod("CleanMethod", config->cleanmethod);
 
