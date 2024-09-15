@@ -56,7 +56,7 @@ enum longopt_flags {
 
 pu_config_t *config = NULL;
 alpm_handle_t *handle = NULL;
-int noconfirm = 0, nohooks = 0, printonly = 0, verbose = 0;
+int noconfirm = 0, printonly = 0, verbose = 0;
 int log_level = ALPM_LOG_ERROR | ALPM_LOG_WARNING;
 int trans_flags = ALPM_TRANS_FLAG_NODEPS | ALPM_TRANS_FLAG_NOCONFLICTS;
 char *sysroot = NULL;
@@ -164,7 +164,7 @@ pu_config_t *parse_opts(int argc, char **argv) {
         noconfirm = 1;
         break;
       case FLAG_NOHOOKS:
-        nohooks = 1;
+        trans_flags |= ALPM_TRANS_FLAG_NOHOOKS;
         break;
       case FLAG_NOSCRIPTLET:
         trans_flags |= ALPM_TRANS_FLAG_NOSCRIPTLET;
@@ -553,9 +553,6 @@ int main(int argc, char **argv) {
     goto cleanup;
   }
 
-  if (nohooks) {
-    alpm_option_set_hookdirs(handle, NULL);
-  }
   alpm_option_set_questioncb(handle, pu_ui_cb_question, NULL);
   alpm_option_set_progresscb(handle, pu_ui_cb_progress, NULL);
   alpm_option_set_dlcb(handle, pu_ui_cb_download, NULL);
