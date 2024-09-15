@@ -1,0 +1,54 @@
+=head1 NAME
+
+pacutils-uix - low-level utility wrappers with error checking
+
+=head1 SYNOPSIS
+
+ #include <pacutils/uix.h>
+
+=head1 DESCRIPTION
+
+Wrappers for low-level utility functions that provide basic error messages and
+immediately exit the program on failure. Primarily intended for front-end use
+for setup where failure is non-recoverable. C<on_exit> or C<atexit> can be used
+to perform cleanup if needed.
+
+=over
+
+=item char *pu_uix_strdup(const char *string);
+
+=item void *pu_uix_calloc(size_t nmemb, size_t size)
+
+=item void *pu_uix_malloc(size_t size)
+
+=item void *pu_uix_realloc(void *ptr, size_t size)
+
+=item alpm_list_t *pu_uix_list_append(alpm_list_t **list, void *data);
+
+=item alpm_list_t *pu_uix_list_append_strdup(alpm_list_t **list, char *data);
+
+=item void pu_uix_read_list_from_fdstr(const char *fdstr, int sep, alpm_list_t **dest);
+
+=item void pu_uix_read_list_from_path(const char *file, int sep, alpm_list_t **dest);
+
+=item void pu_uix_read_list_from_stream(FILE *stream, int sep, alpm_list_t **dest, const char *label);
+
+=back
+
+=head1 EXAMPLES
+
+ #include <pacutils/uix.h>
+
+ int main(int argc, char *argv[]) {
+    alpm_list_t *args = NULL;
+    for(int i = 1; i < argc; i++) {
+      pu_uix_list_append_strdup(&args, argv[i]);
+    }
+
+    // <args> is guaranteed to be a valid list with copies of program arguments
+    for(alpm_list_t *i = args; i; i = i->next) {
+      ...
+    }
+
+    return 0;
+ }

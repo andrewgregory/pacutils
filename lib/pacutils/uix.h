@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2016 Andrew Gregory <andrew.gregory.8@gmail.com>
+ * Copyright 2024 Andrew Gregory <andrew.gregory.8@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -20,37 +20,27 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef PACUTILS_H
-#define PACUTILS_H
-
+#include <alpm_list.h>
 #include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
 
-#include <alpm.h>
+#ifndef PACUTILS_UIX_H
+#define PACUTILS_UIX_H
 
-#include "pacutils/config.h"
-#include "pacutils/depends.h"
-#include "pacutils/log.h"
-#include "pacutils/mtree.h"
-#include "pacutils/ui.h"
-#include "pacutils/uix.h"
-#include "pacutils/util.h"
+/******************************************************************************
+ * Basic wrappers with error messages that exit the program on failure
+ *****************************************************************************/
 
-char *pu_version(void);
-void pu_print_version(const char *progname, const char *progver);
+char *pu_uix_strdup(const char *string);
 
-int pu_pathcmp(const char *p1, const char *p2);
-alpm_file_t *pu_filelist_contains_path(alpm_filelist_t *files,
-    const char *path);
+void *pu_uix_malloc(size_t size);
+void *pu_uix_calloc(size_t nelem, size_t elsize);
+void *pu_uix_realloc(void *ptr, size_t size);
 
-alpm_pkg_t *pu_find_pkgspec(alpm_handle_t *handle, const char *pkgspec);
-int pu_fprint_pkgspec(FILE *stream, alpm_pkg_t *pkg);
-char *pu_pkgspec(alpm_pkg_t *pkg);
+alpm_list_t *pu_uix_list_append(alpm_list_t **list, void *data);
+alpm_list_t *pu_uix_list_append_strdup(alpm_list_t **list, const char *data);
 
-int pu_log_command(alpm_handle_t *handle, const char *caller, int argc,
-    char **argv);
+void pu_uix_read_list_from_fd_string(const char *fdstr, int sep, alpm_list_t **dest);
+void pu_uix_read_list_from_path(const char *file, int sep, alpm_list_t **dest);
+void pu_uix_read_list_from_stream(FILE *stream, int sep, alpm_list_t **dest, const char *label);
 
-#endif /* PACUTILS_H */
+#endif /* PACUTILS_UIX_H */
