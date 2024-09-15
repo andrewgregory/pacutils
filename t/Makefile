@@ -20,6 +20,7 @@ TESTS += \
 		 10-parse-datetime.t \
 		 10-pathcmp.t \
 		 10-strreplace.t \
+		 10-util-read-list.t \
 		 20-config-includes.t \
 		 20-config-root-inheritance.t \
 		 30-config-sysroot.t \
