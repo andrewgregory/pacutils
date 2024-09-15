@@ -7,6 +7,9 @@ pacfile - display information about package files
  pacfile [options] <path>...
  pacfile (--help|--version)
 
+An argument of C<-> may be provided to read the list of paths from
+standard input, equivalent to C<--read-fd=0>.
+
 =head1 DESCRIPTION
 
 Display file information from the local package database.
@@ -30,6 +33,16 @@ Set an alternate installation root.
 =item B<--sysroot>=F<path>
 
 Set an alternate system root.  See L<pacutils-sysroot(7)>.
+
+=item B<--read-fd>=I<fd>
+
+Read paths from I<fd>.  NOTE: targets are read immediately upon
+encountering this option.
+
+=item B<--read-file>=I<path>
+
+Read targets from I<path>.  NOTE: targets are read immediately upon
+encountering this option.
 
 =item B<--package>=I<pkgname>
 

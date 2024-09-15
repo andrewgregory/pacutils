@@ -39,7 +39,8 @@ pu_config_t *config = NULL;
 alpm_handle_t *handle = NULL;
 alpm_loglevel_t log_level = ALPM_LOG_ERROR | ALPM_LOG_WARNING;
 
-int srch_cache = 0, srch_local = 0, srch_sync = 0;
+alpm_list_t *pkgspecs = NULL;
+int srch_list = 0, srch_cache = 0, srch_local = 0, srch_sync = 0;
 int invert = 0, re = 0, exact = 0, any = 0, exists = 0;
 int osep = '\n', isep = '\n';
 const char *dbext = NULL, *sysroot = NULL;
@@ -70,6 +71,9 @@ enum longopt_flags {
   FLAG_ROOT,
   FLAG_SYSROOT,
   FLAG_VERSION,
+
+  FLAG_READ_FD,
+  FLAG_READ_FILE,
 
   FLAG_ARCH,
   FLAG_BASE,
@@ -119,6 +123,8 @@ struct date_cmp {
 void cleanup(int ret) {
   alpm_release(handle);
   pu_config_free(config);
+
+  FREELIST(pkgspecs);
 
   FREELIST(repo);
   FREELIST(arch);
@@ -629,6 +635,9 @@ void usage(int ret) {
   hputs("   --help               display this help information");
   hputs("   --version            display version information");
 
+  hputs("   --read-fd=<fd>       read pkgspecs to search from file descriptor <fd>");
+  hputs("   --read-file=<path>   read pkgspecs to search from file <path>");
+
   hputs("   --exists             exit with a non-zero value if no matches were found");
   hputs("   --not-exists         exit with a non-zero value if matches were found");
 
@@ -751,6 +760,13 @@ pu_config_t *parse_opts(int argc, char **argv) {
     switch (c) {
       case 0:
         /* already handled */
+        break;
+
+      case FLAG_READ_FD:
+        pu_uix_read_list_from_fdstr(optarg, isep, &pkgspecs);
+        break;
+      case FLAG_READ_FILE:
+        pu_uix_read_list_from_path(optarg, isep, &pkgspecs);
         break;
       case FLAG_CONFIG:
         config_file = optarg;
@@ -893,7 +909,6 @@ void free_pkg(alpm_pkg_t *p) {
 int main(int argc, char **argv) {
   alpm_list_t *haystack = NULL, *matches = NULL, *i;
   int ret = 0;
-  int have_stdin = !isatty(fileno(stdin)) && errno != EBADF;
 
   if (!(config = parse_opts(argc, argv))) {
     goto cleanup;
@@ -922,11 +937,7 @@ int main(int argc, char **argv) {
     goto cleanup;
   }
 
-  if (have_stdin) {
-    char *buf = NULL;
-    size_t len = 0;
-    ssize_t read;
-
+  if(srch_list) {
     if (srch_local || srch_sync || srch_cache) {
       fprintf(stderr,
           "error: --local, --sync, and --cache cannot be used as filters\n");
@@ -934,17 +945,15 @@ int main(int argc, char **argv) {
       goto cleanup;
     }
 
-    while ((read = getdelim(&buf, &len, isep, stdin)) != -1) {
+    for(alpm_list_t *i = pkgspecs; i; i = i->next) {
+      const char *pkgspec = i->data;
       alpm_pkg_t *pkg;
-      if (buf[read - 1] == isep) { buf[read - 1] = '\0'; }
-      if ((pkg = pu_find_pkgspec(handle, buf))) {
+      if ((pkg = pu_find_pkgspec(handle, pkgspec))) {
         haystack = alpm_list_add(haystack, pkg);
       } else {
-        fprintf(stderr, "warning: could not locate pkg '%s'\n", buf);
+        fprintf(stderr, "warning: could not locate pkg '%s'\n", pkgspec);
       }
     }
-
-    free(buf);
   } else {
     alpm_list_t *p, *s;
 

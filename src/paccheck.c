@@ -52,6 +52,8 @@ enum longopt_flags {
   FLAG_NULL,
   FLAG_OPT_DEPENDS,
   FLAG_QUIET,
+  FLAG_READ_FD,
+  FLAG_READ_FILE,
   FLAG_RECURSIVE,
   FLAG_REQUIRE_MTREE,
   FLAG_ROOT,
@@ -71,7 +73,7 @@ enum check_types {
 pu_config_t *config = NULL;
 alpm_handle_t *handle = NULL;
 alpm_db_t *localdb = NULL;
-alpm_list_t *pkgcache = NULL, *packages = NULL;
+alpm_list_t *pkgcache = NULL, *pkgnames = NULL, *packages = NULL;
 const char *sysroot = NULL;
 int checks = 0, recursive = 0, list_broken = 0, quiet = 0;
 int include_db_files = 0, require_mtree = 0;
@@ -89,7 +91,9 @@ void usage(int ret) {
   hputs("   --dbpath=<path>    set an alternate database location");
   hputs("   --root=<path>      set an alternate installation root");
   hputs("   --sysroot=<path>   set an alternate system root");
-  hputs("   --null[=<sep>]     parse stdin as <sep> separated values (default NUL)");
+  hputs("   --null[=<sep>]     parse input as <sep> separated values (default NUL)");
+  hputs("   --read-fd=<fd>     read packages names from file descriptor <fd>");
+  hputs("   --read-file=<path> read packages names from file <path>")
   hputs("   --list-broken      only print packages that fail checks");
   hputs("   --quiet            only display error messages");
   hputs("   --help             display this help information");
@@ -116,7 +120,7 @@ pu_config_t *parse_opts(int argc, char **argv) {
   pu_config_t *config = NULL;
   int c;
 
-  char *short_opts = "";
+  char *short_opts = "-";
   struct option long_opts[] = {
     { "config", required_argument, NULL, FLAG_CONFIG       },
     { "dbpath", required_argument, NULL, FLAG_DBPATH       },
@@ -145,6 +149,9 @@ pu_config_t *parse_opts(int argc, char **argv) {
     { "md5sum", no_argument, NULL, FLAG_MD5SUM       },
     { "sha256sum", no_argument, NULL, FLAG_SHA256SUM    },
 
+    { "read-fd", required_argument, NULL, FLAG_READ_FD },
+    { "read-file", required_argument, NULL, FLAG_READ_FILE },
+
     { 0, 0, 0, 0 },
   };
 
@@ -160,6 +167,16 @@ pu_config_t *parse_opts(int argc, char **argv) {
 
       case 0:
         /* already handled */
+        break;
+
+      case 1:
+        pu_uix_process_std_arg(optarg, &pkgnames, isep);
+        break;
+      case FLAG_READ_FD:
+        pu_uix_read_list_from_fdstr(optarg, isep, &pkgnames);
+        break;
+      case FLAG_READ_FILE:
+        pu_uix_read_list_from_path(optarg, isep, &pkgnames);
         break;
 
       /* general options */
@@ -238,6 +255,9 @@ pu_config_t *parse_opts(int argc, char **argv) {
         usage(1);
         break;
     }
+  }
+  for(char **a = argv + optind; a; a++) {
+    alpm_list_append_strdup(&pkgnames, *a);
   }
 
   if (!pu_ui_config_load_sysroot(config, config_file, sysroot)) {
@@ -778,7 +798,6 @@ void add_deps(alpm_pkg_t *pkg) {
 int main(int argc, char **argv) {
   alpm_list_t *i;
   int ret = 0;
-  int have_stdin = !isatty(fileno(stdin)) && errno != EBADF;
 
   if (!(config = parse_opts(argc, argv))) {
     ret = 1;
@@ -798,22 +817,9 @@ int main(int argc, char **argv) {
   localdb = alpm_get_localdb(handle);
   pkgcache = alpm_db_get_pkgcache(localdb);
 
-  for (; optind < argc; ++optind) {
-    if (load_pkg(argv[optind]) == NULL) { ret = 1; }
+  for(i = pkgnames; i; i = i->next) {
+    load_pkg(i->data);
   }
-  if (have_stdin) {
-    char *buf = NULL;
-    size_t len = 0;
-    ssize_t read;
-
-    while ((read = getdelim(&buf, &len, isep, stdin)) != -1) {
-      if (buf[read - 1] == isep) { buf[read - 1] = '\0'; }
-      if (load_pkg(buf) == NULL) { ret = 1; }
-    }
-    free(buf);
-  }
-
-  if (ret) { goto cleanup; }
 
   if (packages == NULL) {
     packages = alpm_list_copy(pkgcache);

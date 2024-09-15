@@ -339,6 +339,12 @@ int fix_file(const char *file) {
   return 1;
 }
 
+int fix_file_cb(const char *file, void *ctx) {
+  int ret = fix_file(file);
+  if(ret != 0) { *(int*)ctx = 1; }
+  return 0;
+}
+
 int main(int argc, char **argv) {
   int ret = 0;
   int have_stdin = !isatty(fileno(stdin)) && errno != EBADF;
@@ -379,21 +385,12 @@ int main(int argc, char **argv) {
   }
 
   while (optind < argc) {
-    if (fix_file(argv[optind++]) != 0 ) { ret = 1; }
-  }
-  if (have_stdin) {
-    char *buf = NULL;
-    size_t blen = 0;
-    ssize_t len;
-    while ((len = getline(&buf, &blen, stdin)) != -1) {
-      if (buf[len - 1] == '\n') { buf[len - 1] = '\0'; }
-      if (fix_file(buf) != 0) { ret = 1; }
+    const char *arg = argv[optind++];
+    if(strcmp(arg, "-") == 0) {
+      pu_ui_process_list_from_stream(stdin, sep, fix_file_cb, &ret, "<stdin>");
+    } else {
+      if(fix_file(argv[optind++]) != 0) { ret = 1; }
     }
-    if (!feof(stdin)) {
-      pu_ui_error("unable to read from stdin (%s)", strerror(errno));
-      ret = 1;
-    }
-    free(buf);
   }
 
 cleanup:

@@ -117,7 +117,6 @@ off_t get_pkg_chain_size(alpm_handle_t *handle, alpm_pkg_t *pkg) {
   off_t size = 0;
   alpm_list_t *d;
 
-
   for (d = depchain; d; d = d->next) {
     alpm_pkg_t *p = d->data;
     alpm_list_t *dep, *deps = alpm_list_copy(alpm_pkg_get_depends(p));

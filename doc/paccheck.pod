@@ -9,9 +9,10 @@ paccheck - check installed packages
 
 =head1 DESCRIPTION
 
-Check installed packages.  Additional packages may be specified on F<stdin>.
-If no package are provided, all installed packages will be checked.  By default
-only package dependencies and basic file information will checked.
+Check installed packages.  Passing a single dash (C<->) as an argument is will
+read package names from F<stdin>, equivalent to passing C<--read-fd=0>. If no
+package are provided, all installed packages will be checked.  By default only
+package dependencies and basic file information will checked.
 
 =head1 OPTIONS
 
@@ -33,11 +34,21 @@ Set an alternate installation root.
 
 Set an alternate system root.  See L<pacutils-sysroot(7)>.
 
+=item B<--read-fd>=I<fd>
+
+Read package names from file descriptor I<fd>. Packages are read immediately
+upon encountering the option using any separator previously set with B<--null>.
+
+=item B<--read-file>=F<path>
+
+Read package names from file F<path>. Packages are read immediately
+upon encountering the option using any separator previously set with B<--null>.
+
 =item B<--null>[=I<sep>]
 
-Set an alternate separator for values parsed from F<stdin>.  By default
-a newline C<\n> is used as the separator.  If B<--null> is used without
-specifying I<sep> C<NUL> will be used.
+Use C<NUL> as the separator when parsing values from input streams instead of
+C<\n>. An optional argument I<sep> may be used to specify a separator other
+than C<NUL>.
 
 =item B<--list-broken>
 
@@ -109,12 +120,3 @@ Display usage information and exit.
 Display version information and exit.
 
 =back
-
-=head1 CAVEATS
-
-B<paccheck> determines whether or not to read packages from F<stdin> based on
-a naive check using L<isatty(3)>.  If B<paccheck> is called in an environment,
-such as a shell function or script being used in a pipe, where F<stdin> is not
-connected to a terminal but does not contain packages to check, B<paccheck>
-should be called with F<stdin> closed.  For POSIX-compatible shells, this can
-be done with C<< <&- >>.

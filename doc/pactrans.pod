@@ -15,8 +15,8 @@ Install/remove alpm packages.  The B<pacinstall> and B<pacremove> aliases
 are provided as a convenience, differing only in their default interpretation
 of I<targets>.  Otherwise, they are identical.
 
-If F<stdin> is not connected to a terminal, I<pkgspec>s to install/remove will
-be read from F<stdin>.
+An argument of C<-> may be provided to read the list of targets from standard
+input, equivalent to C<--read-fd=0>.
 
 =head1 OPTIONS
 
@@ -88,9 +88,9 @@ Set an alternate system root.  See L<pacutils-sysroot(7)>.
 
 =item B<--null>[=I<sep>]
 
-Set an alternate separator for values parsed from F<stdin>.  By default
-a newline C<\n> is used as the separator.  If B<--null> is used without
-specifying I<sep> C<NUL> will be used.
+Set an alternate separator for values parsed from files or file descriptors.
+By default a newline C<\n> is used as the separator.  If B<--null> is used
+without specifying I<sep> C<NUL> will be used.
 
 =item B<--debug>
 
@@ -107,6 +107,21 @@ Assume default responses to all prompts.
 =item B<--no-timeout>
 
 Disable low-speed timeouts for downloads.
+
+=item B<--read-fd>=I<fd>
+
+Read targets from file descriptor I<fd>.  A lone dash (C<->) can be used as a
+shortcut for C<--read-fd=0> to read from F<stdin>.  NOTE: targets are read
+immediately upon encountering this option.
+
+ pactrans --install --read-fd=3 --remove --read-fd=4 3<<(echo mpv) 4<<(echo git)
+
+=item B<--read-file>=I<path>
+
+Read targets from I<path>.  NOTE: targets are read immediately upon
+encountering this option.
+
+ pactrans --install --read-file=<(echo mpv) --remove --read-file=<(echo git)
 
 =item B<--help>
 
@@ -347,12 +362,3 @@ Or, if I<bar>'s repository is unknown:
  pactrans --install foo bar
 
 =back
-
-=head1 CAVEATS
-
-B<pactrans> determines whether or not to read I<pkgspec>s from F<stdin> based
-on a naive check using L<isatty(3)>.  If B<pactrans> is called in an
-environment, such as a shell function or script being used in a pipe, where
-F<stdin> is not connected to a terminal but does not contain I<pkgspec>s to
-install/remove, B<pactrans> should be called with F<stdin> closed.  For
-POSIX-compatible shells, this can be done with C<< <&- >>.

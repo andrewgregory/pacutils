@@ -11,8 +11,6 @@ pacrepairfile - reset properties on alpm-managed files
 
 Resets file properties for alpm-managed files based on MTREE data.
 
-If F<stdin> is not connected to a terminal, files will be read from F<stdin>.
-
 =head1 OPTIONS
 
 =over
@@ -73,15 +71,3 @@ Reset file modification time.
 Reset file owner user id.
 
 =back
-
-=head1 CAVEATS
-
-B<pacrepairfile> determines whether or not to read files from F<stdin> based on
-a naive check using L<isatty(3)>.  If B<pacrepairfile> is called in an
-environment, such as a shell function or script being used in a pipe, where
-F<stdin> is not connected to a terminal but does not contain files to reset,
-B<pacrepairfile> should be called with F<stdin> closed.  For POSIX-compatible
-shells, this can be done with C<< <&- >>.
-
-In order for B<pacrepairfile> to reset a file's properties, the package which
-owns the file must have MTREE data.

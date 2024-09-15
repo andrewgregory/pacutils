@@ -80,6 +80,8 @@ enum longopt_flags {
   FLAG_NOTIMEOUT,
   FLAG_NULL,
   FLAG_PRINT,
+  FLAG_READ_FD,
+  FLAG_READ_FILE,
   FLAG_RECURSIVE,
   FLAG_REMOVE,
   FLAG_RESOLVE_CONFLICTS,
@@ -164,6 +166,8 @@ void usage(int ret) {
   hputs("   --null=[sep]       parse stdin as <sep> separated values (default NUL)");
   hputs("   --root=<path>      set an alternate installation root");
   hputs("   --sysroot=<path>   set an alternate system root");
+  hputs("   --read-fd=<fd>     read arguments from <fd>");
+  hputs("   --read-file=<path> read arguments from <path>");
   hputs("   --help             display this help information");
   hputs("   --version          display version information");
   hputs("");
@@ -285,6 +289,8 @@ pu_config_t *parse_opts(int argc, char **argv) {
     { "sysroot", required_argument, NULL, FLAG_SYSROOT      },
     { "sysupgrade", no_argument, NULL, FLAG_SYSUPGRADE   },
     { "downgrade", no_argument, NULL, FLAG_DOWNGRADE    },
+    { "read-fd", required_argument, NULL, FLAG_READ_FD },
+    { "read-file", required_argument, NULL, FLAG_READ_FILE },
 
     { "help", no_argument, NULL, FLAG_HELP         },
     { "version", no_argument, NULL, FLAG_VERSION      },
@@ -329,7 +335,7 @@ pu_config_t *parse_opts(int argc, char **argv) {
 
       case 1:
         /* non-option arguments */
-        *list = alpm_list_add(*list, strdup(optarg));
+        pu_uix_process_std_arg(optarg, isep, list);
         break;
 
       case FLAG_HELP:
@@ -426,6 +432,12 @@ pu_config_t *parse_opts(int argc, char **argv) {
         break;
       case FLAG_SYSUPGRADE:
         sysupgrade = 1;
+        break;
+      case FLAG_READ_FD:
+        pu_uix_read_list_from_fdstr(optarg, isep, list);
+        break;
+      case FLAG_READ_FILE:
+        pu_uix_read_list_from_path(optarg, isep, list);
         break;
 
       /* sysupgrade options */
@@ -820,7 +832,6 @@ void cb_question(void *ctx, alpm_question_t *question) {
 int main(int argc, char **argv) {
   alpm_list_t *i, *err_data = NULL;
   int ret = 0;
-  int have_stdin = !isatty(fileno(stdin)) && errno != EBADF;
 
   myname = pu_basename(argv[0]);
   if (strcasecmp(myname, "pacinstall") == 0) {
@@ -833,15 +844,8 @@ int main(int argc, char **argv) {
     goto cleanup;
   }
 
-  if (have_stdin) {
-    char *buf = NULL;
-    size_t len = 0;
-    ssize_t read;
-    while ((read = getdelim(&buf, &len, isep, stdin)) != -1) {
-      if (buf[read - 1] == isep) { buf[read - 1] = '\0'; }
-      spec = alpm_list_add(spec, strdup(buf));
-    }
-    free(buf);
+  while (optind < argc) {
+    *list = alpm_list_add(*list, strdup(argv[optind++]));
   }
 
   if (!spec && !add && !rem && !files && !sysupgrade) {

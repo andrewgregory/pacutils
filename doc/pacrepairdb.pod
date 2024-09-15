@@ -13,9 +13,6 @@ Attempt to repair broken package entries in libalpm's database.  Any missing
 essential files will be created and the packages will be reinstalled from the
 cache.
 
-If F<stdin> is not connected to a terminal, package names will be read from
-F<stdin>.
-
 =head1 OPTIONS
 
 =over
@@ -108,10 +105,3 @@ it, worsening any database problems.
 
 B<pacrepairdb> does not check for leftover orphaned files.  It is the user's
 responsibility locate and handle orphaned files.
-
-B<pacrepairdb> determines whether or not to read package names from F<stdin>
-based on a naive check using L<isatty(3)>.  If B<pacrepairdb> is called in an
-environment, such as a shell function or script being used in a pipe, where
-F<stdin> is not connected to a terminal but does not contain package names to
-repair, B<pacrepairdb> should be called with F<stdin> closed.  For
-POSIX-compatible shells, this can be done with C<< <&- >>.

@@ -33,7 +33,8 @@
 const char *myname = "pacfile", *myver = BUILDVER;
 
 int checkfs = 0;
-alpm_list_t *pkgnames = NULL;
+alpm_list_t *paths = NULL, *pkgnames = NULL;
+int sep = '\n';
 const char *sysroot = NULL;
 
 enum longopt_flags {
@@ -41,6 +42,8 @@ enum longopt_flags {
   FLAG_DBPATH,
   FLAG_HELP,
   FLAG_PACKAGE,
+  FLAG_READ_FD,
+  FLAG_READ_FILE,
   FLAG_ROOT,
   FLAG_SYSROOT,
   FLAG_VERSION,
@@ -70,7 +73,7 @@ pu_config_t *parse_opts(int argc, char **argv) {
   pu_config_t *config = NULL;
   int c;
 
-  char *short_opts = "";
+  char *short_opts = "-";
   struct option long_opts[] = {
     { "config", required_argument, NULL, FLAG_CONFIG       },
     { "dbpath", required_argument, NULL, FLAG_DBPATH       },
@@ -93,6 +96,15 @@ pu_config_t *parse_opts(int argc, char **argv) {
     switch (c) {
       case 0:
         /* already handled */
+        break;
+      case 1:
+        pu_uix_process_std_arg(optarg, sep, &paths);
+        break;
+      case FLAG_READ_FD:
+        pu_uix_read_list_from_fdstr(optarg, sep, &paths);
+        break;
+      case FLAG_READ_FILE:
+        pu_uix_read_list_from_path(optarg, sep, &paths);
         break;
       case FLAG_CONFIG:
         config_file = optarg;
@@ -122,6 +134,11 @@ pu_config_t *parse_opts(int argc, char **argv) {
         usage(1);
         break;
     }
+  }
+
+  while (optind < argc) {
+    /* non-option arguments */
+    alpm_list_append_strdup(&paths, argv[optind++]);
   }
 
   if (!pu_ui_config_load_sysroot(config, config_file, sysroot)) {
@@ -158,7 +175,6 @@ mode_t cmp_mode(struct archive_entry *entry, struct stat *st) {
   mode_t pmode = archive_entry_mode(entry);
   mode_t perm = pmode & mask;
   const char *type = mode_str(pmode);
-
 
   printf("mode:   %o", perm);
   if (st && perm != (st->st_mode & mask)) {
@@ -390,8 +406,8 @@ int main(int argc, char **argv) {
     pkgs = alpm_list_copy(alpm_db_get_pkgcache(alpm_get_localdb(handle)));
   }
 
-  while (optind < argc) {
-    const char *relfname, *filename = argv[optind];
+  for(alpm_list_t *i = paths; i; i = i->next) {
+    const char *relfname, *filename = i->data;
 
     int found = 0;
     alpm_list_t *p;
@@ -491,8 +507,7 @@ int main(int argc, char **argv) {
       printf("no package owns '%s'\n", filename);
     }
 
-    ++optind;
-    if (optind < argc) {
+    if (i->next) {
       fputs("\n", stdout);
     }
   }
@@ -500,6 +515,7 @@ int main(int argc, char **argv) {
 cleanup:
   alpm_release(handle);
   pu_config_free(config);
+  alpm_list_free(paths);
   alpm_list_free(pkgs);
   FREELIST(pkgnames);
 

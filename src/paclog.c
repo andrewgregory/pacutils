@@ -37,6 +37,7 @@
 const char *myname = "paclog", *myver = BUILDVER;
 
 char *logfile = NULL;
+FILE *logstream = NULL;
 
 time_t after = 0, before = 0;
 alpm_list_t *pkgs = NULL, *caller = NULL, *actions = NULL, *grep = NULL;
@@ -130,6 +131,7 @@ int parse_time(char *string, time_t *dest) {
 
 void parse_opts(int argc, char **argv) {
   char *config_file = PACMANCONF;
+  pu_config_t *config = pu_config_new();
   int c;
 
   const char *short_opts = "";
@@ -166,9 +168,7 @@ void parse_opts(int argc, char **argv) {
         config_file = optarg;
         break;
       case FLAG_ROOT:
-        free(logfile);
-        logfile = malloc(strlen(optarg) + strlen("/var/log/pacman.log") + 1);
-        sprintf(logfile, "%s/var/log/pacman.log", optarg);
+        config->root = strdup(optarg);
         break;
       case FLAG_SYSROOT:
         sysroot = optarg;
@@ -179,6 +179,12 @@ void parse_opts(int argc, char **argv) {
       case FLAG_LOGFILE:
         free(logfile);
         logfile = strdup(optarg);
+        break;
+      case FLAG_READ_FD:
+        free(logfile);
+        close(logstream);
+        logfile = pu_asprintf("<%s>", optarg);
+        logstream = pu_ui_fdopen_string(optarg, "r");
         break;
       case FLAG_VERSION:
         pu_print_version(myname, myver);
@@ -233,14 +239,13 @@ void parse_opts(int argc, char **argv) {
   }
 
   if (!logfile) {
-    pu_config_t *config = pu_ui_config_load_sysroot(NULL, config_file, sysroot);
-    if (config) {
+    if (pu_ui_config_load_sysroot(config, config_file, sysroot)) {
       logfile = strdup(config->logfile);
-      pu_config_free(config);
     } else {
       logfile = strdup("/var/log/pacman.log");
     }
   }
+  pu_config_free(config);
 }
 
 int fprint_entry_color(FILE *stream, pu_log_entry_t *entry) {
@@ -316,28 +321,15 @@ void print_entry(FILE *stream, pu_log_entry_t *entry) {
 
 int main(int argc, char **argv) {
   alpm_list_t *i, *entries = NULL;
-  FILE *f;
   int ret = 0;
-  int have_stdin = !isatty(fileno(stdin)) && errno != EBADF;
 
   parse_opts(argc, argv);
   if (color == 1 && !isatty(fileno(stdout))) {
     color = 0;
   }
 
-  if (have_stdin) {
-    free(logfile);
-    logfile = strdup("<stdin>");
-    f = stdin;
-  } else if (!(f = fopen(logfile, "r"))) {
-    fprintf(stderr, "error: could not open '%s' for reading (%s)\n",
-        logfile, strerror(errno));
-    ret = 1;
-    goto cleanup;
-  }
-
-  entries = pu_log_parse_file(f);
-  fclose(f);
+  entries = pu_log_parse_file(logstream);
+  fclose(logstream);
 
   if (!entries) {
     fprintf(stderr, "error: could not parse '%s'\n", logfile);

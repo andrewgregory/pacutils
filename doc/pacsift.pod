@@ -12,13 +12,13 @@ pacsift - query and filter packages
 By default the intersection of matched packages are returned.  If a field is
 provided multiple times the union of matches will be used for that field.
 
-If F<stdin> is not connected to a terminal, packages to filter will be read
-from F<stdin>.
-
 Combine with B<pacinfo> to display brief package information similar to
 C<pacman -Qs> and C<pacman -Ss>:
 
- pacsift --name pacman | pacinfo --short
+ pacsift --name pacman | pacinfo --short -
+
+An argument of C<-> may be provided to read the list of packages to search from
+standard input, equivalent to C<--read-fd=0>.
 
 =head1 OPTIONS
 
@@ -74,6 +74,20 @@ Match values exactly.
 
 Treat string values as extended case-insensitive regular expressions.
 
+=item B<--read-fd>=I<fd>
+
+Read packages from I<fd>.  NOTE: targets are read immediately upon
+encountering this option.
+
+ pacsift --read-fd=3 --read-fd=4 3<<(echo mpv) 4<<(echo git)
+
+=item B<--read-file>=I<path>
+
+Read targets from I<path>.  NOTE: targets are read immediately upon
+encountering this option.
+
+ pactrans --install --read-file=<(echo mpv) --remove --read-file=<(echo git)
+
 =item B<--help>
 
 Display usage information and exit.
@@ -95,12 +109,14 @@ or B<--any>.
 =item B<--local>
 
 Search locally installed packages.  Similar to:
- pacsift --repo=local | pacsift ...
+
+ pacsift --repo=local | pacsift - ...
 
 =item B<--sync>
 
 Search packages in sync databases.  Similar to:
- pacsift --invert --repo=local | pacsift ...
+
+ pacsift --invert --repo=local | pacsift - ...
 
 =item B<--cache> (B<EXPERIMENTAL>)
 
@@ -230,19 +246,10 @@ Search for packages that satisfy I<dependency>.
 
 =item Find packages with both C<pacman> and C<alpm> in their description:
 
- pacsift --description pacman | pacsift --description alpm
+ pacsift --description pacman | pacsift --description alpm -
 
 =item Check if a package is installed:
 
  pacsift --local --exists --satisfies pacman && echo "pacman is installed"
 
 =back
-
-=head1 CAVEATS
-
-B<pacsift> determines whether or not to read packages from F<stdin> based on
-a naive check using L<isatty(3)>.  If B<pacsift> is called in an environment,
-such as a shell function or script being used in a pipe, where F<stdin> is not
-connected to a terminal but does not contain packages to filter, B<pacsift>
-should be called with F<stdin> closed.  For POSIX-compatible shells, this can
-be done with C<< <&- >>.
