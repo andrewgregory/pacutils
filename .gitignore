@@ -20,6 +20,7 @@
 *~
 *.swp
 *.orig
+tags
 
 # site-specific configuration
 configure.mk
