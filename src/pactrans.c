@@ -42,7 +42,7 @@ alpm_list_t *spec = NULL, *add = NULL, *rem = NULL, *files = NULL;
 alpm_list_t **list = &spec;
 alpm_list_t *ignore_pkg = NULL, *ignore_group = NULL, *assume_installed = NULL;
 int printonly = 0, noconfirm = 0, sysupgrade = 0, downgrade = 0, dbsync = 0;
-int nohooks = 0, isep = '\n';
+int isep = '\n';
 int resolve_conflict = 0, resolve_replacement = 0;
 int install_ignored = 0, remove_corrupted = 0, import_keys = 0;
 int default_provider = 0, skip_unresolvable = 0;
@@ -411,7 +411,7 @@ pu_config_t *parse_opts(int argc, char **argv) {
         isep = optarg ? optarg[0] : '\0';
         break;
       case FLAG_NOHOOKS:
-        nohooks = 1;
+        trans_flags |= ALPM_TRANS_FLAG_NOHOOKS;
         break;
       case FLAG_NOSCRIPTLET:
         trans_flags |= ALPM_TRANS_FLAG_NOSCRIPTLET;
@@ -860,10 +860,6 @@ int main(int argc, char **argv) {
         alpm_strerror(alpm_errno(handle)));
     ret = 1;
     goto cleanup;
-  }
-
-  if (nohooks) {
-    alpm_option_set_hookdirs(handle, NULL);
   }
 
   alpm_option_set_questioncb(handle, cb_question, NULL);
