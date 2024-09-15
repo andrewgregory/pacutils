@@ -371,6 +371,7 @@ pu_config_t *parse_opts(int argc, char **argv) {
       case FLAG_DBONLY:
         trans_flags |= ALPM_TRANS_FLAG_DBONLY;
         trans_flags |= ALPM_TRANS_FLAG_NOSCRIPTLET;
+        trans_flags |= ALPM_TRANS_FLAG_NOHOOKS;
         break;
       case FLAG_DBEXT:
         dbext = optarg;
