@@ -69,3 +69,7 @@ void pu_uix_read_list_from_path(const char *file, int sep, alpm_list_t **dest) {
 void pu_uix_read_list_from_stream(FILE *stream, int sep, alpm_list_t **dest, const char *label) {
   pu_uix_assert(pu_ui_read_list_from_stream(stream, sep, dest, label) == 0);
 }
+
+void pu_uix_process_std_arg(const char *arg, int sep, alpm_list_t **dest) {
+  pu_uix_assert(pu_ui_process_std_arg(arg, sep, dest) == 0);
+}

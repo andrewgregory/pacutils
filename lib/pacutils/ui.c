@@ -692,3 +692,11 @@ int pu_ui_read_list_from_stream(FILE *file, int sep,
   }
   return 0;
 }
+
+int pu_ui_process_std_arg(const char *arg, int sep, alpm_list_t **dest) {
+  if(strcmp(arg, "-") == 0) {
+    return pu_ui_read_list_from_stream(stdin, sep, dest, "<stdin>");
+  } else {
+    return alpm_list_append_strdup(dest, arg) ? 0 : -1;
+  }
+}

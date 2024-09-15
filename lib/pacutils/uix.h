@@ -43,4 +43,6 @@ void pu_uix_read_list_from_fd_string(const char *fdstr, int sep, alpm_list_t **d
 void pu_uix_read_list_from_path(const char *file, int sep, alpm_list_t **dest);
 void pu_uix_read_list_from_stream(FILE *stream, int sep, alpm_list_t **dest, const char *label);
 
+void pu_uix_process_std_arg(const char *arg, int sep, alpm_list_t **dest);
+
 #endif /* PACUTILS_UIX_H */

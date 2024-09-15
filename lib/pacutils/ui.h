@@ -81,4 +81,6 @@ int pu_ui_read_list_from_fdstr(const char *fdstr, int sep, alpm_list_t **dest);
 int pu_ui_read_list_from_path(const char *file, int sep, alpm_list_t **dest);
 int pu_ui_read_list_from_stream(FILE *file, int sep, alpm_list_t **dest, const char *name);
 
+int pu_ui_process_std_arg(const char *arg, int sep, alpm_list_t **dest);
+
 #endif /* PACUTILS_UI_H */
