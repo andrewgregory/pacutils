@@ -43,7 +43,6 @@ int srch_cache = 0, srch_local = 0, srch_sync = 0;
 int invert = 0, re = 0, exact = 0, any = 0, exists = 0;
 int osep = '\n', isep = '\n';
 const char *dbext = NULL, *sysroot = NULL;
-alpm_list_t *search_dbs = NULL;
 alpm_list_t *repo = NULL, *name = NULL, *description = NULL, *packager = NULL;
 alpm_list_t *base = NULL, *arch = NULL, *url = NULL;
 alpm_list_t *group = NULL, *license = NULL;
@@ -118,7 +117,6 @@ struct date_cmp {
 };
 
 void cleanup(int ret) {
-  alpm_list_free(search_dbs);
   alpm_release(handle);
   pu_config_free(config);
 
