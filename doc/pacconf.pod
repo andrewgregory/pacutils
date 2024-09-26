@@ -15,7 +15,7 @@ a normalized format.  By default, if only a single I<directive> is provided,
 only its value will be printed without the option name.  For directives without
 a value, the directive name will be used as the value.
 
-The values displayed are the final values as would be parsed by pacman itself.
+The values displayed are the final values as would be parsed by L<pacman(8)> itself.
 All default values are set, C<Include> directives are processed, C<$arch> and
 C<$repo> variables in repository servers are replaced, and C<Architecture> will
 be replaced if set to C<auto>.
