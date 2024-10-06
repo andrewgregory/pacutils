@@ -1,0 +1,19 @@
+#compdef pacconf
+
+declare -a args
+args=(
+    '--arch=[set an alternate architecture]:<arch>: '
+    '--config=[set an alternate configuration file]:<path>:_files'
+    '(-)--help[display help information]'
+    '--null=[use <sep> to separate values (default NUL)]::sep: '
+    '--options[display all global options]'
+    '--raw[display unmodified values]'
+    '(-)--repo-list[list configured repositories]'
+    '--repo=[query options for a specific repo]:<remote>:{_values repo $(pacconf --repo-list)}'
+    '--root=[set an alternate installation root]:<path>:_path_files -/'
+    '--single[only display the first value for list items]'
+    '--verbose[always show directive names]'
+    '(-)--version[display version information]'
+    '*:directive: '
+)
+_arguments $args

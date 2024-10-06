@@ -1,0 +1,37 @@
+#compdef paclock
+
+local context state state_descr line ret=1
+typeset -A opt_args
+typeset -a args
+args=(
+    '--config=[set an alternate configuration file]:<path>:_files'
+    '--dbpath=[set an alternate database location]:<path>:_files'
+    '--enoent-ok[ignore unlock errors due to a missing lock file]'
+    '--fail-ok[always unlock the database following --run]'
+    '--key=[set the lock identity key]:<id>: '
+    '--lock[establish a new lock (default)]'
+    '--lockfile=[set the lock file path]:<path>:_files'
+    '--no-check-keys[skip check for matching lock file key before unlocking]'
+    '--print[print the lock file path exit]'
+    '--root=[set an alternate installation root]:<path>:_path_files -/'
+    '--run[run a command with the database locked]'
+    '--sysroot=[set an alternate installation system root]:<path>:_path_files -/'
+    '--unlock[remove an existing lock]'
+    '(-)--help[display help]'
+    '(-)--version[display version]'
+)
+
+if [[ $words[(ie)--run] -le ${#words} ]]; then
+    _arguments -S $args \
+        '*::arguments:->cmd' \
+        && ret=0
+else
+    _arguments -S $args \
+        && ret=0
+fi
+
+if [[ $state == 'cmd' ]]; then
+    _normal && ret=0
+fi
+
+return ret

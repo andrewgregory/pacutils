@@ -1,0 +1,19 @@
+#compdef pacrepairfile
+
+declare -a args
+args=(
+    '--config=[set an alternate configuration file]:<path>:_files'
+    '--dbpath=[set an alternate database location]:<path>:_files'
+    '--gid[set file group id]'
+    '(-)--help[display help information]'
+    '--mode[set file permissions]'
+    '--mtime[set file modification time]'
+    '--package=[search package <name> for file properties]:<name>:{_values package $(pacman -Qq)}'
+    '--quiet[do not display progress information]'
+    '--root=[set an alternate installation root]:<path>:_path_files -/'
+    '--sysroot=[set an alternate system root]:<path>:_path_files -/'
+    '--uid[set file owner id]'
+    '(-)--version[display version information]'
+    '*:files:_files'
+)
+_arguments $args
