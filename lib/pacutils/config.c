@@ -321,7 +321,7 @@ void pu_config_free(pu_config_t *config) {
   free(config);
 }
 
-static int _pu_subst_server_vars(pu_config_t *config) {
+int pu_config_subst_server_vars(pu_config_t *config) {
   alpm_list_t *r;
   for (r = config->repos; r; r = r->next) {
     pu_repo_t *repo = r->data;
@@ -549,8 +549,6 @@ int pu_config_resolve(pu_config_t *config) {
 #undef SETSIGLEVEL
 #undef SETBOOL
 #undef SETDEFAULT
-
-  if (_pu_subst_server_vars(config) != 0) { return -1; }
 
   return 0;
 }
@@ -976,4 +974,9 @@ void pu_config_reader_free(pu_config_reader_t *reader) {
   FREELIST(reader->_includes);
   pu_config_reader_free(reader->_parent);
   free(reader);
+}
+
+pu_config_t *pu_config_add_architecture(pu_config_t *dest, char *arch) {
+  dest->architectures = alpm_list_add(dest->architectures, strdup(arch));
+  return dest;
 }

@@ -44,6 +44,10 @@ Set an alternate installation root.
 
 Set an alternate system root.  See L<pacutils-sysroot(7)>.
 
+=item B<--arch>=F<arch>
+
+set an alternate architecture.
+
 =item B<--debug>
 
 Display additional debugging information.

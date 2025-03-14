@@ -74,6 +74,10 @@ Set an alternate sync database extension.
 
 Set an alternate database path.
 
+=item B<--arch>=F<arch>
+
+set an alternate architecture.
+
 =item B<--logfile>=F<path>
 
 Set an alternate log file path.

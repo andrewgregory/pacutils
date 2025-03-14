@@ -46,6 +46,7 @@ enum longopt_flags {
   FLAG_LOGFILE,
   FLAG_SYSROOT,
   FLAG_VERSION,
+  FLAG_ARCH,
 };
 
 #define hputs(msg) fputs(msg"\n", stream);
@@ -59,6 +60,7 @@ void usage(int ret) {
   hputs("   --dbext=<ext>      set an alternate sync database extension");
   hputs("   --dbpath=<path>    set an alternate database location");
   hputs("   --sysroot=<path>   set an alternate system root");
+  hputs("   --arch=<arch>      set an alternate architecture");
   hputs("   --force            sync repos even if already up-to-date");
   hputs("   --debug            enable extra debugging messages");
   hputs("   --logfile=<path>   set an alternate log file");
@@ -82,6 +84,7 @@ pu_config_t *parse_opts(int argc, char **argv) {
     { "debug", no_argument, NULL, FLAG_DEBUG    },
     { "no-timeout", no_argument, NULL, FLAG_NOTIMEOUT },
     { "sysroot", required_argument, NULL, FLAG_SYSROOT  },
+    { "arch", required_argument, NULL, FLAG_ARCH   },
     { "force", no_argument, &force, 1             },
     { "updated", no_argument, &ret_updated, 1             },
     { "help", no_argument, NULL, FLAG_HELP     },
@@ -109,6 +112,9 @@ pu_config_t *parse_opts(int argc, char **argv) {
       case FLAG_DBPATH:
         free(config->dbpath);
         config->dbpath = strdup(optarg);
+        break;
+      case FLAG_ARCH:
+        pu_config_add_architecture(config, optarg);
         break;
       case FLAG_DEBUG:
         log_level |= ALPM_LOG_DEBUG;
@@ -138,6 +144,11 @@ pu_config_t *parse_opts(int argc, char **argv) {
 
   if (!pu_ui_config_load_sysroot(config, config_file, sysroot)) {
     fprintf(stderr, "error: could not parse '%s'\n", config_file);
+    return NULL;
+  }
+
+  if (pu_config_subst_server_vars(config) != 0) {
+    fputs("error: substituting repo server values failed", stderr);
     return NULL;
   }
 
