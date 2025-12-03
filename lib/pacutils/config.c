@@ -391,7 +391,10 @@ alpm_handle_t *pu_initialize_handle_from_config(pu_config_t *config) {
   alpm_option_set_architectures(handle, config->architectures);
   alpm_option_set_disable_dl_timeout(handle, config->disabledownloadtimeout);
 
-  alpm_option_set_disable_sandbox(handle, config->disablesandbox);
+  if (config->disablesandbox) {
+      alpm_option_set_disable_sandbox_syscalls(handle, config->disablesandbox);
+      alpm_option_set_disable_sandbox_filesystem(handle, config->disablesandbox);
+  }
   alpm_option_set_sandboxuser(handle, config->downloaduser);
 
   alpm_option_set_default_siglevel(handle, config->siglevel);
