@@ -63,6 +63,8 @@ typedef enum pu_config_option_t {
 
   PU_CONFIG_OPTION_DOWNLOADUSER,
   PU_CONFIG_OPTION_DISABLESANDBOX,
+  PU_CONFIG_OPTION_DISABLESANDBOX_FILESYSTEM,
+  PU_CONFIG_OPTION_DISABLESANDBOX_SYSCALLS,
 
   PU_CONFIG_OPTION_INCLUDE
 } pu_config_option_t;
@@ -97,6 +99,8 @@ typedef struct pu_config_t {
   pu_config_bool_t verbosepkglists;
   pu_config_bool_t disabledownloadtimeout;
   pu_config_bool_t disablesandbox;
+  pu_config_bool_t disablesandbox_filesystem;
+  pu_config_bool_t disablesandbox_syscalls;
 
   int siglevel;
   int localfilesiglevel;

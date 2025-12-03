@@ -304,6 +304,8 @@ void dump_options(void) {
   show_str("XferCommand", config->xfercommand);
   show_str("DownloadUser", config->downloaduser);
   show_bool("DisableSandbox", config->disablesandbox);
+  show_bool("DisableSandboxFilesystem", config->disablesandbox_filesystem);
+  show_bool("DisableSandboxSyscalls", config->disablesandbox_syscalls);
 
   show_bool("UseSyslog", config->usesyslog);
   show_bool("Color", config->color);
@@ -436,6 +438,10 @@ int list_directives(alpm_list_t *directives) {
       show_bool("DisableDownloadTimeout", config->disabledownloadtimeout);
     } else if (strcasecmp(i->data, "DisableSandbox") == 0) {
       show_bool("DisableSandbox", config->disablesandbox);
+    } else if (strcasecmp(i->data, "DisableSandboxFilesystem") == 0) {
+      show_bool("DisableSandboxFilesystem", config->disablesandbox_filesystem);
+    } else if (strcasecmp(i->data, "DisableSandboxSyscalls") == 0) {
+      show_bool("DisableSandboxSyscalls", config->disablesandbox_syscalls);
 
     } else if (strcasecmp(i->data, "CleanMethod") == 0) {
       show_cleanmethod("CleanMethod", config->cleanmethod);

@@ -55,6 +55,8 @@ struct _pu_config_setting {
   {"ParallelDownloads",      PU_CONFIG_OPTION_PARALLELDOWNLOADS},
 
   {"DisableSandbox", PU_CONFIG_OPTION_DISABLESANDBOX},
+  {"DisableSandboxFilesystem", PU_CONFIG_OPTION_DISABLESANDBOX_FILESYSTEM},
+  {"DisableSandboxSyscalls", PU_CONFIG_OPTION_DISABLESANDBOX_SYSCALLS},
   {"DownloadUser",   PU_CONFIG_OPTION_DOWNLOADUSER},
 
   {"SigLevel",        PU_CONFIG_OPTION_SIGLEVEL},
@@ -267,6 +269,8 @@ pu_config_t *pu_config_new(void) {
   config->noprogressbar = PU_CONFIG_BOOL_UNSET;
   config->disabledownloadtimeout = PU_CONFIG_BOOL_UNSET;
   config->disablesandbox = PU_CONFIG_BOOL_UNSET;
+  config->disablesandbox_filesystem = PU_CONFIG_BOOL_UNSET;
+  config->disablesandbox_syscalls = PU_CONFIG_BOOL_UNSET;
   config->ilovecandy = PU_CONFIG_BOOL_UNSET;
   config->usesyslog = PU_CONFIG_BOOL_UNSET;
   config->verbosepkglists = PU_CONFIG_BOOL_UNSET;
@@ -391,7 +395,13 @@ alpm_handle_t *pu_initialize_handle_from_config(pu_config_t *config) {
   alpm_option_set_architectures(handle, config->architectures);
   alpm_option_set_disable_dl_timeout(handle, config->disabledownloadtimeout);
 
-  alpm_option_set_disable_sandbox(handle, config->disablesandbox);
+  if (config->disablesandbox) {
+      alpm_option_set_disable_sandbox_filesystem(handle, config->disablesandbox);
+      alpm_option_set_disable_sandbox_syscalls(handle, config->disablesandbox);
+  } else {
+      alpm_option_set_disable_sandbox_filesystem(handle, config->disablesandbox_filesystem);
+      alpm_option_set_disable_sandbox_syscalls(handle, config->disablesandbox_syscalls);
+  }
   alpm_option_set_sandboxuser(handle, config->downloaduser);
 
   alpm_option_set_default_siglevel(handle, config->siglevel);
@@ -525,6 +535,8 @@ int pu_config_resolve(pu_config_t *config) {
   SETBOOL(config->noprogressbar);
   SETBOOL(config->disabledownloadtimeout);
   SETBOOL(config->disablesandbox);
+  SETBOOL(config->disablesandbox_filesystem);
+  SETBOOL(config->disablesandbox_syscalls);
   SETBOOL(config->ilovecandy);
   SETBOOL(config->usesyslog);
   SETBOOL(config->verbosepkglists);
@@ -570,6 +582,8 @@ void pu_config_merge(pu_config_t *dest, pu_config_t *src) {
   MERGEBOOL(dest->ilovecandy, src->ilovecandy);
   MERGEBOOL(dest->disabledownloadtimeout, src->disabledownloadtimeout);
   MERGEBOOL(dest->disablesandbox, src->disablesandbox);
+  MERGEBOOL(dest->disablesandbox_filesystem, src->disablesandbox_filesystem);
+  MERGEBOOL(dest->disablesandbox_syscalls, src->disablesandbox_syscalls);
 
   MERGEVAL(dest->cleanmethod, src->cleanmethod);
   MERGEVAL(dest->paralleldownloads, src->paralleldownloads);
@@ -902,6 +916,12 @@ int pu_config_reader_next(pu_config_reader_t *reader) {
           break;
         case PU_CONFIG_OPTION_DISABLESANDBOX:
           config->disablesandbox = 1;
+          break;
+        case PU_CONFIG_OPTION_DISABLESANDBOX_SYSCALLS:
+          config->disablesandbox_syscalls = 1;
+          break;
+        case PU_CONFIG_OPTION_DISABLESANDBOX_FILESYSTEM:
+          config->disablesandbox_filesystem = 1;
           break;
         default:
           reader->status = PU_CONFIG_READER_STATUS_UNKNOWN_OPTION;
