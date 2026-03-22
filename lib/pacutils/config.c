@@ -54,6 +54,9 @@ struct _pu_config_setting {
   {"DisableDownloadTimeout", PU_CONFIG_OPTION_DISABLEDOWNLOADTIMEOUT},
   {"ParallelDownloads",      PU_CONFIG_OPTION_PARALLELDOWNLOADS},
 
+  {"DisableSandbox", PU_CONFIG_OPTION_DISABLESANDBOX},
+  {"DownloadUser",   PU_CONFIG_OPTION_DOWNLOADUSER},
+
   {"SigLevel",        PU_CONFIG_OPTION_SIGLEVEL},
   {"LocalFileSigLevel",  PU_CONFIG_OPTION_LOCAL_SIGLEVEL},
   {"RemoteFileSigLevel", PU_CONFIG_OPTION_REMOTE_SIGLEVEL},
@@ -71,6 +74,8 @@ struct _pu_config_setting {
   {"Include",         PU_CONFIG_OPTION_INCLUDE},
 
   {"Server",          PU_CONFIG_OPTION_SERVER},
+
+  {"CacheServer",     PU_CONFIG_OPTION_CACHESERVER},
 
   {NULL, 0}
 };
@@ -254,13 +259,14 @@ static struct _pu_config_setting *_pu_config_lookup_setting(
 }
 
 pu_config_t *pu_config_new(void) {
-  pu_config_t *config = calloc(sizeof(pu_config_t), 1);
+  pu_config_t *config = calloc(1, sizeof(pu_config_t));
   if (config == NULL) { return NULL; }
 
   config->checkspace = PU_CONFIG_BOOL_UNSET;
   config->color = PU_CONFIG_BOOL_UNSET;
   config->noprogressbar = PU_CONFIG_BOOL_UNSET;
   config->disabledownloadtimeout = PU_CONFIG_BOOL_UNSET;
+  config->disablesandbox = PU_CONFIG_BOOL_UNSET;
   config->ilovecandy = PU_CONFIG_BOOL_UNSET;
   config->usesyslog = PU_CONFIG_BOOL_UNSET;
   config->verbosepkglists = PU_CONFIG_BOOL_UNSET;
@@ -279,12 +285,13 @@ void pu_repo_free(pu_repo_t *repo) {
 
   free(repo->name);
   FREELIST(repo->servers);
+  FREELIST(repo->cacheservers);
 
   free(repo);
 }
 
 pu_repo_t *pu_repo_new(void) {
-  return calloc(sizeof(pu_repo_t), 1);
+  return calloc(1, sizeof(pu_repo_t));
 }
 
 void pu_config_free(pu_config_t *config) {
@@ -297,6 +304,7 @@ void pu_config_free(pu_config_t *config) {
   free(config->logfile);
   free(config->gpgdir);
   free(config->xfercommand);
+  free(config->downloaduser);
 
   FREELIST(config->architectures);
   FREELIST(config->holdpkgs);
@@ -319,6 +327,27 @@ static int _pu_subst_server_vars(pu_config_t *config) {
     pu_repo_t *repo = r->data;
     alpm_list_t *s;
     for (s = repo->servers; s; s = s->next) {
+      char *rrepo;
+
+      if (strstr(s->data, "$arch")) {
+        if (config->architectures == NULL) {
+          errno = EINVAL;
+          return -1;
+        } else {
+          char *arch = config->architectures->data;
+          char *rarch = _pu_strreplace(s->data, "$arch", arch);
+          if (rarch == NULL) { return -1; }
+          free(s->data);
+          s->data = rarch;
+        }
+      }
+
+      rrepo = _pu_strreplace(s->data, "$repo", repo->name);
+      if (rrepo == NULL) { return -1; }
+      free(s->data);
+      s->data = rrepo;
+    }
+    for (s = repo->cacheservers; s; s = s->next) {
       char *rrepo;
 
       if (strstr(s->data, "$arch")) {
@@ -362,6 +391,9 @@ alpm_handle_t *pu_initialize_handle_from_config(pu_config_t *config) {
   alpm_option_set_architectures(handle, config->architectures);
   alpm_option_set_disable_dl_timeout(handle, config->disabledownloadtimeout);
 
+  alpm_option_set_disable_sandbox(handle, config->disablesandbox);
+  alpm_option_set_sandboxuser(handle, config->downloaduser);
+
   alpm_option_set_default_siglevel(handle, config->siglevel);
   alpm_option_set_local_file_siglevel(handle, config->localfilesiglevel);
   alpm_option_set_remote_file_siglevel(handle, config->remotefilesiglevel);
@@ -384,7 +416,8 @@ alpm_handle_t *pu_initialize_handle_from_config(pu_config_t *config) {
 alpm_db_t *pu_register_syncdb(alpm_handle_t *handle, pu_repo_t *repo) {
   alpm_db_t *db = alpm_register_syncdb(handle, repo->name, repo->siglevel);
   if (db) {
-    alpm_db_set_servers(db, alpm_list_strdup(repo->servers));
+    alpm_db_set_servers(db, repo->servers);
+    alpm_db_set_cache_servers(db, repo->cacheservers);
     alpm_db_set_usage(db, repo->usage);
   }
   return db;
@@ -424,6 +457,20 @@ int pu_config_resolve_sysroot(pu_config_t *config, const char *sysroot) {
     pu_repo_t *r = i->data;
     alpm_list_t *s;
     for (s = r->servers; s; s = s->next) {
+      if (strncmp("file://", s->data, 7) == 0) {
+        char *newdir = NULL, *newsrv = NULL;
+        if ((newdir = pu_prepend_dir(sysroot, (char *)s->data + 7)) == NULL
+            || (newsrv = pu_asprintf("file://%s", newdir)) == NULL) {
+          free(newdir);
+          free(newsrv);
+          return 1;
+        }
+        free(newdir);
+        free(s->data);
+        s->data = newsrv;
+      }
+    }
+    for (s = r->cacheservers; s; s = s->next) {
       if (strncmp("file://", s->data, 7) == 0) {
         char *newdir = NULL, *newsrv = NULL;
         if ((newdir = pu_prepend_dir(sysroot, (char *)s->data + 7)) == NULL
@@ -477,6 +524,7 @@ int pu_config_resolve(pu_config_t *config) {
   SETBOOL(config->color);
   SETBOOL(config->noprogressbar);
   SETBOOL(config->disabledownloadtimeout);
+  SETBOOL(config->disablesandbox);
   SETBOOL(config->ilovecandy);
   SETBOOL(config->usesyslog);
   SETBOOL(config->verbosepkglists);
@@ -521,6 +569,7 @@ void pu_config_merge(pu_config_t *dest, pu_config_t *src) {
   MERGEBOOL(dest->noprogressbar, src->noprogressbar);
   MERGEBOOL(dest->ilovecandy, src->ilovecandy);
   MERGEBOOL(dest->disabledownloadtimeout, src->disabledownloadtimeout);
+  MERGEBOOL(dest->disablesandbox, src->disablesandbox);
 
   MERGEVAL(dest->cleanmethod, src->cleanmethod);
   MERGEVAL(dest->paralleldownloads, src->paralleldownloads);
@@ -530,6 +579,7 @@ void pu_config_merge(pu_config_t *dest, pu_config_t *src) {
   MERGESTR(dest->logfile, src->logfile);
   MERGESTR(dest->gpgdir, src->gpgdir);
   MERGESTR(dest->xfercommand, src->xfercommand);
+  MERGESTR(dest->downloaduser, src->downloaduser);
 
   MERGELIST(dest->architectures, src->architectures);
   MERGELIST(dest->cachedirs, src->cachedirs);
@@ -724,6 +774,11 @@ int pu_config_reader_next(pu_config_reader_t *reader) {
             _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
           }
           break;
+        case PU_CONFIG_OPTION_CACHESERVER:
+          if (pu_list_append_str(&r->cacheservers, mini->value) == NULL) {
+            _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
+          }
+          break;
         case PU_CONFIG_OPTION_USAGE:
           if (_pu_config_parse_usage(mini->value, &r->usage) != 0) {
             _PU_ERR(reader, PU_CONFIG_READER_STATUS_INVALID_VALUE);
@@ -751,6 +806,12 @@ int pu_config_reader_next(pu_config_reader_t *reader) {
           break;
         case PU_CONFIG_OPTION_ARCHITECTURE:
           APPENDLIST(&config->architectures, mini->value);
+          break;
+        case PU_CONFIG_OPTION_DOWNLOADUSER:
+          free(config->downloaduser);
+          if ((config->downloaduser = strdup(mini->value)) == NULL) {
+            _PU_ERR(reader, PU_CONFIG_READER_STATUS_ERROR);
+          }
           break;
         case PU_CONFIG_OPTION_XFERCOMMAND:
           free(config->xfercommand);
@@ -839,6 +900,9 @@ int pu_config_reader_next(pu_config_reader_t *reader) {
         case PU_CONFIG_OPTION_DISABLEDOWNLOADTIMEOUT:
           config->disabledownloadtimeout = 1;
           break;
+        case PU_CONFIG_OPTION_DISABLESANDBOX:
+          config->disablesandbox = 1;
+          break;
         default:
           reader->status = PU_CONFIG_READER_STATUS_UNKNOWN_OPTION;
           break;
@@ -856,7 +920,7 @@ int pu_config_reader_next(pu_config_reader_t *reader) {
 
 pu_config_reader_t *pu_config_reader_new_sysroot(pu_config_t *config,
     const char *file, const char *sysroot) {
-  pu_config_reader_t *reader = calloc(sizeof(pu_config_reader_t), 1);
+  pu_config_reader_t *reader = calloc(1, sizeof(pu_config_reader_t));
   if (reader == NULL) { return NULL; }
 
   if ((reader->file = strdup(file)) == NULL) {
@@ -891,7 +955,7 @@ pu_config_reader_t *pu_config_reader_new(pu_config_t *config,
 }
 
 pu_config_reader_t *pu_config_reader_finit(pu_config_t *config, FILE *stream) {
-  pu_config_reader_t *reader = calloc(sizeof(pu_config_reader_t), 1);
+  pu_config_reader_t *reader = calloc(1, sizeof(pu_config_reader_t));
   if (reader == NULL) { return NULL; }
   if ((reader->_mini = mini_finit(stream)) == NULL) {
     pu_config_reader_free(reader);
@@ -913,4 +977,3 @@ void pu_config_reader_free(pu_config_reader_t *reader) {
   pu_config_reader_free(reader->_parent);
   free(reader);
 }
-/* vim: set ts=2 sw=2 et: */

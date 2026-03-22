@@ -76,6 +76,11 @@ pu_config_t *pu_ui_config_parse_sysroot(pu_config_t *dest, const char *file,
 pu_config_t *pu_ui_config_load_sysroot(pu_config_t *dest, const char *file,
     const char *root);
 
-#endif /* PACUTILS_UI_H */
+int pu_ui_read_list_from_fd(int fd, int sep, alpm_list_t **dest);
+int pu_ui_read_list_from_fdstr(const char *fdstr, int sep, alpm_list_t **dest);
+int pu_ui_read_list_from_path(const char *file, int sep, alpm_list_t **dest);
+int pu_ui_read_list_from_stream(FILE *file, int sep, alpm_list_t **dest, const char *name);
 
-/* vim: set ts=2 sw=2 et: */
+int pu_ui_process_std_arg(const char *arg, int sep, alpm_list_t **dest);
+
+#endif /* PACUTILS_UI_H */

@@ -311,7 +311,9 @@ void pu_ui_cb_question(void *ctx, alpm_question_t *question) {
       alpm_question_conflict_t *q = (alpm_question_conflict_t *) question;
       alpm_conflict_t *c = q->conflict;
       q->remove = pu_ui_confirm(1, "'%s' conflicts with '%s'.  Remove '%s'?",
-              c->package1, c->package2, c->package2);
+              alpm_pkg_get_name(c->package1),
+              alpm_pkg_get_name(c->package2),
+              alpm_pkg_get_name(c->package2));
     }
     break;
     case ALPM_QUESTION_REMOVE_PKGS: {
@@ -373,19 +375,9 @@ void pu_ui_cb_question(void *ctx, alpm_question_t *question) {
     break;
     case ALPM_QUESTION_IMPORT_KEY: {
       alpm_question_import_key_t *q = &question->import_key;
-      alpm_pgpkey_t *key = q->key;
-      char created[12];
-      time_t time = (time_t) key->created;
-
-      if (strftime(created, 12, "%Y-%m-%d", localtime(&time)) == 0) {
-        strcpy(created, "(unknown)");
-      }
-
-      q->import = pu_ui_confirm(1,
-              (key->revoked
-                  ? "Import PGP key %u%c/%s, '%s', created: %s (revoked)"
-                  : "Import PGP key %u%c/%s, '%s', created: %s"),
-              key->length, key->pubkey_algo, key->fingerprint, key->uid, created);
+      q->import = q->uid
+          ? pu_ui_confirm(1, "Import PGP key %s (%s)", q->fingerprint, q->uid)
+          : pu_ui_confirm(1, "Import PGP key %s", q->fingerprint);
     }
     break;
   }
@@ -418,7 +410,7 @@ void pu_ui_cb_download(void *ctx, const char *filename,
 
   switch (event) {
     case ALPM_DOWNLOAD_INIT: {
-      _pu_ui_download_status_t *s = calloc(sizeof(_pu_ui_download_status_t), 1);
+      _pu_ui_download_status_t *s = calloc(1, sizeof(_pu_ui_download_status_t));
       alpm_list_append(&c->active_downloads, s);
       s->filename = strdup(filename);
       s->optional = ((alpm_download_event_init_t *)data)->optional;
@@ -652,4 +644,59 @@ pu_config_t *pu_ui_config_load(pu_config_t *dest, const char *file) {
   return pu_ui_config_load_sysroot(dest, file, "/");
 }
 
-/* vim: set ts=2 sw=2 et: */
+int _pu_ui_parse_fd(const char *fdstr) {
+  int result = 0;
+  for(const char *c = fdstr; *c; c++) {
+    int cval = *c - '0';
+    int newval = result * 10 + cval;
+    if(cval < 0 || cval > 9) { errno = EINVAL; return -1; }     /* non-digit */
+    if(newval - result < result) { errno = ERANGE; return -1; }  /* overflow */
+    result = newval;
+  }
+  return result;
+}
+
+int pu_ui_read_list_from_fd(int fd, int sep, alpm_list_t **dest) {
+  if (pu_read_list_from_fd(fd, sep, dest) == -1) {
+    pu_ui_error("error reading list from file descriptor %d (%s)",
+        fd, strerror(errno));
+    return -1;
+  }
+  return 0;
+}
+
+int pu_ui_read_list_from_fdstr(const char *fdstr, int sep, alpm_list_t **dest) {
+  int fd;
+
+  if ((fd = _pu_ui_parse_fd(fdstr)) == -1) {
+    pu_ui_error("invalid file descriptor '%s' (%s)", fdstr, strerror(errno));
+    return -1;
+  }
+  return pu_ui_read_list_from_fd(fd, sep, dest);
+}
+
+int pu_ui_read_list_from_path(const char *file, int sep, alpm_list_t **dest) {
+  if (pu_read_list_from_path(file, sep, dest) == -1) {
+    pu_ui_error("error reading list from file '%s' (%s)",
+        file, strerror(errno));
+    return -1;
+  }
+  return 0;
+}
+
+int pu_ui_read_list_from_stream(FILE *file, int sep,
+    alpm_list_t **dest, const char *name) {
+  if (pu_read_list_from_stream(file, sep, dest) == -1) {
+    pu_ui_error("error reading from %s (%s)", name, strerror(errno));
+    return -1;
+  }
+  return 0;
+}
+
+int pu_ui_process_std_arg(const char *arg, int sep, alpm_list_t **dest) {
+  if(strcmp(arg, "-") == 0) {
+    return pu_ui_read_list_from_stream(stdin, sep, dest, "<stdin>");
+  } else {
+    return alpm_list_append_strdup(dest, arg) ? 0 : -1;
+  }
+}

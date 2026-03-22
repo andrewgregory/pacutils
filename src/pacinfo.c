@@ -413,7 +413,9 @@ void print_pkg_info(alpm_pkg_t *pkg) {
         int v = alpm_pkg_get_validation(pkg);
         alpm_pkgreason_t r = alpm_pkg_get_reason(pkg);
         prints("Install Reason: %s\n",
-            r == ALPM_PKG_REASON_EXPLICIT ? "Explicit" : "Dependency");
+              r == ALPM_PKG_REASON_EXPLICIT ? "Explicit"
+            : r == ALPM_PKG_REASON_DEPEND   ? "Dependency"
+            :                                 "Unknown");
         if (v == ALPM_PKG_VALIDATION_UNKNOWN) {
           prints("Validated By:   %s\n", "Unknown");
         } else {
@@ -525,5 +527,3 @@ cleanup:
 
   return ret;
 }
-
-/* vim: set ts=2 sw=2 noet: */

@@ -57,8 +57,12 @@ typedef enum pu_config_option_t {
   PU_CONFIG_OPTION_CACHEDIRS,
 
   PU_CONFIG_OPTION_SERVER,
+  PU_CONFIG_OPTION_CACHESERVER,
 
   PU_CONFIG_OPTION_USAGE,
+
+  PU_CONFIG_OPTION_DOWNLOADUSER,
+  PU_CONFIG_OPTION_DISABLESANDBOX,
 
   PU_CONFIG_OPTION_INCLUDE
 } pu_config_option_t;
@@ -81,6 +85,7 @@ typedef struct pu_config_t {
   char *gpgdir;
   char *logfile;
   char *xfercommand;
+  char *downloaduser;
 
   int paralleldownloads;
 
@@ -91,6 +96,7 @@ typedef struct pu_config_t {
   pu_config_bool_t usesyslog;
   pu_config_bool_t verbosepkglists;
   pu_config_bool_t disabledownloadtimeout;
+  pu_config_bool_t disablesandbox;
 
   int siglevel;
   int localfilesiglevel;
@@ -118,6 +124,7 @@ typedef struct pu_config_t {
 typedef struct pu_repo_t {
   char *name;
   alpm_list_t *servers;
+  alpm_list_t *cacheservers;
   int usage;
   int siglevel;
   int siglevel_mask;
@@ -164,5 +171,3 @@ int pu_config_reader_next(pu_config_reader_t *reader);
 void pu_config_reader_free(pu_config_reader_t *reader);
 
 #endif /* PACUTILS_CONFIG_H */
-
-/* vim: set ts=2 sw=2 et: */

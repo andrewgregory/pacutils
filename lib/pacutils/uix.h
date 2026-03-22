@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Andrew Gregory <andrew.gregory.8@gmail.com>
+ * Copyright 2024 Andrew Gregory <andrew.gregory.8@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -20,58 +20,29 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef PACUTILS_CONFIG_DEFAULTS_H
-#define PACUTILS_CONFIG_DEFAULTS_H
+#include <alpm_list.h>
+#include <stdio.h>
 
-#define BASEVER "0.15.0"
+#ifndef PACUTILS_UIX_H
+#define PACUTILS_UIX_H
 
-#ifdef GITVER
-#define BUILDVER BASEVER "+" GITVER
-#else
-#define BUILDVER BASEVER
-#endif
+/******************************************************************************
+ * Basic wrappers with error messages that exit the program on failure
+ *****************************************************************************/
 
-/* duplicates default configuration settings from lib/Makefile in order to
- * allow compilation without make and to provide defaults for analyzers */
+char *pu_uix_strdup(const char *string);
 
-#ifndef PREFIX
-#define PREFIX "/usr/local"
-#endif
+void *pu_uix_malloc(size_t size);
+void *pu_uix_calloc(size_t nelem, size_t elsize);
+void *pu_uix_realloc(void *ptr, size_t size);
 
-#ifndef LOCALSTATEDIR
-#define LOCALSTATEDIR PREFIX "/var"
-#endif
+alpm_list_t *pu_uix_list_append(alpm_list_t **list, void *data);
+alpm_list_t *pu_uix_list_append_strdup(alpm_list_t **list, const char *data);
 
-#ifndef SYSCONFDIR
-#define SYSCONFDIR PREFIX "/etc"
-#endif
+void pu_uix_read_list_from_fd_string(const char *fdstr, int sep, alpm_list_t **dest);
+void pu_uix_read_list_from_path(const char *file, int sep, alpm_list_t **dest);
+void pu_uix_read_list_from_stream(FILE *stream, int sep, alpm_list_t **dest, const char *label);
 
-#ifndef CACHEDIR
-#define CACHEDIR LOCALSTATEDIR "/cache/pacman/pkg"
-#endif
+void pu_uix_process_std_arg(const char *arg, int sep, alpm_list_t **dest);
 
-#ifndef DBEXT
-#define DBEXT ".db"
-#endif
-
-#ifndef DBPATH
-#define DBPATH LOCALSTATEDIR "/lib/pacman"
-#endif
-
-#ifndef GPGDIR
-#define GPGDIR SYSCONFDIR "/pacman.d/gnupg"
-#endif
-
-#ifndef HOOKDIR
-#define HOOKDIR SYSCONFDIR "/pacman.d/hooks"
-#endif
-
-#ifndef LOGFILE
-#define LOGFILE LOCALSTATEDIR "/log/pacman.log"
-#endif
-
-#ifndef ROOTDIR
-#define ROOTDIR "/"
-#endif
-
-#endif /* PACUTILS_CONFIG_DEFAULTS_H */
+#endif /* PACUTILS_UIX_H */

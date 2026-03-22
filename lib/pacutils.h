@@ -36,6 +36,7 @@
 #include "pacutils/log.h"
 #include "pacutils/mtree.h"
 #include "pacutils/ui.h"
+#include "pacutils/uix.h"
 #include "pacutils/util.h"
 
 char *pu_version(void);
@@ -53,5 +54,3 @@ int pu_log_command(alpm_handle_t *handle, const char *caller, int argc,
     char **argv);
 
 #endif /* PACUTILS_H */
-
-/* vim: set ts=2 sw=2 noet: */

@@ -126,5 +126,3 @@ int main(int argc, char **argv) {
 
   return ret;
 }
-
-/* vim: set ts=2 sw=2 noet: */

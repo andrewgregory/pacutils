@@ -283,6 +283,7 @@ void dump_repo(pu_repo_t *repo) {
   show_usage("Usage", repo->usage);
   show_siglevel("SigLevel", repo->siglevel, 0);
   show_list_str("Server", repo->servers);
+  show_list_str("CacheServer", repo->cacheservers);
 }
 
 void dump_options(void) {
@@ -301,6 +302,8 @@ void dump_options(void) {
   show_list_str("Architecture", config->architectures);
 
   show_str("XferCommand", config->xfercommand);
+  show_str("DownloadUser", config->downloaduser);
+  show_bool("DisableSandbox", config->disablesandbox);
 
   show_bool("UseSyslog", config->usesyslog);
   show_bool("Color", config->color);
@@ -357,6 +360,8 @@ int list_repo_directives(alpm_list_t *directives) {
   for (i = directives; i; i = i->next) {
     if (strcasecmp(i->data, "Server") == 0) {
       show_list_str("Server", repo->servers);
+    } else if (strcasecmp(i->data, "CacheServer") == 0) {
+      show_list_str("CacheServer", repo->cacheservers);
     } else if (strcasecmp(i->data, "SigLevel") == 0) {
       show_siglevel("SigLevel", repo->siglevel, 0);
     } else if (strcasecmp(i->data, "Usage") == 0) {
@@ -411,6 +416,8 @@ int list_directives(alpm_list_t *directives) {
 
     } else if (strcasecmp(i->data, "XferCommand") == 0) {
       show_str("XferCommand", config->xfercommand);
+    } else if (strcasecmp(i->data, "DownloadUser") == 0) {
+      show_str("DownloadUser", config->downloaduser);
 
     } else if (strcasecmp(i->data, "ParallelDownloads") == 0) {
       show_int("ParallelDownloads", config->paralleldownloads);
@@ -427,6 +434,8 @@ int list_directives(alpm_list_t *directives) {
       show_bool("VerbosePkgLists", config->verbosepkglists);
     } else if (strcasecmp(i->data, "DisableDownloadTimeout") == 0) {
       show_bool("DisableDownloadTimeout", config->disabledownloadtimeout);
+    } else if (strcasecmp(i->data, "DisableSandbox") == 0) {
+      show_bool("DisableSandbox", config->disablesandbox);
 
     } else if (strcasecmp(i->data, "CleanMethod") == 0) {
       show_cleanmethod("CleanMethod", config->cleanmethod);
@@ -486,5 +495,3 @@ cleanup:
 
   return ret;
 }
-
-/* vim: set ts=2 sw=2 noet: */

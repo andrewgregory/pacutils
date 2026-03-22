@@ -50,6 +50,7 @@ HEADERS = \
 					pacutils/log.h \
 					pacutils/mtree.h \
 					pacutils/ui.h \
+					pacutils/uix.h \
 					pacutils/util.h
 
 SOURCES = \
@@ -61,6 +62,7 @@ SOURCES = \
 					pacutils/log.c \
 					pacutils/mtree.c \
 					pacutils/ui.c \
+					pacutils/uix.c \
 					pacutils/util.c
 
 all: libpacutils.so
