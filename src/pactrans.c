@@ -79,6 +79,7 @@ enum longopt_flags {
   FLAG_NOSCRIPTLET,
   FLAG_NOTIMEOUT,
   FLAG_NULL,
+  FLAG_OVERWRITE,
   FLAG_PRINT,
   FLAG_RECURSIVE,
   FLAG_REMOVE,
@@ -212,6 +213,7 @@ void usage(int ret) {
   hputs("                      enable/disable skipping packages with missing dependencies");
   hputs("   --import-pgp-keys=(prompt|yes|no)");
   hputs("                      enable/disable automatic importing of missing PGP keys");
+  hputs("   --overwrite        If there are already files on the system they will be overwritten");
   hputs("   --yolo             set all prompt disposition options to all/yes");
   hputs("                      and set --no-confirm");
 #undef hputs
@@ -310,6 +312,7 @@ pu_config_t *parse_opts(int argc, char **argv) {
     { "use-first-provider",       required_argument, NULL, FLAG_USE_DEFAULT_PROVIDER },
     { "skip-unresolvable",        required_argument, NULL, FLAG_SKIP_UNRESOLVABLE    },
     { "import-pgp-keys",          required_argument, NULL, FLAG_IMPORT_KEYS          },
+    { "overwrite",                no_argument,       NULL, FLAG_OVERWRITE            },
     { "yolo",                     no_argument,       NULL, FLAG_YOLO                 },
 
     { 0, 0, 0, 0 },
@@ -502,6 +505,9 @@ pu_config_t *parse_opts(int argc, char **argv) {
         break;
       case FLAG_IMPORT_KEYS:
         parse_bool_disposition(&import_keys, optarg, "--import-pgp-keys");
+        break;
+      case FLAG_OVERWRITE:
+        alpm_option_add_overwrite_file(handle, "*");
         break;
       case FLAG_YOLO:
         resolve_conflict = resolve_replacement = RESOLVE_CONFLICT_ALL;
@@ -868,6 +874,7 @@ int main(int argc, char **argv) {
   alpm_option_set_eventcb(handle, pu_ui_cb_event, NULL);
   alpm_option_set_dlcb(handle, pu_ui_cb_download, NULL);
   alpm_option_set_logcb(handle, cb_log, NULL);
+  alpm_option_add_overwrite_file(handle, "*");
 
   for (i = assume_installed; i; i = i->next) {
     alpm_depend_t *d = alpm_dep_from_string(i->data);
